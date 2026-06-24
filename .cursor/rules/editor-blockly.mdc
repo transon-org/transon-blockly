@@ -8,6 +8,10 @@ alwaysApply: false
 
 Projects the IR to/from Blockly — the only Blockly-coupled mapping (AD-016).
 
+Before defining/generating blocks, building the toolbox, or wiring serialization, follow
+`.cursor/skills/blockly-authoring/SKILL.md`. Look up version-specific Blockly API via the Context7
+MCP (Blockly is pinned at M0) — never from memory; **use JSON serialization, never the XML API**.
+
 ## Rules
 
 - **Variants over hidden modes** (AD-015): one palette block per parameter shape; never a hidden mode
