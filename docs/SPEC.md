@@ -1,6 +1,13 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 1.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-23
+> **Version:** 1.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-24
+
+> **v1.1 — ratified decisions.** Open questions OQ-001…OQ-009 are closed
+> ([`ROADMAP.md`](ROADMAP.md) §"Open questions"). Two reverse the v1.0 drafts and are folded
+> in here: **bidirectional JSON editing is in v1** with strict in-surface gating (§7.15, §12.7,
+> FR-005, FR-111…FR-113; reverses OQ-001) and **custom rules must additionally provide
+> `title`, `category`, and `examples`** ([`metadata-contract.md`](metadata-contract.md) §2.1;
+> tightens OQ-004). IDs remain append-only (§21.1).
 
 This document is the source of truth for the **what**: product behavior, use cases, functional
 and non-functional requirements, the conceptual domain model, the UX and block models, rule
@@ -292,8 +299,9 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
 - **FR-003** The editor shall provide a compact embedded editor mode focused on canvas and
   palette.
 - **FR-004** The compact mode should support switching between visual, JSON, and split views.
-- **FR-005** In v1, the JSON view may be read-only generated output unless direct JSON editing
-  is explicitly approved.
+- **FR-005** The JSON view supports direct (bidirectional) editing in v1: it shows generated
+  output and accepts edits that sync back to the workspace under the strict in-surface rule of
+  §7.15.
 - **FR-006** The editor shall display validation and runtime errors.
 - **FR-007** The editor shall support manual import of a Transon JSON template.
 - **FR-008** The editor shall support manual export, copy, and download of a Transon JSON
@@ -488,6 +496,22 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
 - **FR-108** The component should support theming hooks.
 - **FR-109** The component should support configurable rule categories.
 - **FR-110** The component should support a configurable marker key.
+
+### 7.15 Bidirectional JSON Editing
+
+Direct JSON editing was deferred in v1.0 (OQ-001) and is **approved for v1** with a strict
+in-surface contract that protects the canonical-JSON and round-trip invariants (AD-003, AD-004,
+AD-024).
+
+- **FR-111** The editor shall allow users to edit the generated Transon JSON directly and sync
+  accepted edits back to the Blockly workspace.
+- **FR-112** Direct JSON edits shall be applied to the workspace only when the edited text is
+  valid JSON **and** within the supported surface (§15.7). When either check fails, the editor
+  shall report the error (`json_template` or `import_unsupported`, §16.4) and leave the existing
+  workspace unchanged.
+- **FR-113** While a direct JSON edit is unparsed or rejected, the editor shall not silently
+  alter, partially apply, or discard the user's workspace; it preserves the last valid workspace
+  and marks the JSON as out of sync until a valid in-surface edit is accepted or reverted.
 
 ---
 
@@ -690,7 +714,10 @@ metadata shape.
 If metadata is incomplete: built-in rules are covered by the engine-owned export (AD-012) and
 any residual gap is surfaced in diagnostics and fixed engine-side; custom rules may be rejected
 or rendered as limited generic blocks; missing metadata is visible in diagnostics and tracked as
-a Transon-library issue, never silently worked around.
+a Transon-library issue, never silently worked around. For a **custom** rule to be rendered as a
+safe (non-limited) block, its metadata must additionally provide `title`, `category`, and
+`examples` (OQ-004; [`metadata-contract.md`](metadata-contract.md) §2.1) — these are
+editor-owned for built-ins but required from custom-rule authors.
 
 ### 10.4 Runtime Host Boundary
 
@@ -753,8 +780,10 @@ the editor treats as UI-only.
 
 ### 11.6 Export Contract
 
-Export produces the canonical Transon JSON template. It may optionally also produce a separate
-editor state bundle (`{ template, workspace, editor_metadata }`); not required in v1.
+Export produces the canonical Transon JSON template. v1 exports the canonical Transon JSON
+**only** (OQ-002): no workspace/UI-state bundle is produced, keeping the JSON the single source
+of truth (AD-003). A separate editor-state bundle (`{ template, workspace, editor_metadata }`)
+remains future work.
 
 ### 11.7 Import Contract
 
@@ -777,18 +806,23 @@ The full playground/dev/demo experience. Recommended layout:
 │ Blockly Canvas       │ Input JSON            │
 │                      ├──────────────────────┤
 │                      │ Output / Errors       │
+│                      ├──────────────────────┤
+│                      │ Files produced        │
 └──────────────────────┴──────────────────────┘
 ```
 
-Sandbox mode includes: canvas, palette, generated template JSON, input JSON, output JSON,
-validation/runtime errors, examples, and run/validate controls. This is the canonical panel set
-referenced by FR-002, UC-014, AC-031.
+Sandbox mode includes: canvas, palette, generated template JSON (editable per §7.15, §12.7),
+input JSON, output JSON, validation/runtime errors, a "Files produced" panel (§12.11), examples,
+and run/validate controls. This is the canonical panel set referenced by FR-002, UC-014, AC-031.
+The "Files produced" panel is shown when a template can emit `file` writes; it may be collapsed
+or hidden when empty.
 
 ### 12.2 Compact Embedded Editor Mode
 
 The embeddable visual editor experience: toolbar plus palette + canvas, with an optional
-`Visual | JSON | Split` view switch. In v1 the JSON view may be read-only; direct JSON editing
-with sync back to blocks is future work unless explicitly approved.
+`Visual | JSON | Split` view switch. The JSON view supports direct editing with strict
+in-surface sync back to blocks (§7.15); an embedding may still opt the component into read-only
+mode (FR-107).
 
 ### 12.3 Toolbar Actions
 
@@ -823,17 +857,24 @@ enabled.
 
 The palette shows block variants, not only raw rule names, grouped by the canonical categories
 (§12.4). Several palette blocks may generate the same rule with different parameter shapes. See
-§14 for the canonical `attr`/`object`/`map` variant examples.
+§14 for the canonical `attr`/`object`/`map` variant examples. Block and palette labels show
+**both** the friendly title and the rule name, e.g. `Get attribute (attr)` (OQ-008); the rule
+name keeps developers oriented and reinforces the JSON mapping (NFR-016).
 
 ### 12.6 Progressive Disclosure
 
 Common beginner-friendly blocks are visible by default. Advanced blocks (`set`, `get`, `parent`,
 `zip`, `file`, `include`, custom rules) may be available under advanced categories or toggles.
+Because per-shape variants enlarge the palette, palette size is managed (OQ-009) with canonical
+categories (§12.4), a palette search/filter, an advanced-blocks toggle, and the clear dual labels
+of §12.5 — a clearer palette is preferred over hidden mode dropdowns (NFR-012, AD-015).
 
 ### 12.7 Generated JSON Panel
 
 Updates when blocks change; shows formatted JSON; shows an invalid-generation state when the
-workspace is incomplete; allows copying; may allow direct editing in a future version.
+workspace is incomplete; allows copying; and supports direct (bidirectional) editing per §7.15 —
+edits sync back to blocks only when valid and in-surface (§15.7), otherwise the panel shows the
+error and is marked out of sync (FR-111…FR-113).
 
 ### 12.8 Sample Input Panel
 
@@ -842,14 +883,22 @@ selected.
 
 ### 12.9 Output Panel
 
-Shows the transformation result, runtime errors, captured file outputs, and expected-vs-actual
-result for examples.
+Shows the transformation result, runtime errors, and expected-vs-actual result for examples.
+Captured `file` writes are shown separately in the "Files produced" panel (§12.11), not inline
+with the transformation output (OQ-007).
 
 ### 12.10 Tooltips
 
 Rule and parameter tooltips are derived from engine metadata and explain rule/parameter purpose,
 whether a parameter is required, whether it is dynamic or constant where known, and common
 examples.
+
+### 12.11 Files Produced Panel
+
+A dedicated panel that lists captured `file` writes from preview execution (§16.5), each with its
+name and a content preview, kept separate from the transformation output (OQ-007, §17.11, AC-024).
+No filesystem write occurs in browser preview (NFR-035, AD-009). The panel may be collapsed or
+hidden when the latest execution produced no files.
 
 ---
 
@@ -1152,9 +1201,9 @@ The single canonical error taxonomy. FR-095 (error display) and §17 reference t
 
 | Code | Category | Raised during |
 |------|----------|---------------|
-| `json_template` | Invalid JSON in imported template text | import |
+| `json_template` | Invalid JSON in imported template text or in a direct JSON edit (§7.15) | import / JSON edit |
 | `json_input` | Invalid JSON in sample input | execution setup |
-| `import_unsupported` | Out-of-surface template (§15.7): unknown rule, unknown parameter, ambiguous/partial variant match, ambiguous marker handling, malformed template, or unsupported workspace representation | import |
+| `import_unsupported` | Out-of-surface template (§15.7): unknown rule, unknown parameter, ambiguous/partial variant match, ambiguous marker handling, malformed template, or unsupported workspace representation. Also raised when a direct JSON edit (§7.15) is valid JSON but out of surface. | import / JSON edit |
 | `template_definition` | Transon definition/validation error (engine `DefinitionError` via `validate()`) | validation |
 | `runtime_transformation` | Transon transformation/runtime error (engine `TransformationError` via `transform()`) | execution |
 | `include_loader` | Include template could not be resolved (§16.6) | validation/execution |
@@ -1369,6 +1418,9 @@ Version 1 is acceptable when all criteria below are met.
 - **AC-031 — Sandbox mode.** Sandbox mode shows the panels defined in §12.1.
 - **AC-032 — Compact editor mode.** Compact mode can show canvas and palette without requiring
   input/output panels.
+- **AC-033 — Bidirectional JSON editing.** A user can edit the generated JSON directly; a valid
+  in-surface edit syncs back to the workspace, while an invalid or out-of-surface edit is reported
+  and leaves the workspace unchanged (§7.15, FR-111…FR-113).
 
 ---
 

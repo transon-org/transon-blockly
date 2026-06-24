@@ -1,6 +1,10 @@
 # metadata-contract.md — Editor Metadata Contract
 
-> **Version:** 1.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-23
+> **Version:** 1.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-24
+
+> **v1.1.** Per OQ-004 ([`SPEC.md`](SPEC.md) §10.3), `title`, `category`, and `examples` are now
+> **required from custom-rule authors** for a rule to render as a safe (non-limited) block. For
+> built-in rules these remain editor-owned/presentation fields. See §2.1.
 
 This document is the single source of truth for the **shape** of the machine-readable Transon
 metadata the visual editor consumes. Editor behavior is owned by [`SPEC.md`](SPEC.md) and
@@ -33,10 +37,11 @@ This is the single source of truth for the metadata field list; `SPEC.md` FR-081
 A rule must provide:
 
 - `name` — rule name as used after the marker key (e.g. `attr`).
-- `title` — short human label (e.g. "Get attribute"). Presentation; may be editor-owned if the
-  engine does not supply it.
+- `title` — short human label (e.g. "Get attribute"). Presentation. **Editor-owned for built-in
+  rules; required from the author for custom rules** (OQ-004).
 - `description` — markdown documentation (the rule docstring).
-- `category` — canonical category from `SPEC.md` §12.4 (or a hint the editor maps).
+- `category` — canonical category from `SPEC.md` §12.4 (or a hint the editor maps). **Editor-owned
+  for built-in rules; required from the author for custom rules** (OQ-004).
 - `advanced` — boolean: advanced vs beginner-friendly (drives progressive disclosure,
   `SPEC.md` §12.6).
 - `params` — ordered list of `ParameterMetadata` (§2.2).
@@ -44,7 +49,16 @@ A rule must provide:
 - `modes` — the mutually exclusive parameter groups (from the engine `_modes` tuple of tuples).
   This is the source from which block variants and import matchers are derived (`SPEC.md` §7.7;
   matcher format in [`ARCHITECTURE.md`](ARCHITECTURE.md) §5.7).
-- `examples` — example cases (from the tagged test corpus) where available.
+- `examples` — example cases (from the tagged test corpus). Optional ("where available") for
+  built-in rules; **required from the author for custom rules** to render as a safe block
+  (OQ-004).
+
+**Custom-rule minimum (OQ-004).** A custom rule is rendered as a safe (non-limited) block only
+when it supplies all of: `name`, `description`, `params`, `required_params`, `modes`, per-parameter
+`kind` (§2.2), **and** `title`, `category`, `examples`. A custom rule missing any of these is
+rendered as a limited generic block or rejected with an actionable error (`SPEC.md` FR-086, §10.3).
+Built-in rules need not carry author-supplied `title`/`category`/`examples`: the editor owns those
+presentation fields and sources examples from the tagged corpus.
 
 ### 2.2 Parameter metadata
 

@@ -1,6 +1,6 @@
 # traceability.md — Requirement Traceability
 
-> **Version:** 1.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-23
+> **Version:** 1.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-24
 
 Tracks every requirement in [`SPEC.md`](SPEC.md) through to code and tests, per the SPEC-first /
 tests-required discipline (`SPEC.md` §21.1, §21.2, §21.13). Architecture is in
@@ -111,6 +111,7 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-030 | Variant import matching | [ ] | |
 | AC-031 | Sandbox mode | [ ] | |
 | AC-032 | Compact editor mode | [ ] | |
+| AC-033 | Bidirectional JSON editing (strict in-surface) | [ ] | |
 
 ## Functional requirement coverage (§7)
 
@@ -133,6 +134,7 @@ implementing module and the test that cites the ID.
 | §7.12 Error mapping | FR-091..FR-095 | [ ] | canonical error taxonomy (§16.4) |
 | §7.13 Import / export UX | FR-096..FR-101 | [ ] | |
 | §7.14 Component embedding | FR-102..FR-110 | [ ] | component API |
+| §7.15 Bidirectional JSON editing | FR-111..FR-113 | [ ] | strict in-surface sync (AD-024); reuses §15.7 surface check |
 
 ## Non-functional & architecture decisions
 
@@ -152,6 +154,7 @@ dedicated tests:
 
 ## Open questions
 
-The still-open questions (OQ-001..009) and their draft decisions are tracked in
-[`ROADMAP.md`](ROADMAP.md). They do not block early implementation, but each should be closed
-(and its decision folded into the relevant requirement) before v1 acceptance.
+OQ-001..009 were ratified at v1.1 and folded into requirements; the decision table and the
+"folded into" references are in [`ROADMAP.md`](ROADMAP.md) §"Open questions". No editor open
+questions remain blocking; the new bidirectional-editing requirements (FR-111..113, AC-033) are
+tracked in the tables above.

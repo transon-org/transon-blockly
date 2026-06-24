@@ -1,0 +1,27 @@
+---
+description: Invariants for the headless semantic core (IR, JSON⇄IR codec, variant matcher, surface check).
+globs: packages/editor-core/**
+alwaysApply: false
+---
+
+# editor-core (pure TS, headless)
+
+The correctness core (AD-016, deliverable #1): `JSON ⇄ IR`, variant matching (ARCH §5.7), surface
+check (§15.7), marker escape (§11.4), `JsonPathBlockMap` (§9.12), error taxonomy (§16.4), and the
+`EngineProvider` port. **No Blockly, React, DOM, or engine dependency** — keep it importable and
+unit-testable without a browser.
+
+## Rules
+
+- Round-trip is `JSON→IR→Blockly→IR→JSON`; the `JSON⇄IR` half is tested here without a browser.
+- Equivalence is **semantic**, proven by engine execution (AD-011) — never textual JSON comparison.
+- Preserve ordering that affects Transon: object keys, array items, `chain` steps, and `set` before a
+  dependent `get` (§13.12, §15.3).
+- Derive block variants and import matchers **mechanically** from the engine `required`/`modes`
+  (ARCH §5.7). One invocation matches exactly one variant; zero/multiple/partial → `import_unsupported`.
+- Out-of-surface input fails clearly (§15.7) or takes the exact-preserving placeholder path (§13.11) —
+  never silently rewritten.
+- Custom marker: all detection and escaping use the configured marker (default `$`), including the
+  `object`/`fields` literal-marker escape (§11.4, §15.4).
+- Bidirectional JSON edits reuse this codec + surface check and apply only when valid and in-surface
+  (§7.15, AD-024).

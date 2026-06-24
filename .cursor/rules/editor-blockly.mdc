@@ -1,0 +1,24 @@
+---
+description: Conventions for Blockly block generation, the toolbox, and the IR⇄Blockly mapping.
+globs: packages/editor-blockly/**
+alwaysApply: false
+---
+
+# editor-blockly (Zelos blocks)
+
+Projects the IR to/from Blockly — the only Blockly-coupled mapping (AD-016).
+
+## Rules
+
+- **Variants over hidden modes** (AD-015): one palette block per parameter shape; never a hidden mode
+  dropdown. Dropdowns only for small constant choices (operator/function names, enums; FR-058).
+- Generic blocks are generated at runtime from metadata; specialized blocks are TS overrides selected
+  by `rule_name`/`variant_id`. A registry resolves specialized over generic, and **both must emit
+  identical JSON per variant** (AD-014).
+- Block/palette labels show both the friendly title and the rule name, e.g. `Get attribute (attr)` (§12.5).
+- The toolbox uses the canonical categories (§12.4); progressive disclosure via the advanced flag plus
+  palette search (§12.6).
+- Required inputs are visually marked; a variant missing required inputs is visually invalid and must
+  not export as valid (FR-056/057).
+- Output types (§13.1) are advisory UX hints — they must not override engine validation (AD-013).
+- Default renderer is Zelos (AD-017); render in light DOM with scoped CSS (AD-018).

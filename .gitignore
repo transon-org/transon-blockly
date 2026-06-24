@@ -1,0 +1,9 @@
+# Python (harness scripts/hooks)
+__pycache__/
+*.py[cod]
+
+# Node / build (added as the monorepo lands)
+node_modules/
+dist/
+.turbo/
+*.log

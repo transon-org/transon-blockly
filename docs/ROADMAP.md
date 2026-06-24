@@ -1,6 +1,10 @@
 # ROADMAP.md — Implementation Roadmap
 
-> **Version:** 1.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-23
+> **Version:** 1.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-24
+
+> **v1.1.** OQ-001…OQ-009 are ratified (see §"Open questions"). Project-bootstrap decisions are
+> now locked (license, npm scope, reference runtime, bidirectional editing). M0 is expanded to
+> emit `title`/`category`/`advanced`/`examples` alongside the metadata contract.
 
 The ordered plan for building the Transon Visual Editor. This is the **sequencing + task layer**
 between the contract docs ([`SPEC.md`](SPEC.md) — the *what*, [`ARCHITECTURE.md`](ARCHITECTURE.md)
@@ -46,6 +50,21 @@ SPEC/ARCHITECTURE change.
 - **Blockly Zelos renderer**, configurable (AD-017); **light DOM + scoped CSS** (AD-018).
 - **Monorepo tooling** (AD-021): pnpm workspaces · Turborepo · Vite (library mode) · Vitest ·
   Changesets. Version pins are chosen at **M0** and reused by later milestones.
+- **Reference host runtime** (AD-025). The shipped sandbox uses **in-browser Python `transon` via
+  Pyodide/PyScript** (mirrors the docs site); round-trip CI uses the Node→Python adapter (AD-011).
+  Production embedders may still supply any `EngineProvider` (AD-008).
+- **Bidirectional JSON editing** is in v1 (AD-024), with strict in-surface sync (`SPEC.md` §7.15,
+  FR-111…FR-113). This reverses the OQ-001 v1.0 draft.
+
+### Project bootstrap (locked at v1.1)
+
+- **License: MIT** — matches the `transon` engine (MIT, © Eugene Chernyshov).
+- **npm scope: `@transon`** — verified available; packages follow the `@transon/editor-*` names in
+  [`ARCHITECTURE.md`](ARCHITECTURE.md) §5.1.
+- **Repo:** this `transon-blockly` repository hosts the pnpm/Turborepo monorepo.
+- **Version pins:** latest stable at M0 (Node LTS, current pnpm, current Blockly), recorded here
+  once chosen.
+- **Examples:** bundled at build time in v1; dynamic loading is future work (OQ-003).
 
 ## Definition of Done (every milestone)
 
@@ -81,8 +100,11 @@ available for tests. Owner-controlled, lives mostly in the Transon repo.
 - Deliverables:
   - `transon/editor_metadata.py::get_editor_metadata()`: serialize `__rule_schema__` `required`
     (→ `required_params`) and `modes`; emit per-parameter `kind` (`dynamic`/`constant`) authored
-    at the rule source; emit operator/function metadata (`metadata-contract.md` §2.3/§2.4); carry
-    a standalone `metadata_version`.
+    at the rule source; emit `title`/`category`/`advanced` and rule/parameter `examples` (from the
+    tagged corpus) so the custom-rule minimum (OQ-004, `metadata-contract.md` §2.1) is expressible;
+    emit operator/function metadata (`metadata-contract.md` §2.3/§2.4); carry a standalone
+    `metadata_version`. Tracked as a proposal in the `transon` repository
+    (`docs/proposals/editor-metadata-export.md`).
   - A Node→Python `transon` `EngineProvider` test adapter (`test/engine-node-adapter`) so M1's
     execution-based round-trip can run without an in-browser runtime.
   - Monorepo scaffolding + version pins recorded (AD-021); a metadata snapshot for M1.
@@ -187,9 +209,12 @@ no blocking conflict. M0/M1 are ready now; later milestones depend only on their
 1. **Per-parameter `kind` values.** The dynamic/constant classification per rule parameter must
    be authored at the engine source for the `editor_metadata` export (FR-047,
    `metadata-contract.md` §2.2). Small, owner-controlled.
-2. **`editor_metadata` export shape sign-off.** Confirm the exact JSON shape against
+2. **Built-in `title`/`category`/`advanced` + `examples` wiring.** The export must carry these so
+   the custom-rule minimum is expressible (OQ-004); for built-ins they are editor-owned/sourced
+   from the corpus. Authored alongside item 1 (see the transon proposal).
+3. **`editor_metadata` export shape sign-off.** Confirm the exact JSON shape against
    `metadata-contract.md` §2 before M1 consumes a snapshot.
-3. **Node engine adapter contract.** The test `EngineProvider` (Node→Python `transon`) must be
+4. **Node engine adapter contract.** The test `EngineProvider` (Node→Python `transon`) must be
    stood up in M0 so M1's execution-based round-trip can run.
 
 > **Verdict: green-light M0 + M1 now.** They depend only on owner-controlled inputs above.
@@ -198,23 +223,21 @@ no blocking conflict. M0/M1 are ready now; later milestones depend only on their
 
 ## Open questions
 
-These carry draft decisions but are not yet ratified. They do not block early implementation, but
-each should be closed (and its decision folded into the relevant requirement) before v1
-acceptance. Resolved questions have already been folded into architecture decisions: two
-metadata-ownership questions → AD-012, two generic/specialized questions → AD-014,
-equivalence-testing → AD-011, framework choice → AD-019.
+These were ratified at v1.1 and folded into the relevant requirements. Earlier-resolved questions
+had already become architecture decisions: two metadata-ownership questions → AD-012, two
+generic/specialized questions → AD-014, equivalence-testing → AD-011, framework choice → AD-019.
 
-| ID | Question | Draft decision | Status |
-|----|----------|----------------|:------:|
-| OQ-001 | Direct JSON editing with sync back to Blockly? | Not in v1; generated JSON is visible/copyable, bidirectional editing is future work. | ☐ |
-| OQ-002 | Export a bundle (Transon JSON + workspace metadata)? | Not required in v1; export canonical Transon JSON only. | ☐ |
-| OQ-003 | Bundle examples at build time or load dynamically? | Bundle first for reliability; dynamic loading later. | ☐ |
-| OQ-004 | Exact metadata required to render custom rules safely? | At least name, docs, parameters, required params, variants, parameter `kind`. | ☐ |
-| OQ-005 | Max template size / block count supported comfortably? | Define performance targets after prototype benchmarks (NFR-025/029). | ☐ |
-| OQ-006 | How do users provide include-able templates in v1? | Host-provided include resolution (examples + embedding config, AD-010); full manager later. | ☐ |
-| OQ-007 | How to display captured `file` writes? | A separate "Files produced" panel with name + content preview (§13.9, §17.11). | ☐ |
-| OQ-008 | Rule names vs friendly labels on blocks? | Show both where practical, e.g. "Get attribute (`attr`)". | ☐ |
-| OQ-009 | Palette size management with per-shape variants? | Categories, search, advanced toggle, clear labels; prefer a clearer palette over hidden modes. | ☐ |
+| ID | Question | Ratified decision | Status | Folded into |
+|----|----------|-------------------|:------:|-------------|
+| OQ-001 | Direct JSON editing with sync back to Blockly? | **In v1**, with strict in-surface sync: a valid in-surface edit syncs back, otherwise error + workspace unchanged. | ☑ | SPEC §7.15, FR-005/111–113, AC-033; AD-024 |
+| OQ-002 | Export a bundle (Transon JSON + workspace metadata)? | Export canonical Transon JSON only in v1; bundle is future work. | ☑ | SPEC §11.6 |
+| OQ-003 | Bundle examples at build time or load dynamically? | Bundle at build time first; dynamic loading later. | ☑ | ROADMAP locked decisions |
+| OQ-004 | Exact metadata required to render custom rules safely? | name, docs, params, required, modes/variants, parameter `kind`, **plus `title`, `category`, `examples`** for custom rules. | ☑ | metadata-contract §2.1; SPEC §10.3 |
+| OQ-005 | Max template size / block count supported comfortably? | Defer; set targets after M2 Zelos-prototype benchmarks (NFR-025/029). | ☑ | this file (M2) |
+| OQ-006 | How do users provide include-able templates in v1? | Host-provided include resolution (examples + embedding config, AD-010); full manager later. | ☑ | SPEC §16.6; AD-010 |
+| OQ-007 | How to display captured `file` writes? | Separate "Files produced" panel with name + content preview. | ☑ | SPEC §12.11, §17.11 |
+| OQ-008 | Rule names vs friendly labels on blocks? | Show both, e.g. "Get attribute (`attr`)". | ☑ | SPEC §12.5 |
+| OQ-009 | Palette size management with per-shape variants? | Categories + search + advanced toggle + clear labels; prefer a clearer palette over hidden modes. | ☑ | SPEC §12.6 |
 
 ## Future considerations
 

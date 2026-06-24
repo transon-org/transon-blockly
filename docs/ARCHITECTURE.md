@@ -1,6 +1,11 @@
 # ARCHITECTURE.md — Transon Visual Editor
 
-> **Version:** 1.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-23
+> **Version:** 1.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-24
+
+> **v1.1.** Adds AD-024 (bidirectional JSON editing with strict in-surface sync; folds the
+> reversed OQ-001 from `SPEC.md` §7.15) and AD-025 (reference host = Pyodide/PyScript in-browser,
+> mirroring the docs site; Node→Python adapter for CI). AD-016 and §6 are updated so the
+> state flow is no longer strictly one-way. Decisions are append-only (`SPEC.md` §21.1).
 
 This document is the source of truth for **how** the Transon Visual Editor is built: the
 architectural principles, the architecture decision records (`AD-001..AD-023`), the
@@ -178,6 +183,9 @@ before engine validation; import/export maps JSON shapes to variants.
 (`SPEC.md` §9.12). `IR ⇄ Blockly` is the only Blockly-coupled mapping.
 **Rationale.** Round-trip = `JSON→IR→Blockly→IR→JSON`; correctness is unit-testable without a
 browser. Implements AD-003/AD-004.
+**Note (AD-024).** The same `JSON→IR` half also backs bidirectional JSON editing: a direct JSON
+edit is parsed to IR and gated by the surface check before it reaches Blockly, so the editor
+flow is no longer strictly one-way (§6, `SPEC.md` §7.15).
 
 ### AD-017 — Blockly Zelos renderer (Scratch-like), configurable
 **Decision.** Default to the Zelos renderer to match `SPEC.md` §1 ("similar to Scratch") and the
@@ -219,6 +227,31 @@ before coding.
 **Decision.** Share links may come later but are not in v1.
 **Rationale.** Requires storage, a sharing model, and abuse considerations not needed for initial
 correctness.
+
+### AD-024 — Bidirectional JSON editing with strict in-surface sync
+**Decision.** The generated-JSON panel is editable in v1 (reversing the OQ-001 v1.0 draft). A
+direct edit is parsed `JSON→IR` and applied to the workspace **only** when it is valid JSON and
+in surface (`SPEC.md` §15.7); otherwise the editor reports `json_template` / `import_unsupported`
+(`SPEC.md` §16.4) and leaves the last valid workspace untouched (`SPEC.md` §7.15, FR-111…FR-113).
+The edit reuses the existing `JSON⇄IR` codec, variant matcher, and surface check (AD-016); no new
+semantic path is introduced.
+**Rationale.** Power users asked for hand-editing; reusing the headless codec keeps the canonical
+JSON the source of truth (AD-003) and preserves strict round-trip (AD-004). The strict gate is
+what makes the reverse direction safe — partial/forgiving application is explicitly disallowed.
+**Trade-off.** The state flow is no longer one-way (§6); the JSON editor needs an "out of sync"
+state and debounced parsing. **SPEC link.** `SPEC.md` §7.15, §12.7, FR-005, FR-111…FR-113, AC-033.
+
+### AD-025 — Reference host runtime: in-browser Pyodide/PyScript + Node adapter for CI
+**Decision.** The shipped sandbox/playground `examples/reference-host` implements `EngineProvider`
+with an **in-browser Python `transon` via Pyodide/PyScript**, mirroring how the Transon docs site
+runs the engine (it loads `transon`, exposes a `transform` global, and feeds engine-generated
+metadata to JS). Round-trip CI continues to use the separate Node→Python `transon` adapter
+(`test/engine-node-adapter`, AD-011). This is a reference implementation only; production embedders
+remain free to supply any `EngineProvider` (AD-008).
+**Rationale.** Matches the proven docs-site approach, keeps the demo a zero-backend static artifact
+(NFR-042), and runs the real engine in the browser so validation/execution/`file`/`include` are
+genuine. **Trade-off.** A multi-MB Pyodide download with a ~10–15s first-load (covered by a splash),
+as the docs site already accepts. **SPEC link.** `SPEC.md` §10.4, §16, NFR-028/042; ROADMAP M3.
 
 ---
 
@@ -280,7 +313,7 @@ The dashed edges are the **host boundary**: everything below it is supplied by t
 | `editor-ui` (internal) | — | core, blockly, react | panels, sandbox/compact modes, `EditorSession` store, theming (light DOM) |
 | `@transon/editor-element` | yes | editor-ui (React bundled) | `createTransonEditor()` + `<transon-editor>`; ESM + IIFE global |
 | `@transon/editor-react` | yes (opt) | editor-ui (React peer) | native React entry |
-| `examples/reference-host` | demo | core port | reference `EngineProvider` (e.g. an in-browser Python runtime such as Pyodide, or a server engine); powers the sandbox/playground |
+| `examples/reference-host` | demo | core port | reference `EngineProvider` using **in-browser Python `transon` via Pyodide/PyScript** (AD-025, mirrors the docs site); powers the sandbox/playground |
 | `test/engine-node-adapter` | dev | core port | Node→local Python `transon` `EngineProvider` for execution round-trip CI |
 
 ```mermaid
@@ -453,10 +486,12 @@ A new, versioned export emitting the [`metadata-contract.md`](metadata-contract.
 
 ## 6. Cross-cutting concerns
 
-- **State / Blockly↔React** (AD-003): one-way. Blockly owns the canvas; React subscribes to
-  change events → debounced codec → derives `{json, validation, execution}` into the
-  `EditorSession` store (`SPEC.md` §9.3). React→Blockly only for explicit commands (New / Import
-  / Load Example).
+- **State / Blockly↔React** (AD-003): primarily one-way. Blockly owns the canvas; React subscribes
+  to change events → debounced codec → derives `{json, validation, execution}` into the
+  `EditorSession` store (`SPEC.md` §9.3). React→Blockly is reserved for explicit commands (New /
+  Import / Load Example) **and** for accepted bidirectional JSON edits (AD-024): a debounced
+  `JSON→IR` parse that passes the surface check projects back into Blockly; a failed parse leaves
+  the workspace untouched and marks the JSON out of sync (`SPEC.md` §7.15, FR-111…FR-113).
 - **Error mapping** (`SPEC.md` FR-091..095, §16.4): the `JsonPathBlockMap` is produced by the
   `JSON⇄IR` step; the UI highlights the mapped or nearest-parent block.
 - **Theming / encapsulation** (AD-017, AD-018): Zelos default, light DOM + scoped CSS.

@@ -1,0 +1,30 @@
+---
+description: Transon Visual Editor — what it is, core invariants, and the doc map. Always applies.
+alwaysApply: true
+---
+
+# Transon Visual Editor — overview
+
+A Blockly visual editor for authoring **Transon** JSON-to-JSON templates. It is an embeddable,
+**engine-free** component that generates, imports, and strictly round-trips canonical Transon JSON.
+Full contract is in `docs/`: `SPEC.md` (what) · `ARCHITECTURE.md` (how) · `metadata-contract.md`
+(metadata shape) · `traceability.md` (coverage) · `ROADMAP.md` (sequencing). Read the relevant
+section before non-trivial changes and cite IDs.
+
+## Invariants (do not break)
+
+- **JSON is canonical** (AD-003): the Blockly workspace is a projection, never the sole source of truth.
+- **Engine-free** (AD-008): no bundled engine; validation/execution/`include`/`file` cross the host
+  `EngineProvider`. The engine is authoritative (NFR-004).
+- **Strict semantic round-trip** (AD-004, §15.7): in-surface templates preserve meaning; everything
+  else takes an explicit unsupported path. Never silently change meaning.
+- **Variants over hidden modes** (AD-015): mutually exclusive params become separate block variants,
+  derived from engine `modes`.
+- **Metadata-driven** (AD-012): the catalog comes from the engine export; no parallel hand-list.
+- **UI ≠ semantics** (§21.12): keep UI-only Blockly metadata out of the executable template.
+
+## Scope guard (§4)
+
+A visual Transon template editor — not a workflow platform, no-code backend, or general visual
+programming environment. No backend persistence in v1 (AD-006). If a change needs new behavior,
+update `docs/SPEC.md` first (§21.2) and never renumber IDs (§21.1).

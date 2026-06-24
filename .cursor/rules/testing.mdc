@@ -1,0 +1,27 @@
+---
+description: Vitest and round-trip test conventions for the Transon editor; always cite requirement IDs.
+globs: **/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx,**/test/**,**/tests/**
+alwaysApply: false
+---
+
+# Testing conventions
+
+Tests use **Vitest**. Every implemented requirement needs a test that **cites its ID** in the name
+or a comment (e.g. `// FR-054`), and the matching `docs/traceability.md` row updated in the same
+change (§21.13, AC-027).
+
+## What to cover (§19)
+
+- Generation, import, marker detection, literal-marker escape, required/optional handling, mutually
+  exclusive variants, variant import matching, path-to-block mapping (§19.1).
+- **Round-trip corpus** (§15.8, §19.2): each built-in rule + variant, each operator/function, nested
+  templates, corpus examples, custom marker, literal marker-key object, and import-failure cases.
+- Round-trip is **execution-based** (AD-011): run import and export through the Node→Python engine
+  adapter and compare outputs; input-less corpus entries fall back to normalized-output + validation.
+- Engine integration (§19.3), UI (§19.4), accessibility (§19.5), metadata compatibility (§19.6).
+
+## Anti-drift
+
+- Never hardcode the rule/operator/function catalog in a test expectation — derive it from the engine
+  `get_editor_metadata()` export so `scripts/check_engine_parity.py` stays meaningful.
+- Add a regression test for every generated-JSON, import/export, or round-trip bug (§19.7).
