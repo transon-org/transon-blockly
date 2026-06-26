@@ -76,12 +76,15 @@ A parameter must provide:
 ### 2.3 Operator metadata
 
 An operator must provide: `name`, `alternative` (alias), `kind` (`unary`/`binary`), `types`,
-`result`, `description`, `examples` where available.
+`result`, `doc`, `examples` where available. (Field names are engine-native — the export emits
+the keys `Transformer.get_operators()` already produces; see the `transon` proposal
+`editor-metadata-export.md` "Resolved decisions" #1.)
 
 ### 2.4 Function metadata
 
-A function must provide: `name`, `input_type`, `output_type`, `description`, `examples` where
-available.
+A function must provide: `name`, `input`, `output`, `doc`, `examples` where available. (Field
+names are engine-native — the export emits the keys `Transformer.get_functions()` already
+produces; see the `transon` proposal `editor-metadata-export.md` "Resolved decisions" #1.)
 
 ---
 

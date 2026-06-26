@@ -62,8 +62,12 @@ SPEC/ARCHITECTURE change.
 - **npm scope: `@transon`** — verified available; packages follow the `@transon/editor-*` names in
   [`ARCHITECTURE.md`](ARCHITECTURE.md) §5.1.
 - **Repo:** this `transon-blockly` repository hosts the pnpm/Turborepo monorepo.
-- **Version pins:** latest stable at M0 (Node LTS, current pnpm, current Blockly), recorded here
-  once chosen.
+- **Version pins (recorded at M0, AD-021):** Node `>=20` (engines), pnpm `10.27.0`
+  (`packageManager`), TypeScript `5.9.3`, Vite `6.4.3`, Vitest `2.1.9`, Turborepo `2.10.0`,
+  `@changesets/cli` `2.31.0`. Blockly `13.0.0` is introduced at **M2** (`@transon/editor-blockly`,
+  default Zelos renderer). React `18.3.1` (internal UI dep) + jsdom/happy-dom test envs are
+  introduced at **M3** (`editor-ui`, `@transon/editor-element`). Exact resolutions are locked in
+  `pnpm-lock.yaml`.
 - **Examples:** bundled at build time in v1; dynamic loading is future work (OQ-003).
 
 ## Definition of Done (every milestone)
@@ -115,9 +119,11 @@ available for tests. Owner-controlled, lives mostly in the Transon repo.
 
 **Goal:** the headless semantic core — pure TypeScript, no Blockly/React/engine dependency.
 
-- Scope: **FR-019 … FR-039** (generation, import, round-trip), **§15.7** (supported surface),
-  **FR-091 … FR-095** (`JsonPathBlockMap`), **§16.4** (error taxonomy); **AC-009 … AC-011**;
-  **AD-016**, **AD-011**.
+- Scope: **FR-019 … FR-039** (generation, import, round-trip), **FR-059 … FR-063** (literal /
+  marker-key objects + custom marker — codec-level here; block/UI facets land in M2), **§15.7**
+  (supported surface), **FR-091** + **FR-094** (`JsonPathBlockMap` data structure; the highlighting
+  + taxonomy-display FRs **FR-092 / FR-093 / FR-095** land in M3), **§16.4** (error taxonomy);
+  **AC-009 … AC-011**; **AD-016**, **AD-011**.
 - Deliverables: typed IR (`ARCHITECTURE.md` §5.4), `JSON ⇄ IR` codec, variant matcher
   (`ARCHITECTURE.md` §5.7), surface check (§15.7), marker escape (§11.4), `EngineProvider` port +
   error taxonomy, the execution-based round-trip corpus (`SPEC.md` §15.8) run via the M0 Node
@@ -144,12 +150,21 @@ available for tests. Owner-controlled, lives mostly in the Transon repo.
 **Goal:** the runnable editor in both UI modes, wired to a host engine across the boundary.
 
 - Scope: **FR-001 … FR-011** (shell + modes), **FR-064 … FR-076** (validation/execution via the
-  host), **FR-091 … FR-095** (error highlighting UI), **§10.4** (host boundary); **AC-001**,
-  **AC-012 … AC-017**, **AC-023 … AC-025**, **AC-031**, **AC-032**; **AD-020**.
+  host), **FR-091 … FR-095** (error highlighting UI), **FR-005** + **FR-111 … FR-113**
+  (bidirectional JSON editing — folded into M3 at v1.1, see note), **§10.4** (host boundary);
+  **AC-001**, **AC-012 … AC-017**, **AC-023 … AC-025**, **AC-031**, **AC-032**, **AC-033**;
+  **NFR-028**, **AD-019**, **AD-020**, **AD-024**, **AD-025**.
+  > **Fold note (v1.1).** OQ-001 ratified bidirectional editing into v1 (FR-005, FR-111…FR-113,
+  > AC-033, AD-024). These normative IDs were unassigned to a milestone; they are implemented in
+  > M3 because they ride the same `EditorSession` ⇄ Blockly sync surface (§7.15). No IDs renumbered
+  > (§21.1).
 - Deliverables: panels + sandbox/compact modes + `EditorSession` store (`ARCHITECTURE.md` §6),
-  `createTransonEditor()` + `<transon-editor>` (ESM + IIFE), a **reference** host engine adapter
-  that powers the sandbox/playground, captured `file` writes view (§17.11), include loader wiring
-  (§17.10).
+  generation-side `JsonPathBlockMap` (`pathsFromIR` / `readWorkspaceWithPaths`) + error→block
+  highlighting, strict bidirectional JSON editing (valid in-surface edit syncs back; otherwise
+  error + workspace unchanged — AD-024, §7.15), `createTransonEditor()` + `<transon-editor>`
+  (ESM + IIFE, `@transon/editor-element`), a **reference** host engine adapter (in-browser Python
+  `transon` via Pyodide, `examples/reference-host`, AD-025) that powers the sandbox/playground,
+  captured `file` writes view (§17.11), include loader wiring (§17.10).
 - DoD additions: with no host engine, authoring/generation/import/export still work and
   validate/run are disabled (§10.4); engine runtime status (idle/loading/ready/failed) is
   surfaced (NFR-028, AC-023).
@@ -182,9 +197,9 @@ available for tests. Owner-controlled, lives mostly in the Transon repo.
 | Milestone | Focus | Key IDs | Status |
 |-----------|-------|---------|:------:|
 | M0 | Engine metadata export + Node adapter | FR-047, FR-081, AD-008/012/021 | ☐ |
-| M1 | `editor-core`: IR + codec + round-trip | FR-019…039, §15.7, AD-016/011 | ☐ |
+| M1 | `editor-core`: IR + codec + round-trip | FR-019…039, 059…063, 091/094, §15.7, AD-016/011 | ☐ |
 | M2 | `editor-blockly`: Zelos + toolbox | FR-012…018, 040…058, 084/088…090 | ☐ |
-| M3 | UI + element + sandbox/compact + host | FR-001…011, 064…076, 091…095 | ☐ |
+| M3 | UI + element + sandbox/compact + host | FR-001…011, 005, 064…076, 091…095, 111…113; AC-033; NFR-028; AD-019/020/024/025 | ☐ |
 | M4 | React + examples + embedding API | FR-077…082, 096…110 | ☐ |
 | M5 | Specialized variants + accessibility | FR-088, NFR-045 | ☐ |
 
@@ -250,6 +265,37 @@ product a visual editor for Transon templates, not a general workflow automation
   approval workflow;
 - custom rule authoring UI; custom rule plugin packs; generated block packs from extension
   metadata;
+- **richer block-composition UX (extends M5 specialized variants, AD-014)** — explorations from
+  the M3 review of "blocks look basic / only slots":
+  - *Adaptive (shadow-block) dynamic params*: give dynamic value inputs a default **shadow** literal
+    (`transon_string`/`number`/`boolean`) so a constant shows as an inline editable field and Blockly
+    auto-swaps it for a real connection when a rule is dropped in (restoring it on disconnect). The
+    codec already reads `connection.targetBlock()`, which includes shadows, so this round-trips for
+    free. Open decisions before adopting: shadows on **optional** params would erase the "absent"
+    (`NO_CONTENT`) case; "missing required" readiness (`exportReadiness`) would stop flagging empty
+    inputs and instead emit a default; and the default scalar type isn't in metadata today (`kind`
+    is only dynamic/constant) — likely string-default or per-rule specialized knowledge. Touches
+    behavior, so SPEC-first (§21.2).
+  - *Array/Object add/remove slots*: `transon_array`/`transon_object` blocks have no on-canvas way to
+    grow — item/entry inputs are only materialized from imported JSON by the codec (`buildArray`/
+    `buildObject`). Add a Blockly **mutator** (gear/⊕/⊖) or dynamic-input extension so items can be
+    added/removed visually (currently only possible via bidirectional JSON editing).
+  - *Per-rule inline layout*: `blockDefinitionFor` hardcodes `inputsInline: false` (external/stacked
+    rows). Thread an `inputsInline` hint through `VariantDescriptor` (or a specialized override) so
+    expression-like rules (e.g. `expr`) can render side-by-side. Layout only — no semantic change.
+- **runtime metadata-source policy**: let an embedder override the committed snapshot with metadata
+  pulled live from a specific (possibly extended) Transon engine build. Already partially enabled —
+  every catalog consumer is parameterized by `EditorMetadata` (`createBlockRegistry`, `describeAll`,
+  `buildToolbox`, `parse`/`importJsonToWorkspace`) and the host carries `TransonEditorHost.metadata`
+  (AD-012); the snapshot is only the default. Gaps to evaluate: add an optional
+  `EngineProvider.getEditorMetadata()` pull channel (the Node adapter already does this for tests),
+  a `metadata_version` compatibility guard (NFR-040) before trusting injected metadata, an atomic
+  rebuild (`defineTransonBlocks` + `buildToolbox` + re-`import` the canonical JSON under the new
+  catalog, AD-003), and an explicit `metadataSource: 'snapshot' | 'host' | 'engine'` policy that
+  keeps `'snapshot'` as the deterministic default so `check_metadata_parity` and reproducibility stay
+  intact. Caveat: hardcoded couplings (`CANONICAL_CATEGORY_ORDER`/`CATEGORY_COLOURS`,
+  `enumOptionsFor`) won't auto-adapt to brand-new categories/enum-bound params and would surface them
+  via `Custom`/text-field fallbacks until moved into the contract;
 - natural-language-to-template assistance; AI-assisted block construction; template linting;
   style-guide enforcement;
 - larger include-template manager; multi-template projects;
