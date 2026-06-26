@@ -1,17 +1,24 @@
 # ARCHITECTURE.md — Transon Visual Editor
 
-> **Version:** 1.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-24
+> **Version:** 2.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-27
 
-> **v1.1.** Adds AD-024 (bidirectional JSON editing with strict in-surface sync; folds the
-> reversed OQ-001 from `SPEC.md` §7.15) and AD-025 (reference host = Pyodide/PyScript in-browser,
-> mirroring the docs site; Node→Python adapter for CI). AD-016 and §6 are updated so the
-> state flow is no longer strictly one-way. Decisions are append-only (`SPEC.md` §21.1).
+> **v2.0 — template-driven projection pivot.** The editor surface (palette, toolbox, encoder,
+> decoder) is no longer a hand-written TypeScript mapping layer. It is **derived as Transon-template
+> projections of the engine's editor-metadata** (AD-026): metadata is the single source, and the
+> projections are data (templates) executed by the host engine, never bundled. Adds AD-026…AD-031
+> and **supersedes AD-014** (hand-written hybrid block generation + specialized TS override registry)
+> and **AD-016** (typed-IR round-trip pivot). The compiler model is the committed model: generator
+> templates `G_*` (run at build time with a meta-level marker) emit specialized codec templates that
+> run at runtime via the host engine. No interpreter fallback is shipped (OQ-010 → compiler-only).
+> Earlier decisions kept: AD-024 (bidirectional JSON editing, now via the generated decoder) and
+> AD-025 (reference host = Pyodide/PyScript in-browser; Node→Python adapter for CI). Decisions are
+> append-only and never renumbered (`SPEC.md` §21.1); superseded decisions are marked in place.
 
 This document is the source of truth for **how** the Transon Visual Editor is built: the
-architectural principles, the architecture decision records (`AD-001..AD-023`), the
-package/module structure, the host boundary and public API, the intermediate representation (IR)
-used for round-trip, the variant-matching and validation/execution flows, distribution, and
-build tooling.
+architectural principles, the architecture decision records (`AD-001..AD-031`), the
+package/module structure, the host boundary and public API, the **template-driven projections**
+(generators `G_*` and the generated codec) that replace the former typed IR, the metadata
+reshape and dispatch primitives, the validation/execution flows, distribution, and build tooling.
 
 It complements — and does not restate — [`SPEC.md`](SPEC.md) (the *what*),
 [`metadata-contract.md`](metadata-contract.md) (the metadata *shape*),
@@ -28,7 +35,7 @@ It complements — and does not restate — [`SPEC.md`](SPEC.md) (the *what*),
 | Document | Owns (source of truth for) | Does **not** contain |
 |---|---|---|
 | [`SPEC.md`](SPEC.md) | Product behavior: use cases, FR/NFR/AC, conceptual domain model, UX model, rule coverage, import/export and round-trip semantics, canonical error taxonomy, governance rules. The **what**. | Architecture decisions, package/module layout, language/tooling choices, public API signatures, build/distribution mechanics, implementation flows. |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) (this doc) | Implementation **how**: architecture decisions (`AD-001..023`), package decomposition, ports & adapters, host boundary & public API, IR design, variant-matching + validation/execution flows, state/error/theming strategy, distribution, build/tooling. | Behavioral requirements (SPEC), metadata field lists (contract), test matrices (traceability), milestone sequencing (roadmap). |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) (this doc) | Implementation **how**: architecture decisions (`AD-001..031`), package decomposition, ports & adapters, host boundary & public API, the template-driven projections (`G_*`) and generated codec, the metadata reshape + dispatch primitives, validation/execution flows, state/error/theming strategy, distribution, build/tooling. | Behavioral requirements (SPEC), metadata field lists (contract), test matrices (traceability), milestone sequencing (roadmap). |
 | [`metadata-contract.md`](metadata-contract.md) | The cross-repo **data contract**: metadata field shapes for rules/params/operators/functions, the engine-owned export, schema versioning. The metadata **shape**. | Editor internals, UI, runtime wiring. |
 | [`traceability.md`](traceability.md) | **Verification**: requirement→code→test matrix, engine-parity (anti-drift) checks, round-trip corpus coverage, AC coverage. The **is-it-covered**. | Design rationale, behavior definitions. |
 | [`ROADMAP.md`](ROADMAP.md) | **Sequencing**: milestones (M0–M5), per-milestone scope/deliverables/Definition of Done, readiness, locked decisions, open questions, future considerations. The **in-what-order**. | Behavior definitions, design rationale, test matrices. |
@@ -54,17 +61,29 @@ flowchart TD
 1. **JSON is canonical** (AD-003). Transon JSON is the artifact; the Blockly workspace is a
    projection. Round-trip equivalence is *semantic*, proven by execution (§5.4, AD-011).
 2. **The editor is engine-free** (AD-008). It ships no engine runtime. All runtime concerns
-   (validation, execution, include resolution, `file` capture, the metadata source) cross **one
-   host-provided boundary** (§5.2).
-3. **Metadata-driven, engine-owned** (AD-012, AD-014). Blocks and palette are generated from
-   metadata the engine owns and exports; the editor adds only presentation.
-4. **Framework-agnostic on the outside, React on the inside** (AD-019). Usable from pure HTML or
+   (validation, execution, include resolution, `file` capture, the metadata source, **and running
+   the projection codecs**) cross **one host-provided boundary** (§5.2). Projection *templates* are
+   data; only *executing* them needs an engine, and that execution is the host's (AD-030, §5.4).
+3. **Metadata-driven, engine-owned** (AD-012). The catalog of rules/params/operators/functions
+   comes from the engine's editor-metadata export; the editor maintains no parallel semantic source.
+4. **One source, many projections** (AD-026). Palette, toolbox, encoder, and decoder are all
+   JSON→JSON and are therefore expressed as **Transon-template projections** of that metadata.
+   Encode and decode derive from the *same* source, so they are inverse by construction (§5.4) —
+   eliminating the "two halves drift" risk of a hand-written codec.
+5. **Compiler model, committed** (AD-026, AD-030). Generator templates `G_*` run at build time
+   (meta-level marker `@`) and emit specialized codec templates (object-level marker `$`); the
+   emitted codecs run at runtime via the host engine. No interpreter codec is shipped.
+6. **Codec = skeleton + projected arms** (AD-028). Generic invariants (recursion, literal
+   passthrough, marker-escape, ordering, the out-of-surface placeholder) live in a fixed skeleton;
+   only the per-rule dispatch arms are projected from metadata.
+7. **Behavior that JSON can't express stays as a finite runtime** (AD-031). A small, fixed,
+   **rule-agnostic** Blockly behavior runtime handles field widgets, mutators, connection rules, and
+   change events; it does **not** grow per rule (NFR-046).
+8. **Framework-agnostic on the outside, React on the inside** (AD-019). Usable from pure HTML or
    any framework; React is a bundled implementation detail.
-5. **Correctness isolated and tested first.** The semantic core (IR + codec + variant matching +
-   surface check) is pure TypeScript with no Blockly/React/engine dependency and is the first
-   deliverable (AD-016).
-6. **Variants over hidden modes** (AD-015). Mutually exclusive parameter groups become separate
-   palette block variants whose matchers derive mechanically from engine modes (§5.7).
+9. **Variants over hidden modes** (AD-015). Mutually exclusive parameter groups become separate
+   palette block variants, sourced from the **pre-derived variant signatures** the metadata carries
+   (§5.7), not re-derived by editor code.
 
 ---
 
@@ -161,13 +180,18 @@ is known; advisory runtime-type expectations where values are dynamic.
 **Rationale.** Many parameters are templates and runtime type depends on input; overly strict
 typing would reject valid templates, loose typing would allow invalid structures.
 
-### AD-014 — Metadata-driven generation with specialized variants
-**Decision.** Generic blocks are generated at runtime from metadata (so new/custom rules need no
-editor code); specialized blocks are authored TS override modules selected by
+### AD-014 — Metadata-driven generation with specialized variants — **SUPERSEDED by AD-026/AD-031 (v2.0)**
+**Status.** Superseded by the template-driven projection model. Retained for ID stability (`SPEC.md`
+§21.1); do not implement as written.
+**Original decision.** Generic blocks are generated at runtime from metadata (so new/custom rules
+need no editor code); specialized blocks are authored TS override modules selected by
 `rule_name`/`variant_id`. A registry resolves specialized over generic; both paths must emit
 identical JSON per variant.
-**Rationale.** New rules appear with minimal code; common rules stay usable for low-code users;
-extensibility is preserved; import/export maps parameter shapes to variants.
+**Why superseded.** Block *definitions* are now produced by the `G_palette` projection (AD-026),
+not generated by hand-written TS, and there is no per-rule specialized TS override registry: the
+only code that remains is the finite, rule-agnostic behavior runtime (AD-031). The properties this
+decision wanted — new rules with no editor code, one canonical JSON shape per variant — are
+preserved and strengthened by the projection model (FR-120, AC-034).
 
 ### AD-015 — Mutually exclusive parameters as block variants
 **Decision.** Rules with mutually exclusive parameter groups are represented as separate palette
@@ -176,16 +200,22 @@ block variants, not one block with a hidden mode dropdown.
 before engine validation; import/export maps JSON shapes to variants.
 **Trade-off.** A larger palette; naming and organization matter more (`SPEC.md` §12.5).
 
-### AD-016 — Typed IR as the round-trip pivot
-**Decision.** A typed intermediate representation sits between Transon JSON and Blockly.
-`JSON ⇄ IR` is pure/headless and hosts variant matching (§5.7), surface checks
-(`SPEC.md` §15.7), marker escape (`SPEC.md` §11.4), and the `JsonPathBlockMap`
-(`SPEC.md` §9.12). `IR ⇄ Blockly` is the only Blockly-coupled mapping.
-**Rationale.** Round-trip = `JSON→IR→Blockly→IR→JSON`; correctness is unit-testable without a
-browser. Implements AD-003/AD-004.
-**Note (AD-024).** The same `JSON→IR` half also backs bidirectional JSON editing: a direct JSON
-edit is parsed to IR and gated by the surface check before it reaches Blockly, so the editor
-flow is no longer strictly one-way (§6, `SPEC.md` §7.15).
+### AD-016 — Typed IR as the round-trip pivot — **SUPERSEDED by AD-026/AD-030 (v2.0)**
+**Status.** Superseded by the generated codec. Retained for ID stability (`SPEC.md` §21.1); do not
+implement as written.
+**Original decision.** A typed intermediate representation sits between Transon JSON and Blockly.
+`JSON ⇄ IR` is pure/headless and hosts variant matching, surface checks, marker escape, and the
+`JsonPathBlockMap`. `IR ⇄ Blockly` is the only Blockly-coupled mapping.
+**Why superseded.** The hand-written `JSON⇄IR` codec is replaced by the **generated encoder/decoder
+templates** (`G_encode`/`G_decode`, AD-026): a document is the *data* moved between a JSON template
+and a Blockly workspace, and the codec is itself a Transon template run by the host (AD-030). The
+codec skeleton (AD-028) still owns the surface check (`SPEC.md` §15.7), marker escape (§11.4),
+ordering (§15.3), the out-of-surface placeholder (§13.11), and the `JsonPathBlockMap` (§9.12) — but
+as fixed skeleton scaffolding around metadata-projected arms, not as TypeScript. Round-trip is now
+`document → encoder → workspace → decoder → document`, inverse by construction (§5.4).
+**Note (AD-024).** Bidirectional JSON editing now runs the generated **decoder** (then re-runs the
+encoder for the gate); the direct edit is still gated by the surface check before it reaches the
+workspace (§6, `SPEC.md` §7.15).
 
 ### AD-017 — Blockly Zelos renderer (Scratch-like), configurable
 **Decision.** Default to the Zelos renderer to match `SPEC.md` §1 ("similar to Scratch") and the
@@ -195,7 +225,7 @@ low-code audience; expose renderer/theme via the theming hook (FR-108).
 ### AD-018 — Light DOM + scoped CSS (shadow optional)
 **Decision.** Render in light DOM with scoped/prefixed CSS by default to avoid Blockly's
 `document.head` CSS injection and sizing/focus friction; a Shadow-DOM mode is optional, validated
-by the M2 spike.
+by the M3 Blockly-rendering spike.
 **Rationale.** Avoids known Blockly encapsulation pitfalls while leaving stricter isolation
 available.
 
@@ -230,11 +260,12 @@ correctness.
 
 ### AD-024 — Bidirectional JSON editing with strict in-surface sync
 **Decision.** The generated-JSON panel is editable in v1 (reversing the OQ-001 v1.0 draft). A
-direct edit is parsed `JSON→IR` and applied to the workspace **only** when it is valid JSON and
-in surface (`SPEC.md` §15.7); otherwise the editor reports `json_template` / `import_unsupported`
-(`SPEC.md` §16.4) and leaves the last valid workspace untouched (`SPEC.md` §7.15, FR-111…FR-113).
-The edit reuses the existing `JSON⇄IR` codec, variant matcher, and surface check (AD-016); no new
-semantic path is introduced.
+direct edit is run through the generated **decoder** (`G_decode` output) and applied to the
+workspace **only** when it is valid JSON and in surface (`SPEC.md` §15.7); otherwise the editor
+reports `json_template` / `import_unsupported` (`SPEC.md` §16.4) and leaves the last valid workspace
+untouched (`SPEC.md` §7.15, FR-111…FR-113). The edit reuses the same generated codec (decoder for
+parse, encoder for the round-trip gate) and surface check (AD-026/AD-028); no new semantic path is
+introduced.
 **Rationale.** Power users asked for hand-editing; reusing the headless codec keeps the canonical
 JSON the source of truth (AD-003) and preserves strict round-trip (AD-004). The strict gate is
 what makes the reverse direction safe — partial/forgiving application is explicitly disallowed.
@@ -251,7 +282,103 @@ remain free to supply any `EngineProvider` (AD-008).
 **Rationale.** Matches the proven docs-site approach, keeps the demo a zero-backend static artifact
 (NFR-042), and runs the real engine in the browser so validation/execution/`file`/`include` are
 genuine. **Trade-off.** A multi-MB Pyodide download with a ~10–15s first-load (covered by a splash),
-as the docs site already accepts. **SPEC link.** `SPEC.md` §10.4, §16, NFR-028/042; ROADMAP M3.
+as the docs site already accepts. **SPEC link.** `SPEC.md` §10.4, §16, NFR-028/042; ROADMAP M4.
+
+### AD-026 — Editor surface is Transon-template projections of engine metadata (compiler model, compiler-only)
+**Decision.** The palette, toolbox, encoder, and decoder are **not** hand-written. They are
+produced by four **Transon-template projections** of the engine editor-metadata
+(`SPEC.md` §7.16, FR-114):
+
+```
+G_palette(metadata) → palette block definitions      G_encode(metadata) → encoder (a Transon template)
+G_toolbox(metadata) → toolbox / category structure    G_decode(metadata) → decoder (a Transon template)
+```
+
+The committed model is the **compiler**: each `G_*` is itself a Transon template whose *output is
+another template* (homoiconicity — Transon templates are JSON and Transon output is JSON). The
+generated encoder/decoder then run on instances: `encoder(document) → workspace`,
+`decoder(workspace) → document`. **No interpreter codec is shipped** (OQ-010 → compiler-only); a
+single rule-agnostic codec that consults metadata at runtime is explicitly out of the normative
+surface.
+**Rationale.** Metadata is the single source; encode and decode derive from it, so they are inverse
+by construction (§5.4, `SPEC.md` AC-035). A new rule flows to every surface from one place with no
+editor code and no projection-template change (FR-120, AC-034). The visual layer becomes
+retargetable and self-describing — the projection templates are themselves Transon templates,
+openable in the editor they configure (FR-121, UC-016, AC-036).
+**Trade-off.** Two-level metaprogramming in a non-macro language; mitigated by the de-risk
+prototype (ROADMAP M1) and by keeping generators small via `include` (AD-027). **SPEC link.**
+`SPEC.md` §7.16 (FR-114, FR-115, FR-120, FR-121), §15; supersedes AD-014, AD-016.
+
+### AD-027 — Distinct markers per evaluation phase for staging/quoting; no `eval`
+**Decision.** Generator templates are **staged with a distinct meta-level marker** (`@`) and emit
+object-level (`$`) codecs. In a generator: `@`-keyed dicts are generator rules evaluated *now* (the
+"unquotes"); `$`-keyed dicts are inert literal data, deep-copied verbatim into the emitted codec
+(the "quoted" structure). N evaluation levels = N distinct markers. This reuses v0.1.0's configurable
+marker — **no new engine feature** for quoting. Generators are factored with `include` to stay small
+(`SPEC.md` §7.16, FR-116); because `include` passes only the context value, every fragment is
+designed as a pure function of `this`. To keep the marker consistent across staged includes, the
+**`include` rule inherits the parent's default marker** when the loader does not specify one
+(OQ-014; a small, SPEC-first engine change tracked in the engine repo,
+[`metadata-contract.md`](metadata-contract.md) §6). The engine adds **no `eval`/`apply`**: running a
+freshly synthesized template from data is a real security surface, and the two-pass
+generate-then-run model (AD-030) avoids it entirely.
+**Rationale.** Lets the codec be written mostly literally (real `$` markers survive) with `@`-holes
+only where metadata fills something in; keeps the security surface closed (`SPEC.md` §21.11).
+**SPEC link.** `SPEC.md` §7.16 (FR-116), §11.4; metadata-contract §6.
+
+### AD-028 — Codec = fixed generic skeleton + metadata-projected per-rule arms
+**Decision.** A generated codec is **not** 100% projected. It is a **fixed generic skeleton**
+wrapping **metadata-projected per-rule arms**:
+- **Projected (the holes):** per-rule dispatch arms — "rule `attr` ↔ this block", param↔input
+  wiring, variant selection.
+- **Fixed scaffolding (not derivable from metadata):** recursion over nested nodes, literal
+  passthrough of non-rule JSON, the **marker-escape** rule (`SPEC.md` §11.4), **ordering
+  preservation** (object keys, `chain` steps, `set`-before-`get`, `SPEC.md` §15.3), and the
+  out-of-surface / exact-preserving placeholder path (`SPEC.md` §13.11). `G_*` wraps these fixed
+  pieces around the projected arms.
+**Rationale.** Concentrates the round-trip invariants in one reviewable place and makes the
+projection a pure map over the catalog. **SPEC link.** `SPEC.md` §7.16 (FR-117), §11.4, §13.11,
+§15.3, §15.7.
+
+### AD-029 — Engine `switch` and `cond` are the runtime dispatch primitives
+**Decision.** The generated codec dispatches per node using a **lazy multi-way dispatch** rule added
+to the engine (OQ-012 → **both** `switch` and `cond`): `switch` (equality on a key, cases as a JSON
+object) for the common rule-name/block-type dispatch, and `cond` (Lisp-style `{when,then}` list +
+`default`, subsuming `if`) for predicate dispatch (e.g. deriving the input-widget from `kind` +
+presence of `options`). **Lazy branch evaluation is the hard requirement**: only the selected case
+is walked, so dead branches raise no errors and cause no side effects — what an `object`+`attr`
+table lookup cannot provide. Both honor `NO_CONTENT` discipline, `DefinitionError`/`TransformationError`,
+stdlib-only, Python 3.9+, and no input/template mutation. These are ordinary JSON rules — no new
+transformation language (`SPEC.md` §21.8). The rules live in the engine repo
+([`metadata-contract.md`](metadata-contract.md) §6).
+**Rationale.** Runtime dispatch on rule name (encode) / block type (decode) is the core mechanism of
+the generated codec, and the widget decision is derived in-template from engine facts (AD-012, §5.5).
+**SPEC link.** `SPEC.md` §7.16 (FR-118); engine contract metadata-contract §6.
+
+### AD-030 — Build-time codegen of committed codec artifacts; runtime execution via the host
+**Decision.** Projections run in **two places**: (1) at **build time**, the generators `G_*` are run
+to produce **committed codec artifacts** (the encoder/decoder templates and palette/toolbox
+definitions), checked in and diffable; (2) at **runtime**, those artifacts are executed via the
+host-provided `EngineProvider` (the same port used for validation/execution, OQ-016) using the
+**two-pass generate-then-run** model — the codec is data, the host runs it. The editor bundles no
+engine (AD-008). Re-running the generators is a build/CI step, so a new engine rule produces new
+committed artifacts deterministically, which the parity + round-trip gates verify
+([`traceability.md`](traceability.md)).
+**Rationale.** Deterministic, reviewable artifacts; keeps the "new rule, no editor code change"
+guarantee (FR-120, AC-034) objectively testable; preserves engine-free distribution. **Trade-off.**
+A codegen step in CI and a regeneration discipline when metadata changes. **SPEC link.** `SPEC.md`
+§7.16 (FR-119), §10.4; ROADMAP M1.
+
+### AD-031 — A finite, rule-agnostic Blockly behavior runtime (replaces per-rule specialized code)
+**Decision.** Templates define block **structure**; a small, fixed, **rule-agnostic** runtime
+handles Blockly **behavior** that JSON cannot express — field validators, custom field widgets,
+mutator interaction UI, drag/connection rules, change events. The crucial property: this runtime is
+**finite and does not grow per rule** (NFR-046). New rules ride entirely on metadata + projections;
+only a brand-new *interaction primitive* touches this code. This replaces AD-014's per-rule
+specialized TS override registry.
+**Rationale.** Mirrors the engine boundary "JSON can't express behavior": everything expressible as
+data is data; only genuine interaction primitives are code. **SPEC link.** `SPEC.md` §7.16 (FR-120),
+§13 (structure/behavior boundary), NFR-046.
 
 ---
 
@@ -308,23 +435,26 @@ The dashed edges are the **host boundary**: everything below it is supplied by t
 
 | Package | Public | Depends on | Responsibility |
 |---|:--:|---|---|
-| `@transon/editor-core` | yes | pure TS | IR, `JSON⇄IR` codec, variant matcher (§5.7), surface check (`SPEC.md` §15.7), marker escape (`SPEC.md` §11.4), `JsonPathBlockMap` (`SPEC.md` §9.12), metadata model, `EngineProvider` **port**, error taxonomy (`SPEC.md` §16.4). Engine-free, headless. **Deliverable #1.** |
-| `@transon/editor-blockly` | yes | core, blockly | Zelos generic block generation + specialized overrides + `IR⇄Blockly` + toolbox |
+| `@transon/editor-core` | yes | pure TS | The **projection templates** `G_*` (data), the **committed codec artifacts** (encoder/decoder + palette/toolbox, regenerated at build time, AD-030), the codec-skeleton invariants (`SPEC.md` §11.4/§13.11/§15.3), surface check (`SPEC.md` §15.7), `JsonPathBlockMap` (`SPEC.md` §9.12), metadata model, `EngineProvider` **port** (used to *run* the codec, §5.4), error taxonomy (`SPEC.md` §16.4). Engine-free, headless. **Deliverable #1.** |
+| `@transon/editor-blockly` | yes | core, blockly | Renders the projected palette/toolbox to Zelos; the finite **rule-agnostic behavior runtime** (AD-031); wires `workspace ⇄ blocks` so the generated encoder/decoder can read/write workspace JSON |
 | `editor-ui` (internal) | — | core, blockly, react | panels, sandbox/compact modes, `EditorSession` store, theming (light DOM) |
 | `@transon/editor-element` | yes | editor-ui (React bundled) | `createTransonEditor()` + `<transon-editor>`; ESM + IIFE global |
 | `@transon/editor-react` | yes (opt) | editor-ui (React peer) | native React entry |
-| `examples/reference-host` | demo | core port | reference `EngineProvider` using **in-browser Python `transon` via Pyodide/PyScript** (AD-025, mirrors the docs site); powers the sandbox/playground |
-| `test/engine-node-adapter` | dev | core port | Node→local Python `transon` `EngineProvider` for execution round-trip CI |
+| `examples/reference-host` | demo | core port | reference `EngineProvider` using **in-browser Python `transon` via Pyodide/PyScript** (AD-025, mirrors the docs site); runs both the user template *and* the projection codecs (AD-030); powers the sandbox/playground |
+| `test/engine-node-adapter` | dev | core port | Node→local Python `transon` `EngineProvider`; runs the generators at build/CI time and the codecs for execution round-trip CI |
 
 ```mermaid
 flowchart LR
-    CORE["editor-core"] --> BLK["editor-blockly"]
+    META["engine editor-metadata export"] --> GEN["G_* projections (build-time)"]
+    GEN --> ART["committed codec artifacts"]
+    ART --> CORE["editor-core"]
+    CORE --> BLK["editor-blockly"]
     CORE --> UI["editor-ui"]
     BLK --> UI
     UI --> EL["editor-element"]
     UI --> RX["editor-react"]
-    CORE -.port.-> PH["examples/reference-host"]
-    CORE -.port.-> NA["test/engine-node-adapter"]
+    CORE -.port (run codec).-> PH["examples/reference-host"]
+    CORE -.port (run G_* + codec).-> NA["test/engine-node-adapter"]
 ```
 
 ### 5.2 The host boundary & contracts (AD-008; `SPEC.md` §10.4)
@@ -355,6 +485,20 @@ interface EngineProvider {         // implemented by the HOST, not the editor
 `template_loader` constructor delegates, so a host adapter wires them without touching engine
 internals.
 
+**Running projections through the same port (AD-030, OQ-016).** A projection is just a template
+run with a chosen marker, so no new host method is required — `transform` is reused, parameterized
+by `marker`:
+
+- **build time** (CI codegen): `transform(G_encode, metadata, { marker: "@" }) → encoder` (and
+  likewise `G_decode`/`G_palette`/`G_toolbox`); the outputs are committed as artifacts.
+- **runtime**: `transform(encoder, document, { marker: "$" }) → workspace` and
+  `transform(decoder, workspace, { marker: "$" }) → document`.
+
+This is the **two-pass generate-then-run** model: the editor never asks the host to `eval` a value
+as a template (AD-027); it hands the host a finished codec template plus its input data. The split
+metadata payload (`SPEC.md` NFR-047) means generators consume the lean structural catalog;
+examples/docs travel separately.
+
 ### 5.3 Public surface & distribution (AD-019, AD-020)
 
 ```ts
@@ -371,129 +515,133 @@ function createTransonEditor(target: HTMLElement, options: TransonEditorHost & {
 - ESM is primary; the IIFE global auto-registers `<transon-editor>` for `<script>` usage.
 - `@transon/editor-react` exposes `<TransonEditor {...options} />` with React as a peer.
 
-### 5.4 Intermediate Representation (IR) & round-trip (AD-016, AD-011)
+### 5.4 Generated codec & round-trip (AD-026, AD-028, AD-030, AD-011)
 
-The IR is a small typed tree:
-
-```text
-TemplateNode =
-  | Scalar(string | number | boolean | null)
-  | ArrayNode(TemplateNode[])
-  | LiteralObject(Map<string, TemplateNode>)         // no marker key
-  | LiteralMarkerObject(...)                          // emitted via object/fields escape (§11.4)
-  | RuleInvocation(rule, variantId, params: Map<string, TemplateNode>)
-```
+There is no typed IR. The **document** (the user's Transon template) is the data; the **codec**
+(generated encoder/decoder templates) is the program that moves it between a JSON template and a
+Blockly workspace. Both directions are emitted by the generators from the same metadata, so they are
+inverse by construction.
 
 ```mermaid
 flowchart LR
-    J1[Transon JSON in] --> P1[parse to IR]
-    P1 --> M[variant match + surface check]
-    M --> B1[project IR to Blockly]
-    B1 --> WS[(Blockly workspace)]
-    WS --> B2[read Blockly to IR]
-    B2 --> G[generate JSON from IR]
-    G --> J2[Transon JSON out]
-    J1 -. semantic equivalence via engine execution .- J2
+    META["editor-metadata (projection-ready §9 shape)"] --> GE["G_encode (marker @)"]
+    META --> GD["G_decode (marker @)"]
+    GE --> ENC["encoder (Transon template, marker $)"]
+    GD --> DEC["decoder (Transon template, marker $)"]
+    DOC["document"] --> ENC
+    ENC --> WS[("Blockly workspace JSON")]
+    WS --> DEC
+    DEC --> DOC2["document'"]
+    DOC -. semantic identity via engine execution (AD-011) .- DOC2
 ```
 
-Ordering semantics for `set`/`chain` (`SPEC.md` §13.12, §15.3) are preserved in the IR (ordered
-object keys, ordered array items, ordered `chain` steps).
+The encoder/decoder are committed artifacts (build-time codegen, AD-030) and run at runtime via the
+host engine (§5.2). The codec **skeleton** (AD-028) owns the fixed invariants: recursion over nested
+nodes, literal passthrough, marker escape (`SPEC.md` §11.4), ordering preservation for `set`/`chain`
+and object keys (`SPEC.md` §13.12, §15.3), the surface check (`SPEC.md` §15.7), and the
+out-of-surface placeholder (`SPEC.md` §13.11). The `JsonPathBlockMap` (`SPEC.md` §9.12) is produced
+as the codec walks; it is skeleton output, not a separate TS pass.
 
-### 5.5 Metadata normalization & generic block generation
+### 5.5 The generators `G_*` (projections)
 
-Post-AD-012 the normalization layer is **presentation-only** (it owns no semantic fields):
+Each generator is a Transon template run with the meta-level marker `@` (AD-027). `@`-keyed dicts
+evaluate now (reading the metadata); `$`-keyed structure is emitted verbatim into the codec. The
+generators are thin drivers that map over `metadata.rules` and `include` small per-rule fragments,
+each a pure function of `this` (AD-027). Illustrative `G_encode` fragment (meta marker `@`, emitting
+object-level `$`):
 
-- map rules to canonical palette categories (`SPEC.md` §12.4);
-- derive block variants from the engine `modes` (mechanical; §5.7);
-- palette ordering, labels/titles, colors;
-- select the specialized renderer where one exists (§5.6).
+```json
+{
+  "@": "map",
+  "items": { "@": "attr", "name": "rules" },
+  "key":   { "@": "attr", "name": "name" },
+  "value": {
+    "$": "object",
+    "key":   { "@": "format", "pattern": "transon_rule_{}", "value": { "@": "attr", "name": "name" } },
+    "value": { "$": "this" }
+  }
+}
+```
 
 ```mermaid
 flowchart TD
-    MD["engine editor-metadata export"] --> N["normalize (presentation only)"]
-    N --> V["derive block variants from modes (§5.7)"]
-    V --> GEN["generate Blockly block definitions"]
-    GEN --> PAL["palette / toolbox categories"]
-    GEN --> MAP["import/export matchers (§5.7)"]
+    MD["editor-metadata (structural catalog §9)"] --> GP["G_palette"]
+    MD --> GT["G_toolbox"]
+    MD --> GEN["G_encode / G_decode"]
+    GP --> PAL["palette block definitions"]
+    GT --> TB["toolbox / category structure"]
+    GEN --> COD["encoder / decoder templates"]
 ```
 
-### 5.6 Specialized block override (AD-014)
+The **input-widget decision** (`input`/`dropdown`/`field`) is derived *in the projection* via
+`cond`/`switch` from the metadata facts (`kind` + presence of `options`), not baked into the engine
+(AD-012, AD-029). The toolbox/category structure is projected from the metadata categories by
+`G_toolbox` (OQ-017), not a separate presentation template.
 
-Generic blocks come from metadata at runtime; specialized blocks are authored TS modules that
-override generic rendering for selected rules/variants. A registry resolves specialized over
-generic; both paths must emit identical JSON per variant.
+### 5.6 Per-rule arms & the behavior runtime (AD-028, AD-031)
 
-```mermaid
-flowchart TD
-    R["rule / variant"] --> Q{specialized renderer registered?}
-    Q -->|yes| SP["use specialized block variant"]
-    Q -->|no| G["use generic metadata-generated block"]
-    SP --> REG["block registry"]
-    G --> REG
-    REG --> TB["toolbox / palette"]
+The projected portion of a codec is the **per-rule arm**: a `switch` case keyed by rule name (encode)
+or block type (decode) whose body emits that rule's block/JSON shape and wires params↔inputs and
+variant selection. Adding a rule adds an arm via metadata; it does **not** add code.
+
+Blockly **behavior** that JSON cannot express (field validators, custom field widgets, mutator UI,
+connection rules, change events) lives in the finite, **rule-agnostic** behavior runtime (AD-031).
+This runtime does not grow per rule (NFR-046); only a brand-new interaction primitive touches it.
+
+### 5.7 Variant signatures (pre-derived in metadata; consumed by the projections)
+
+Variant derivation is **not** editor code. The projection-ready metadata carries **pre-derived
+variant signatures** per rule (`SPEC.md` FR-116; [`metadata-contract.md`](metadata-contract.md) §2.5):
+each variant lists its ordered visible params, each flagged `required`. The set algebra over
+`_modes`/`_required` that the former TS matcher performed is done **once, in Python**, where it is
+trivial, and emitted as data — so encode, decode, the surface check, and the docs all read the same
+signatures (AD-015, `SPEC.md` §15.6).
+
+```json
+"variants": [
+  { "id": "name",  "params": [ { "name": "name",  "required": true }, { "name": "default", "required": false } ] },
+  { "id": "names", "params": [ { "name": "names", "required": true }, { "name": "default", "required": false } ] }
+]
 ```
 
-### 5.7 Import variant matching
+**Matching at decode/import.** A rule invocation matches the variant whose required params are all
+present, whose other-variant-only params are all absent, and where no parameter outside the rule's
+declared params appears (an undeclared parameter is out of surface, `SPEC.md` §15.7). Exactly one
+variant must match; zero/multiple/partial → `import_unsupported` (`SPEC.md` §16.4, §17.6). The
+matcher is part of the generated decoder skeleton+arms, not a hand-written algorithm.
 
-**Variant matcher format.** A variant's `import_matcher` (referenced by `SPEC.md` FR-053/054/055
-and the domain model §9.6) is derived mechanically from the engine rule schema (`__rule_schema__`:
-`_required` and `_modes`; see [`metadata-contract.md`](metadata-contract.md) §2.1). A matcher is
-three sets of parameter names:
+### 5.8 Engine-side projection-ready metadata export (engine repo) (AD-012, AD-026)
 
-- `required_present` — the rule's always-required params (`_required`) plus this variant's mode
-  params. All must be present.
-- `forbidden` — params that belong only to other modes of the same rule. None may be present.
-- `optional` — remaining declared params. May be present or absent.
+The export is **greenfield at v0.1.0** (the engine has no editor-metadata export yet) and is
+co-designed with the projections to be **projection-ready** (`SPEC.md` §9, FR-116/FR-117;
+[`metadata-contract.md`](metadata-contract.md) §2). It is split (NFR-047) into:
 
-A rule invocation matches a variant when every `required_present` key is present, no `forbidden`
-key is present, and no parameter outside the rule's declared params appears (an undeclared
-parameter is out of surface, `SPEC.md` §15.7).
+- a **structural catalog** consumed by the generators: per-rule `name`, `kind`-tagged `params`,
+  **pre-derived variant signatures** (§5.7), **resolved enum domains** on constant params (e.g.
+  `expr.op` → operator names + aliases, `call.name` → function names), `title`, `category`,
+  `advanced`, and a standalone `metadata_version` (NFR-040);
+- a separate **examples/docs payload** (rule/param `description`, `examples` from the tagged corpus).
 
-Examples (derived from the engine):
-
-```text
-attr  _modes=(('name',),('names',))  optional: default
-  variant "name":  required_present={name}   forbidden={names}  optional={default}
-  variant "names": required_present={names}  forbidden={name}   optional={default}
-
-expr  _required=('op',)  _modes=((),('value',),('values',))
-  variant "current": required_present={op}          forbidden={value,values}
-  variant "value":   required_present={op,value}    forbidden={values}
-  variant "values":  required_present={op,values}   forbidden={value}
-```
-
-The empty mode `()` yields a valid zero-extra-parameter variant whose `required_present` is just
-the rule's `_required` and whose `forbidden` is every moded param (covers `expr`/`call` "current
-value" forms).
-
-**Algorithm.** When importing a rule invocation: (1) read the rule name from the marker key;
-(2) load rule metadata; (3) identify available variants and their matchers; (4) compare present
-parameters against each matcher; (5) select exactly one; (6) if zero or multiple match, report
-`import_unsupported` (`SPEC.md` §16.4, §17.6); (7) populate required and optional inputs;
-(8) validate generated output against the original semantic template.
-
-### 5.8 Engine-side editor-metadata export (transon repo) (AD-012)
-
-A new, versioned export emitting the [`metadata-contract.md`](metadata-contract.md) §2 fields:
-
-- rules: `name`, `description`, `required_params` (from `_required`), `modes` (from `_modes`),
-  `params[]` with per-param `kind`, `examples`; optional engine hints (`title`, `category`,
-  `advanced`);
-- operators, functions per `metadata-contract.md` §2.3/§2.4;
-- a standalone `metadata_version`, versioned separately from the engine release (NFR-040).
+The engine stays Blockly-agnostic (AD-016 line not crossed): **no** Blockly shapes in the export
+(colours, `message0`, field types, placeholder indexing) — those live in the projection template.
+The export, the `switch`/`cond` rules (AD-029), and `include` default-marker inheritance (AD-027) are
+engine work tracked in the engine repo; this editor consumes the contract in
+[`metadata-contract.md`](metadata-contract.md). Parity checks
+([`traceability.md`](traceability.md)) guard export↔editor agreement.
 
 ---
 
 ## 6. Cross-cutting concerns
 
 - **State / Blockly↔React** (AD-003): primarily one-way. Blockly owns the canvas; React subscribes
-  to change events → debounced codec → derives `{json, validation, execution}` into the
-  `EditorSession` store (`SPEC.md` §9.3). React→Blockly is reserved for explicit commands (New /
-  Import / Load Example) **and** for accepted bidirectional JSON edits (AD-024): a debounced
-  `JSON→IR` parse that passes the surface check projects back into Blockly; a failed parse leaves
-  the workspace untouched and marks the JSON out of sync (`SPEC.md` §7.15, FR-111…FR-113).
-- **Error mapping** (`SPEC.md` FR-091..095, §16.4): the `JsonPathBlockMap` is produced by the
-  `JSON⇄IR` step; the UI highlights the mapped or nearest-parent block.
+  to change events → debounced **encoder run** (host engine, §5.2) → derives `{json, validation,
+  execution}` into the `EditorSession` store (`SPEC.md` §9.3). React→Blockly is reserved for explicit
+  commands (New / Import / Load Example) **and** for accepted bidirectional JSON edits (AD-024): a
+  debounced **decoder run** whose output passes the surface check projects back into Blockly; a
+  failed parse/out-of-surface result leaves the workspace untouched and marks the JSON out of sync
+  (`SPEC.md` §7.15, FR-111…FR-113).
+- **Error mapping** (`SPEC.md` FR-091..095, §16.4): the `JsonPathBlockMap` is produced by the codec
+  skeleton as it walks (§5.4); the UI highlights the mapped or nearest-parent block.
 - **Theming / encapsulation** (AD-017, AD-018): Zelos default, light DOM + scoped CSS.
 - **Diagnostics** (`SPEC.md` FR-080, §18): engine + metadata versions, parity diffs, renderer
   used.
@@ -507,7 +655,7 @@ All engine calls go through the host-provided `EngineProvider` (§5.2); the edit
 
 ```mermaid
 flowchart TD
-    A[user edits Blockly workspace] --> B[generate Transon JSON from IR]
+    A[user edits Blockly workspace] --> B[run generated encoder on workspace -> Transon JSON]
     B --> C{generation complete?}
     C -->|no| C1["show incomplete state, skip validate (SPEC 17.5)"]
     C -->|yes| D["host engine validate()"]
@@ -549,11 +697,16 @@ stateDiagram-v2
 
 Defers to [`traceability.md`](traceability.md) for the matrix. Architecture-specific notes:
 
-- The headless core (`editor-core`) is tested without DOM/engine for codec/matcher/surface.
-- **Round-trip is execution-based** (AD-011) via `test/engine-node-adapter`; input-less corpus
-  entries use normalized-output + validation comparison.
+- The headless core (`editor-core`) is tested without DOM: the **generators** are run on metadata
+  to produce codec artifacts, and the **generated codec** is exercised per rule via the host engine
+  for surface/round-trip (the generators and codecs are templates, run through `test/engine-node-adapter`).
+- **Round-trip is execution-based and by construction** (AD-011, AD-026) via `test/engine-node-adapter`;
+  encoder and decoder come from one metadata source, so the per-rule round-trip identity check
+  (`SPEC.md` AC-035) is the primary correctness gate; input-less corpus entries use normalized-output
+  + validation comparison.
 - Engine-parity checks ([`traceability.md`](traceability.md)) compare the editor against the
-  engine's `editor_metadata` export (AD-012), not a hand list.
+  engine's `editor_metadata` export (AD-012), not a hand list, and verify the **regenerated** codec
+  artifacts are up to date (AD-030).
 
 ---
 
