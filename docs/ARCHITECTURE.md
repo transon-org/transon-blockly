@@ -618,8 +618,10 @@ co-designed with the projections to be **projection-ready** (`SPEC.md` §9, FR-1
 
 - a **structural catalog** consumed by the generators: per-rule `name`, `kind`-tagged `params`,
   **pre-derived variant signatures** (§5.7), **resolved enum domains** on constant params (e.g.
-  `expr.op` → operator names + aliases, `call.name` → function names), `title`, `category`,
-  `advanced`, and a standalone `metadata_version` (NFR-040);
+  `expr.op` → operator names + aliases, `call.name` → function names), and a standalone
+  `metadata_version` (NFR-040). Presentation — `title`, `category`, `advanced` — is **editor-owned**
+  for built-in rules and is **not** emitted by the engine ([`metadata-contract.md`](metadata-contract.md)
+  §2.7/§2.8); the editor joins it into the catalog by `name`;
 - a separate **examples/docs payload** (rule/param `description`, `examples` from the tagged corpus).
 
 The engine stays Blockly-agnostic (AD-016 line not crossed): **no** Blockly shapes in the export
@@ -628,6 +630,35 @@ The export, the `switch`/`cond` rules (AD-029), and `include` default-marker inh
 engine work tracked in the engine repo; this editor consumes the contract in
 [`metadata-contract.md`](metadata-contract.md). Parity checks
 ([`traceability.md`](traceability.md)) guard export↔editor agreement.
+
+### 5.9 Reference host: gluing the engine via Pyodide/PyScript (the docs-site pattern) (AD-025)
+
+The reference `EngineProvider` (`examples/reference-host`, AD-025) can reuse the **proven recipe the
+Transon docs site already uses** to run the engine in the browser (provenance:
+`transon-org.github.io` — `public/index.html`, `public/config.toml`, `public/script.py`,
+`src/index.tsx`). The mechanics worth carrying over:
+
+- **Engine installed, not bundled.** PyScript bootstraps Pyodide and a `py-config`
+  `packages = ["transon"]` pulls the engine from PyPI at load time — the editor ships no engine
+  (AD-008). Pin the engine version to the metadata snapshot the build was generated against.
+- **A small Python glue module exposes the port.** The docs site's `script.py` imports the engine,
+  wires a `template_loader`, defines a `transform(template, data)` global, and pushes generated
+  metadata to JS once (`js.init(json.dumps(get_all_docs()))`). The editor's glue is the same shape:
+  expose `get_editor_metadata()` (catalog push, analogous to `get_all_docs`), `validate`, `execute`,
+  and — for the compiler model — **run a projection/codec template** against input (the two-pass
+  *generate-then-run*, AD-030). `template_loader` / `file_writer` are wired in Python so `include`
+  and captured `file` writes cross the boundary (`SPEC.md` §10.4, §16.5).
+- **JSON-string boundary.** Every value crosses JS↔Python as a **serialized JSON string**
+  (`json.dumps` ↔ `JSON.parse`), not as live Python proxies — JS→Python calls
+  `pyscript.interpreter.globals.get('<fn>')(...)`, Python→JS calls a JS global. This keeps the
+  `EngineProvider` a pure data-in/data-out port (consistent with "the codec is data", AD-030) and
+  sidesteps proxy-lifetime pitfalls.
+- **Async loading state.** A static placeholder is shown during the multi-MB, ~10–15s first load and
+  replaced when Python signals readiness — exactly the host-runtime loading state the editor must
+  surface (`SPEC.md` AC-023, §10.4; the splash trade-off is already accepted in AD-025).
+
+This is reference-only: production embedders may supply any `EngineProvider` (AD-008), and round-trip
+CI uses the Node→Python adapter (`test/engine-node-adapter`, AD-011) rather than Pyodide.
 
 ---
 

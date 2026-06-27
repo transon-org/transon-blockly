@@ -52,12 +52,12 @@ defense against spec/engine drift:
 
 | Check | Asserts | Source of truth | Status |
 |-------|---------|-----------------|:------:|
-| Rule parity | editor supported rule set == the engine rule set | `Transformer.get_rules()` (currently 20: this, parent, item, index, key, value, set, get, attr, object, map, filter, zip, file, join, chain, expr, call, format, include) | [ ] |
-| Operator parity | editor operator list == engine operators | `transon/operators.py` (`Transformer.get_operators()`) | [ ] |
-| Function parity | editor function list == engine functions | `transon/functions.py` (`Transformer.get_functions()`) | [ ] |
-| Variant-signature parity | each rule's variants used by the projections == the engine's pre-derived variant signatures | engine editor-metadata export, pre-derived `variants` ([`metadata-contract.md`](metadata-contract.md) §2.5, §3) | [ ] |
-| Resolved-enum parity | `options` domains used in the projection == engine operator/function catalogs | engine export `options` ([`metadata-contract.md`](metadata-contract.md) §2.6) | [ ] |
-| Metadata export parity | editor-consumed structural catalog == engine projection-ready export (pre-derived `variants`, per-param `kind`/`options`, split payload) | engine `get_editor_metadata()` ([`metadata-contract.md`](metadata-contract.md) §3) | [ ] |
+| Rule parity | editor supported rule set == the engine rule set | `Transformer.get_rules()` (currently 22: this, parent, item, index, key, value, set, get, attr, object, map, filter, zip, file, join, chain, expr, call, format, include, switch, cond) | [x] `scripts/check_engine_parity.py` |
+| Operator parity | editor operator list == engine operators | `transon/operators.py` (`Transformer.get_operators()`) | [x] `scripts/check_engine_parity.py` |
+| Function parity | editor function list == engine functions | `transon/functions.py` (`Transformer.get_functions()`) | [x] `scripts/check_engine_parity.py` |
+| Variant-signature parity | each rule's pre-derived `variants` are well-formed (ids + `required` flags, params drawn from the rule) | engine editor-metadata export, pre-derived `variants` ([`metadata-contract.md`](metadata-contract.md) §2.5, §3) | [x] `scripts/check_engine_parity.py` |
+| Resolved-enum parity | `expr.op`/`call.name` `options` == engine operator/function catalogs | engine export `options` ([`metadata-contract.md`](metadata-contract.md) §2.6) | [x] `scripts/check_engine_parity.py` |
+| Metadata export parity | export has the contract shape (split `catalog`/`docs`, per-rule `name`/`params`/`variants`, per-param `kind`, `metadata_version`) | engine `get_editor_metadata()` ([`metadata-contract.md`](metadata-contract.md) §3) | [x] `scripts/check_engine_parity.py` |
 | Codec-regeneration | committed codec artifacts (encoder/decoder + palette/toolbox) == re-running `G_*` on the current metadata | `G_*` projections + build-time codegen (`SPEC.md` FR-119, AD-030) | [ ] |
 | Behavior-runtime size | the rule-agnostic behavior runtime gains no per-rule branch as the catalog grows | `SPEC.md` NFR-046, AD-031 | [ ] |
 

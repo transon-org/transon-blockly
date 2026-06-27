@@ -390,7 +390,9 @@ itself (FR-121, AC-036).
 - **FR-040** The editor shall support all built-in Transon rules, enumerated in §14 and
   categorized in §12.4: `this`, `parent`, `item`, `index`, `key`, `value`, `set`, `get`,
   `attr`, `object`, `map`, `filter`, `zip`, `join`, `chain`, `expr`, `call`, `format`, `file`,
-  `include`.
+  `include`, `switch`, `cond`. `switch`/`cond` are first-class authored rules (§14.16) like every
+  other rule; the generated codec also uses them internally for dispatch (FR-118), which is
+  independent of their availability as authored blocks.
 - **FR-041** The editor shall support all built-in `expr` operators (§14.14).
 - **FR-042** The editor shall support all built-in `call` functions (§14.15).
 - **FR-043** The editor shall derive rule names, parameter names, and help text from engine
@@ -936,6 +938,7 @@ references it rather than defining competing taxonomies.
 | Iteration | `map`, `filter` |
 | Composition | `chain`, `zip`, `join` |
 | Computation | `expr`, `call` |
+| Control Flow | `switch`, `cond` |
 | Formatting | `format` |
 | Side Effects | `file` |
 | Includes | `include` |
@@ -1191,6 +1194,23 @@ Built-in `expr` operators shall be supported:
 ### 14.15 Functions
 
 Built-in `call` functions shall be supported: `str`, `int`, `float`.
+
+### 14.16 Conditional Dispatch
+
+`switch` and `cond` are **lazy multi-way dispatch** rules (engine v0.1.1, `ARCHITECTURE.md`
+AD-029), supported as **first-class authored blocks** like every other rule (FR-040, category
+*Control Flow* in §12.4):
+
+- `switch` — evaluates `key`, then walks **only** the matching entry of a literal-keyed `cases`
+  mapping; an optional `default` covers no-match (including a `NO_CONTENT` key). Variant: `key`+`cases`.
+- `cond` — an ordered list of `{when, then}` arms; the first truthy `when` selects its `then`
+  (subsuming `if`/`else`), with an optional `default`. Variant: `cases`.
+
+Only the selected branch is evaluated (lazy dispatch). The editor projects them from metadata like
+any other rule — including the pre-derived variant signatures ([`metadata-contract.md`](metadata-contract.md)
+§2.5) and the optional `default` parameter. Separately, the **generated codec** uses these same
+engine rules internally for its own dispatch (FR-118); that internal use is orthogonal to their
+availability as authored blocks.
 
 ---
 

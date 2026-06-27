@@ -147,8 +147,11 @@ to carry.
 The export is delivered in two parts so projection input stays lean:
 
 - **Structural catalog** — consumed by the generators `G_*`: per-rule `name`, `kind`-tagged
-  `params` (with `options` where applicable), pre-derived `variants` (§2.5), `title`, `category`,
-  `advanced`; operators (§2.3) and functions (§2.4); and `metadata_version` (§5).
+  `params` (with `options` where applicable), pre-derived `variants` (§2.5); operators (§2.3) and
+  functions (§2.4); and `metadata_version` (§5). Presentation fields `title`, `category`, and
+  `advanced` are **editor-owned for built-in rules** (§2.1, §2.8): the editor supplies them and the
+  engine export does **not** emit them (they are not engine facts); for **custom** rules the author
+  supplies them (§2.1, OQ-004). They are joined into the catalog the generators see by `name`.
 - **Examples/docs payload** — consumed by tooltips/examples UI, not by the generators: rule and
   parameter `description` and `examples` (from the tagged corpus).
 
@@ -162,6 +165,10 @@ The export states **engine facts only**. It must **not** contain Blockly shapes 
 templates. The **input-widget decision** (`input`/`dropdown`/`field`) is *derived in the projection*
 via `cond`/`switch` from the facts (`kind` + presence of `options`, FR-118), never baked into the
 engine. The engine says "valid invocation facts"; the projection turns facts into widgets.
+Likewise **presentation** — `title`, `category`, and `advanced` (progressive disclosure) — is not an
+engine fact: the editor owns it for built-in rules and the export omits it (§2.1, §2.7). The engine
+verified `get_editor_metadata()` (v0.1.1) accordingly emits neither widget choices nor these
+presentation fields.
 
 ---
 
