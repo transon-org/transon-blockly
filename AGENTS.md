@@ -66,7 +66,11 @@ unchanged).
 
 ## Tooling notes
 
+- **Skills** (`.cursor/skills/`): **`transon-authoring`** — general Transon JSON template authoring
+  and engine verification (authority = running engine + engine SPECIFICATION, **not** generative web
+  docs, LLM memory, or Context7); **`blockly-authoring`** — Blockly/Zelos/workspace layer (Context7
+  OK for Blockly API only).
 - MCP (`.cursor/mcp.json`): **Playwright** for UI/accessibility testing (§19.4, §19.5);
-  **Context7** for current Blockly/React/Vite/Vitest API docs.
+  **Context7** for current Blockly/React/Vite/Vitest API docs — **not** for Transon semantics.
 - The harness is designed so a less-capable executor model can work safely: small per-ID tasks,
   test-first, and objective gates (parity + round-trip + traceability) it cannot bypass.
