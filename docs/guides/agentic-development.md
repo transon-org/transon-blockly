@@ -5,20 +5,20 @@
 > remain `docs/SPEC.md` (the *what*), `docs/ARCHITECTURE.md` (the *how*), `docs/metadata-contract.md`
 > (the metadata *shape*), `docs/ROADMAP.md` (sequencing), `docs/traceability.md` (coverage), and
 > `AGENTS.md` / `.cursor/rules/` (always-on agent rules). Where this guide and those disagree, **they
-> win**. This file describes the harness *as it exists today* and grills it for gaps; treat the
-> "Gaps" section as a backlog of opinions, not as decisions.
+> win**. This file describes the harness *as it exists today*; the gap backlog and improvement
+> tracking live in [maturity-plan.md](maturity-plan.md) (see §5).
 
 This repo (`transon-blockly`) is, at the time of writing, a **docs + AI-harness repository**: there
-is no `packages/`, no `package.json`, no `pnpm-workspace.yaml`, and no `.github/` CI yet (M0 hasn't
-landed). That makes the harness unusually important — for now it is most of what governs how code
-*will* arrive. This guide explains what the harness is, how to drive it, why it is shaped the way it
-is, and where it is thin.
+is no `packages/`, no `package.json`, and no `pnpm-workspace.yaml` yet (M0 hasn't landed), though CI
+now runs the deterministic gates. That makes the harness unusually important — for now it is most of
+what governs how code *will* arrive. This guide explains what the harness is, how to drive it, why it
+is shaped the way it is, and where it is thin.
 
 ---
 
 ## 1. What the harness is
 
-The harness lives entirely under `.cursor/` plus two `scripts/` checkers. It is built around one
+The harness lives under `.cursor/`, the `scripts/` checkers, and a CI gate. It is built around one
 idea: **the contract docs are the source of truth, and every layer of automation exists to keep
 generated code pinned to that contract.**
 
@@ -161,7 +161,7 @@ it does not fail, it simply does nothing. See Gap **G-02**.
   model does the bounded, well-specified implementation. The expensive models can't accidentally
   mangle the tree (readonly); the cheap model can't drift far because the task is one FR with a
   test-first recipe and objective gates.
-- **Determinism where it matters.** The two checkers are pure-stdlib Python with no model in the
+- **Determinism where it matters.** The core checkers are pure-stdlib Python with no model in the
   loop. They answer two yes/no questions a model cannot rationalize away: *does the editor's catalog
   match the engine?* and *is every cited/"done" requirement ID real and tested?*
 - **Context economy.** Always-on rules carry only the invariants; everything deeper (Blockly API,
@@ -205,146 +205,31 @@ flowchart LR
 ```
 
 **The hooks nudge; they do not block.** A `stop`/`subagentStop` hook can only inject a follow-up
-message, and only up to `loop_limit` times. After that, a change with drift can still be committed.
-There is currently **no CI and no pre-commit hook**, so the deterministic gates run only when the
-agent (or a human) chooses to run them. In other words: *the objective gates exist, but today nothing
-mandatory actually gates on them.* This is the harness's defining limitation right now, and it shapes
-most of the recommendations below.
+message, and only up to `loop_limit` times — a change with drift can still be committed locally. CI
+(`.github/workflows/agentic-checks.yml`) now runs the deterministic gates on every PR, so drift is
+caught before merge; what is still missing is a **local pre-commit/git hook** so the gates also bind
+before a commit lands (tracked as M-01 in [maturity-plan.md](maturity-plan.md)).
 
 ---
 
-## 5. Other modern-agentic-engineering aspects
+## 5. Gaps & improvement tracking
 
-A checklist of practices a mature agent harness tends to have, scored against this repo.
+The harness gaps once catalogued here (G-01 … G-12), the practice scorecard, and the recommended next
+steps now live in one trackable, score-driven backlog — so they have a single owner instead of being
+restated across docs:
 
-| Aspect | Present? | Notes |
-|---|---|---|
-| Layered, scoped context (rules vs skills) | ✅ | Always-on invariants + glob rules + explicit skills. Clean separation. |
-| Multi-agent role separation | ✅ | Planner / implementer / reviewer, registered as selectable subagent types. |
-| Cost-aware model routing | ✅ (verify slugs) | opus for judgement, composer for execution. Slugs need confirming (G-03). |
-| Test-first, ID-cited workflow | ✅ | Enforced by command + rules. |
-| Deterministic, model-independent gates | ✅ | Two stdlib checkers. |
-| Gates wired into CI / pre-commit | ❌ | No `.github/`, no husky/pre-commit (G-01). |
-| Mandatory review for risky changes | ❌ | Review is prose-recommended, not enforced (G-05). |
-| Tool/version pinning + lockfile | ◑ | Pins listed in ROADMAP; no lockfile/`package.json` yet (M0). |
-| Authoritative-source discipline (anti-hallucination) | ✅ | "Authority = running engine, never memory/web/Context7" is explicit and repeated. |
-| MCP for live docs + UI testing | ✅ | Context7 + Playwright. |
-| Secret handling / sandbox policy for agents | ◑ | Engine-free + no-arbitrary-Python invariants exist; no explicit agent-secret policy doc. |
-| Observability of agent runs | ◑ | Transcripts archived; no metrics/eval harness for agent quality. |
-| Rollback / change isolation (one PR per unit) | ✅ | "One branch/PR per milestone", "one requirement per run". |
-| Eval/regression suite for the agents themselves | ❌ | No fixtures that test "does the planner produce a valid task list", etc. |
-| Reproducible engine snapshot | ◑ | `metadata_version` contract exists; no committed snapshot or pinned engine version yet (G-07). |
+- **[maturity-plan.md](maturity-plan.md)** — the gap backlog (G-01 … G-12) merged with the improvement
+  proposals into a checklist; each item carries a criticality = its maturity-score delta, a
+  machine-detectable acceptance criterion, and a status checkbox.
+- **[`scripts/check_maturity.py`](../../scripts/check_maturity.py)** +
+  **[`docs/maturity-baseline.json`](../maturity-baseline.json)** — the deterministic scorecard (eight
+  dimensions on a 0-4 enforcement ladder) and its committed baseline; the CI ratchet fails on regression.
+
+Run `python scripts/check_maturity.py` for the current per-dimension levels and the evidence behind each.
 
 ---
 
-## 6. Gaps, discrepancies, and issues (grilled)
-
-Each item is grounded in a file or an observed fact. Severity: 🔴 structural · 🟡 should-fix ·
-🟢 polish. None of these are blocking *spec* problems — they're harness-quality problems.
-
-### 🔴 G-01 — The gates gate nothing (no CI / pre-commit)
-`.github/` and any pre-commit/husky config are absent; there is no `package.json`. The deterministic
-checkers are only ever run by the agent voluntarily or surfaced by an advisory hook. `AGENTS.md` and
-the ROADMAP DoD both say "run the checks before finishing" and "make required in CI once the engine
-is available" — i.e. this is acknowledged TODO, but until it lands, drift can ship. **Fix:** add a CI
-workflow that runs both checkers (and Vitest, once it exists) on PRs, and optionally a pre-commit
-hook for the traceability checker. This is the highest-leverage change.
-
-### 🔴 G-02 — Engine-parity fails open and rides on an unpinned local layout
-`check_engine_parity.py` **skips with exit 0** when `transon` can't be imported. In this environment
-the package is not installed; the check passes only because `../transon` exists as a sibling. On a
-fresh clone or a CI runner without that sibling, the "primary defense against spec/engine drift"
-silently becomes a no-op. **Fix:** pin and `pip install` a specific `transon` version in dev/CI (or
-set `TRANSON_REPO`), and once M0 lands, make the check **required** (fail, not skip, when the engine
-is missing) — the script's own docstring already says to.
-
-### 🟡 G-03 — Subagent model slugs are unverified / non-canonical
-`milestone-planner.md` and `round-trip-reviewer.md` pin `model: claude-4.8-opus-high-thinking`;
-`requirement-implementer.md` pins `model: composer-2.5-fast`. The exact opus slug does not match the
-canonical-looking form seen elsewhere (e.g. `claude-opus-4-8-thinking-high`). If a slug doesn't
-resolve, Cursor may silently fall back to a default model, quietly collapsing the cost-tiered design.
-**Fix:** confirm both slugs resolve in the Models/Hooks UI; correct them if not.
-
-### 🟡 G-04 — "Tested" is proxied by an ID string, not by real coverage
-`check_traceability.py` only verifies that a *file under the code dirs contains the ID string* for any
-FR/AC marked `[x]`. A bare `// FR-035` comment satisfies it. It also doesn't flag the reverse
-(code/behavior that ships with the row left `[ ]`), and it can't tell whether the test actually
-exercises the requirement. It's a useful liveness check, not a coverage proof. **Fix:** pair it with
-real Vitest coverage and treat the ID-citation as a *necessary, not sufficient* signal in review.
-
-### 🟡 G-05 — Round-trip review is recommended, never enforced
-The riskiest changes (codec, variant matcher, surface check, marker escape, ordering, engine/`file`/
-`include`/remote-example surfaces) are exactly where meaning can silently change. The harness handles
-this with a *prose* "note that a round-trip-reviewer pass is required before merge" — nothing detects
-a codec-touching diff and demands the review. **Fix:** add a CI label/check (or a `postToolUse`/PR
-template) that trips when trust-critical paths change and requires the reviewer verdict.
-
-### 🟡 G-06 — Hand-maintained status can drift from reality
-The ROADMAP milestone tracker shows **M0 ☐ pending**, yet the engine already exports
-`get_editor_metadata()` (the parity run reports `source: export`), so engine-side M0 work is at least
-partly done. Milestone/`[ ]` status fields are human-maintained and reconciled by nothing. This is
-itself a small instance of intent/status drift. **Fix:** derive what status you can (e.g. "export
-exists") and review the trackers each milestone.
-
-### 🟡 G-07 — No committed metadata snapshot or pinned engine version
-M1 is meant to consume a metadata snapshot, and `metadata-contract.md` defines `metadata_version` +
-NFR-040 mismatch detection — but no snapshot is committed and the editor repo pins no engine version.
-Parity therefore validates against whatever `../transon` currently is. "Metadata-driven" floats on an
-unpinned engine. **Fix:** commit the snapshot and record the exact engine commit/version it came from.
-
-### 🟢 G-08 — `stop`-hook `followup_message` support is unverified
-The Cursor hooks output cheat sheet documents `followup_message` for **`subagentStop`**; the `stop`
-event's documented outputs don't explicitly include it. `check-docs-consistency.py` returns
-`followup_message` on `stop`. It may work, but it's worth confirming in the **Hooks** output channel
-that the message is actually injected and not ignored.
-
-### 🟢 G-09 — `subagentStop` identity detection is hand-rolled
-`advance-requirement-loop.py` sniffs seven possible payload keys (`subagent_type`, `subagentType`,
-`agent_type`, `name`, `type`, …) plus `status == "completed"` to recognize the implementer — all
-assumptions about an undocumented payload shape. The documented mechanism is a `matcher` on subagent
-type in `hooks.json`. **Fix:** add `"matcher": "requirement-implementer"` to the hook entry and
-confirm the payload schema from the Hooks channel; keep the key-sniffing only as a fallback. Also
-note the auto-advance loop only fires for the *subagent-driven* flow — a milestone driven directly in
-the main agent won't self-advance.
-
-### 🟢 G-10 — Skills are explicit-invocation only
-All four skills set `disable-model-invocation: true`, so they won't auto-trigger; they're pulled in by
-the commands/agents that reference them by path. That's a deliberate determinism choice, but a
-free-form chat that bypasses the commands gets no skill guidance automatically. Worth knowing so you
-remember to invoke them.
-
-### 🟢 G-11 — Watched-path lists are duplicated and must stay in sync
-`check-docs-consistency.py` (`WATCHED_PREFIXES`) and `check_traceability.py` (`CODE_DIRS`) hard-code
-overlapping-but-not-identical directory lists (`packages/ src/ test/ tests/ examples/ apps/`). If the
-M0 monorepo layout differs (the AD-019 names are `@transon/editor-*` under `packages/`), these lists
-must be updated or the gates silently skip files. **Fix:** centralize the path list, or assert it
-against the real workspace layout once it exists.
-
-### 🟢 G-12 — No eval/regression harness for the agents themselves
-There are no fixtures that check the *harness* behaves (e.g. "the planner emits one task per FR",
-"the implementer refuses an ambiguous SPEC"). For a harness this central, a few golden-path agent
-evals would catch regressions in the prompts/agents over time.
-
----
-
-## 7. Recommended next steps (opinion, not contract)
-
-Ordered by leverage:
-
-1. **G-01 + G-02 together:** stand up a CI workflow that `pip install`s a pinned `transon`, then runs
-   both checkers (required, not skipped) and Vitest. This converts the gates from advisory to binding.
-2. **G-05:** make round-trip review a binding step for trust-critical diffs (CI label or PR check).
-3. **G-03:** verify the subagent model slugs resolve.
-4. **G-07:** commit a metadata snapshot + record the engine version.
-5. **G-09 / G-08:** tighten the hooks with a `matcher` and confirm `stop` output behavior.
-6. **G-12:** add a couple of golden-path agent evals.
-
-None of these require a SPEC change; they harden the harness, not the product. Anything that *would*
-change product behavior must still go through SPEC-first (§21.2) with a new ID (§21.1).
-
----
-
-## 8. Quick reference
+## 6. Quick reference
 
 ```text
 .cursor/
@@ -357,6 +242,9 @@ change product behavior must still go through SPEC-first (§21.2) with a new ID 
 scripts/
   check_engine_parity.py     SPEC §14 + derived catalog  ==  engine get_editor_metadata()
   check_traceability.py      no dead/deprecated IDs; every "done" FR/AC has a citing test
+  check_maturity.py          harness maturity score (8 dims, 0-4 ladder) + ratchet vs baseline
+.github/workflows/
+  agentic-checks.yml         runs the three checkers on every PR/push (binding gate)
 ```
 
 Run before finishing any change that touches `docs/`, code, or tests:
@@ -364,4 +252,5 @@ Run before finishing any change that touches `docs/`, code, or tests:
 ```bash
 python scripts/check_traceability.py
 python scripts/check_engine_parity.py   # needs transon installed or TRANSON_REPO set
+python scripts/check_maturity.py --check # ratchet vs docs/maturity-baseline.json
 ```
