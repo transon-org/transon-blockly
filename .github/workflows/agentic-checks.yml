@@ -26,11 +26,15 @@ jobs:
       - name: Traceability
         run: python scripts/check_traceability.py
 
-      # 2. Engine/spec drift. Self-skips (exit 0) until the transon engine is installable;
-      #    pin + install transon here and drop continue-on-error once M0 lands (G-02).
+      # 2. Harness golden-path evals: maker≠checker, cost-tiered routing, skill determinism, loop recipe.
+      - name: Harness evals
+        run: python evals/run_evals.py
+
+      # 3. Engine/spec drift. Self-skips today (the engine is not yet installable here). Once M0 lands,
+      #    pin + `pip install transon` above and add `--require-engine` to make parity binding (M-09).
       - name: Engine parity
         run: python scripts/check_engine_parity.py
 
-      # 3. Agentic-maturity ratchet: fail if the harness regresses below the committed baseline.
+      # 4. Agentic-maturity ratchet: fail if the harness regresses below the committed baseline.
       - name: Agentic maturity (ratchet)
         run: python scripts/check_maturity.py --check

@@ -43,15 +43,16 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ## Current snapshot
 
-`check_maturity.py` baseline (pre-code): **63% · L3 Enforced** (`21.5 / 34` weighted).
+`check_maturity.py` baseline (pre-code): **75% · L3 Enforced** (`25.5 / 34` weighted) — after the
+🔴 Critical items M-01 + M-02 landed (63% → 75%).
 
 | Dim | Level | Weight | Headroom |
 |---|---|---|---|
 | D1 context engineering | L3 | 1.0 | → L4 needs a documented rule-feedback loop (hard to auto-detect; not pursued) |
-| D2 spec & traceability | L3 | 1.5 | **→ L4 via M-01** |
-| D3 verification & gates · *gated* | L3 | 1.5 | **→ L4 via M-02** |
+| D2 spec & traceability | **L4** | 1.5 | ✅ maxed (M-01) |
+| D3 verification & gates · *gated* | **L4** | 1.5 | ✅ via harness evals (M-02); real-coverage evidence deferred (M-15) |
 | D4 review / maker ≠ checker | L2 | 1.0 | **→ L3 via M-05 → L4 via M-06** |
-| D5 loop & orchestration | L2 | 1.0 | **→ L3 via M-01 → L4 via M-08** |
+| D5 loop & orchestration | **L3** | 1.0 | done to L3 (M-01); **→ L4 via M-08** |
 | D6 memory & knowledge | L3 | 1.0 | **→ L4 via M-04** |
 | D7 portability & tooling | L2 | 1.0 | **→ L3 via M-03 → L4 via M-07** |
 | D8 proof & observability · *gated* | L1 | 0.5 | → L2+ deferred to M3+ (M-14) |
@@ -60,11 +61,20 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ## Done
 
-- [x] **CI gate** — `.github/workflows/agentic-checks.yml` runs traceability + engine-parity +
-  maturity ratchet on every PR/push. *(closes the CI half of **G-01**; lifted D2 L2→L3 and D3 L2→L3,
-  +8.8 pts: 54% → 63%.)*
+- [x] **CI gate** — `.github/workflows/agentic-checks.yml` runs traceability + harness evals +
+  engine-parity + maturity ratchet on every PR/push. *(closes the CI half of **G-01**; lifted D2 L2→L3
+  and D3 L2→L3, +8.8 pts: 54% → 63%.)*
 - [x] **Maturity scorer + baseline** — `scripts/check_maturity.py` + `docs/maturity-baseline.json`;
   the `--check` ratchet fails CI on regression. *(the L3→L4 self-improvement mechanism for the harness.)*
+- [x] **M-01 · Binding git hooks** — `.githooks/pre-commit` (traceability + evals + maturity ratchet)
+  and `.githooks/commit-msg` (`Refs:`/`Slice:` trailer on code-touching commits); enable with
+  `git config core.hooksPath .githooks`. *(D2 L3→L4, D5 L2→L3, +7.3 pts.)*
+- [x] **M-02 · Harness golden-path evals** — `evals/run_evals.py` (maker≠checker, cost-tiered routing,
+  skill determinism, loop hooks/recipe) + model-judged `evals/cases/`, run in CI + pre-commit.
+  *(closes **G-12**; D3 L3→L4, +4.4 pts.)*
+- [x] **M-09 (mechanism)** — `check_engine_parity.py --require-engine` flips skip→fail when the engine
+  is absent; CI wired to flip it on once M0 makes `transon` installable. *(gate-integrity; see M-09 below
+  for the remaining M0-gated step.)*
 
 ---
 
@@ -72,27 +82,25 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ### 🔴 Critical
 
-- [ ] **M-01 — Binding git hooks (pre-commit + commit-msg).**  *Gap: **G-01** (hook half), **G-05** spirit.*
-  Add `.githooks/pre-commit` (runs `check_traceability.py` + `check_maturity.py --check`, and lint/test
-  once code exists) and `.githooks/commit-msg` (rejects a code-touching commit lacking a `Refs: FR-xxx`
-  / `Slice:` trailer). Wire `git config core.hooksPath .githooks`.
-  - **Impact:** D2 L3→**L4** (+4.4) **and** D5 L2→**L3** (+2.9) = **+7.3 pts** → ~71%.
-  - **Acceptance:** `check_maturity.py` reports D2 L4 + D5 L3; a trailerless code commit is rejected locally.
-  - **Effort:** S.
+- [x] **M-01 — Binding git hooks (pre-commit + commit-msg).** ✅ *done — see Done above.*  *Gap: **G-01** (hook half), **G-05** spirit.*
+  `.githooks/pre-commit` runs `check_traceability.py` + `evals/run_evals.py` + `check_maturity.py --check`
+  (+ lint/test once code exists); `.githooks/commit-msg` rejects a code-touching commit lacking a
+  `Refs: FR-xxx` / `Slice:` trailer. Enable with `git config core.hooksPath .githooks`.
+  - **Impact:** D2 L3→**L4** (+4.4) **and** D5 L2→**L3** (+2.9) = **+7.3 pts**. ✅ landed.
+  - **Acceptance:** `check_maturity.py` reports D2 L4 + D5 L3; a trailerless code commit is rejected locally. ✅
 
-- [ ] **M-02 — Harness golden-path evals.**  *Gap: **G-12**.*
-  Add an `evals/` dir with a few fixtures asserting the agents behave: the planner emits one task per
-  FR; the implementer refuses an ambiguous SPEC and proposes the next free ID; a **seeded**
-  meaning-changing diff is caught by the round-trip corpus.
-  - **Impact:** D3 L3→**L4** (+4.4) → ~75%.
-  - **Acceptance:** `evals/` present and run in CI; `check_maturity.py` reports D3 L4.
-  - **Effort:** M. *(The one place "evals" genuinely fit a deterministic product — they test the agents, not the output.)*
+- [x] **M-02 — Harness golden-path evals.** ✅ *done — see Done above.*  *Gap: **G-12**.*
+  `evals/run_evals.py` asserts the agents behave (maker≠checker, cost-tiered routing, skill determinism,
+  loop hooks/recipe); `evals/cases/*.md` hold the model-judged behavioral cases (planner one-task-per-FR,
+  implementer refuses ambiguous SPEC, round-trip catches a seeded meaning change — last one gated on M1).
+  - **Impact:** D3 L3→**L4** (+4.4). ✅ landed.
+  - **Acceptance:** `evals/` present and run in CI; `check_maturity.py` reports D3 L4. ✅
 
-- [ ] **M-09 — Engine pin + fail-closed parity.**  *Gap: **G-02**.*
-  Pin a specific `transon` version (or `TRANSON_REPO`), `pip install` it in CI, and make
-  `check_engine_parity.py` **fail** (not skip) when the engine is missing, once M0 lands.
-  - **Impact:** score-neutral, **gate-integrity**. Today parity silently no-ops on a clean clone — the
-    primary spec/engine-drift defense is load-bearing on a sibling checkout. Critical for *trust* in D3.
+- [~] **M-09 — Engine pin + fail-closed parity.**  *Gap: **G-02**. Mechanism done; flip gated on M0.*
+  `check_engine_parity.py --require-engine` now fails (not skips) when the engine is absent, and CI is
+  wired to flip it on. **Remaining (M0-gated):** pin a specific `transon` version, `pip install` it in
+  CI, and add `--require-engine` to the CI step so parity can never silently no-op.
+  - **Impact:** score-neutral, **gate-integrity**. Until the flip, parity still self-skips on a clean clone.
   - **Acceptance:** CI fails if `transon` is absent; the skip path is gone.
   - **Effort:** S (blocked on M0 engine availability for the hard-fail flip).
 
@@ -165,8 +173,8 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 | After clearing | Score | Tier |
 |---|---|---|
-| *(baseline today)* | 63% | L3 Enforced |
-| 🔴 Critical (M-01, M-02) | ~75% | L3 Enforced |
+| ~~CI gate + scorer~~ | ~~63%~~ | done |
+| ✅ 🔴 Critical (M-01, M-02) — **current** | **75%** | L3 Enforced |
 | + 🟠 High (M-03, M-04, M-05) | ~84% | **L4 Optimizing** |
 | + 🟡 Medium (M-06, M-07, M-08) | ~93% | L4 Optimizing |
 

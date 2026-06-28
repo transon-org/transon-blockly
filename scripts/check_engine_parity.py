@@ -36,6 +36,7 @@ Pure stdlib, Python 3.9+. Run:
 """
 from __future__ import annotations
 
+import argparse
 import os
 import re
 import sys
@@ -271,7 +272,16 @@ def check_resolved_enums(catalog: EngineCatalog) -> List[str]:
     return problems
 
 
-def main() -> int:
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description="Check editor↔engine catalog parity.")
+    parser.add_argument(
+        "--require-engine",
+        action="store_true",
+        help="fail (exit 1) instead of skipping when the transon engine is not importable (M-09). "
+        "CI flips this on once M0 makes the engine installable, so parity can never silently no-op.",
+    )
+    args = parser.parse_args(argv)
+
     spec_rules, spec_operators, spec_functions, parse_problems = spec_catalog()
     if parse_problems:
         print("engine-parity: spec parsing problems:")
@@ -281,10 +291,14 @@ def main() -> int:
 
     catalog = engine_catalog()
     if catalog is None:
-        print(
-            "engine-parity: skipped — transon engine not importable "
-            "(install transon or set TRANSON_REPO=../transon). Make this required in CI."
+        message = (
+            "transon engine not importable "
+            "(install a pinned transon or set TRANSON_REPO=../transon)."
         )
+        if args.require_engine:
+            print(f"engine-parity: FAILED — {message} --require-engine is set, so this is an error.")
+            return 1
+        print(f"engine-parity: skipped — {message} Run with --require-engine to make it binding.")
         return 0
 
     problems = (

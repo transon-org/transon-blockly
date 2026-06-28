@@ -2,9 +2,9 @@
   "generated_by": "scripts/check_maturity.py",
   "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
   "pre_code": true,
-  "score_pct": 63,
+  "score_pct": 75,
   "tier": "L3 · Enforced",
-  "weighted": 21.5,
+  "weighted": 25.5,
   "weighted_max": 34.0,
   "dimensions": {
     "D1": {
@@ -17,15 +17,15 @@
     "D2": {
       "name": "spec & traceability",
       "weight": 1.5,
-      "level": 3,
-      "evidence": "traceability checker runs in CI/hook (blocking)",
+      "level": 4,
+      "evidence": "traceability gated in CI + commit-trailer convention enforced",
       "lifecycle_gated": false
     },
     "D3": {
       "name": "verification & gates",
       "weight": 1.5,
-      "level": 3,
-      "evidence": "deterministic gates run in CI/hook (blocking)",
+      "level": 4,
+      "evidence": "gates run in CI + coverage/eval ratchet guards regression",
       "lifecycle_gated": true
     },
     "D4": {
@@ -38,8 +38,8 @@
     "D5": {
       "name": "loop & orchestration",
       "weight": 1.0,
-      "level": 2,
-      "evidence": "2 command(s) + advisory hooks (nudge, not block)",
+      "level": 3,
+      "evidence": "binding git hook gates the loop (green before commit)",
       "lifecycle_gated": false
     },
     "D6": {

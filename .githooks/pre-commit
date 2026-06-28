@@ -1,0 +1,16 @@
+#!/bin/sh
+# Binding inner-loop gate (M-01). The deterministic checks an agent is *told* to
+# run before finishing must also run before a commit can land — so drift cannot
+# be committed locally, not just blocked at the PR.
+#
+# Enable once per clone:
+#   git config core.hooksPath .githooks
+#
+# Skip in an emergency with --no-verify (CI still enforces the same checks).
+set -e
+
+python3 scripts/check_traceability.py
+python3 evals/run_evals.py
+python3 scripts/check_maturity.py --check
+# check_engine_parity self-skips until the engine is importable; CI is authoritative.
+python3 scripts/check_engine_parity.py
