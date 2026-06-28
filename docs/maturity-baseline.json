@@ -1,0 +1,67 @@
+{
+  "generated_by": "scripts/check_maturity.py",
+  "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
+  "pre_code": true,
+  "score_pct": 63,
+  "tier": "L3 · Enforced",
+  "weighted": 21.5,
+  "weighted_max": 34.0,
+  "dimensions": {
+    "D1": {
+      "name": "context engineering",
+      "weight": 1.0,
+      "level": 3,
+      "evidence": "AGENTS.md + 6 rules (always/glob) + 4 skills; negative rules present",
+      "lifecycle_gated": false
+    },
+    "D2": {
+      "name": "spec & traceability",
+      "weight": 1.5,
+      "level": 3,
+      "evidence": "traceability checker runs in CI/hook (blocking)",
+      "lifecycle_gated": false
+    },
+    "D3": {
+      "name": "verification & gates",
+      "weight": 1.5,
+      "level": 3,
+      "evidence": "deterministic gates run in CI/hook (blocking)",
+      "lifecycle_gated": true
+    },
+    "D4": {
+      "name": "review / maker != checker",
+      "weight": 1.0,
+      "level": 2,
+      "evidence": "distinct maker + checker agents, but review is advisory (not triggered)",
+      "lifecycle_gated": false
+    },
+    "D5": {
+      "name": "loop & orchestration",
+      "weight": 1.0,
+      "level": 2,
+      "evidence": "2 command(s) + advisory hooks (nudge, not block)",
+      "lifecycle_gated": false
+    },
+    "D6": {
+      "name": "memory & knowledge",
+      "weight": 1.0,
+      "level": 3,
+      "evidence": "structured contract + AD/OQ intent ledger (no working handoff/snapshot)",
+      "lifecycle_gated": false
+    },
+    "D7": {
+      "name": "portability & tooling",
+      "weight": 1.0,
+      "level": 2,
+      "evidence": "AGENTS.md + MCP + skills, but single agent-tool surface",
+      "lifecycle_gated": false
+    },
+    "D8": {
+      "name": "proof & observability",
+      "weight": 0.5,
+      "level": 1,
+      "evidence": "UI-test MCP / transcripts configured; no asserted proof yet",
+      "lifecycle_gated": true
+    }
+  }
+}

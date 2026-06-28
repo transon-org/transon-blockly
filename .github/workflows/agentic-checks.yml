@@ -1,0 +1,36 @@
+name: agentic-checks
+
+# Turns the repo's deterministic gates from advisory into binding: every PR and
+# every push to main must pass the same checks an agent is told to run. This is
+# the "deterministic checks before judgment" rule applied to CI itself.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 1. Requirement-ID consistency: no dead/deprecated IDs; done rows have a citing test.
+      - name: Traceability
+        run: python scripts/check_traceability.py
+
+      # 2. Engine/spec drift. Self-skips (exit 0) until the transon engine is installable;
+      #    pin + install transon here and drop continue-on-error once M0 lands (G-02).
+      - name: Engine parity
+        run: python scripts/check_engine_parity.py
+
+      # 3. Agentic-maturity ratchet: fail if the harness regresses below the committed baseline.
+      - name: Agentic maturity (ratchet)
+        run: python scripts/check_maturity.py --check
