@@ -1,0 +1,33 @@
+{
+  "name": "@transon/editor-core",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Engine-free core of the Transon Visual Editor: the EngineProvider port and the typed metadata snapshot (M0).",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.9",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vite-plugin-dts": "4.5.4",
+    "vitest": "2.1.9"
+  }
+}

@@ -143,13 +143,18 @@ Transon repo (this editor repo consumes the contract; see `metadata-contract.md`
 - DoD additions: metadata-export-parity, variant-signature-parity, and resolved-enum-parity checks
   exist and pass against the engine export (`traceability.md`); the adapter can execute a template
   with markers `@` and `$`.
-- **Status (◐ in progress).** The **engine half has landed** in the sibling `transon` repo: the
+- **Status (☑ done; CI pin flip deferred to M-09).** The **engine half has landed** in the sibling `transon` repo: the
   `switch`/`cond` rules and the projection-ready `get_editor_metadata()` export exist and are pinned
   in [`docs/metadata-snapshot.json`](metadata-snapshot.json) (engine `v0.1.1-1-g5812b63`,
   `metadata_version 2.0`, see [`metadata-snapshot.md`](metadata-snapshot.md)); the export/variant/enum
-  parity checks run against it. **Remaining (editor side):** the Node→Python `EngineProvider` test
-  adapter and the monorepo scaffolding + version pins (AD-021). Living status:
-  [`docs/current-state.md`](current-state.md).
+  parity checks run against it. **Editor side (landed, reviewed):** the monorepo scaffolding
+  + pinned tooling (AD-021), the engine-free `EngineProvider` port (`@transon/editor-core`, AD-008),
+  the typed metadata-snapshot loader (AD-012/NFR-047), and the Node→Python `EngineProvider` test
+  adapter (`test/engine-node-adapter`, AD-011) — `version()`/`validate()` round-trip and the `@`/`$`
+  two-pass staging proof (FR-116/FR-119/AD-027/AD-030) both pass, signed off by an independent
+  `round-trip-reviewer`. The M0 DoD additions (export/variant/enum parity + adapter runs `@`/`$`) are
+  met. **Only deferred item:** the hard-fail CI engine-pin flip (`--require-engine`, M-09) waits on
+  `transon` being pip-installable in CI. Living status: [`docs/current-state.md`](current-state.md).
 
 ## M1 — `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule (de-risk prototype)
 
@@ -243,7 +248,7 @@ self-hosting demonstration.
 
 | Milestone | Focus | Key IDs | Status |
 |-----------|-------|---------|:------:|
-| M0 | Engine `switch`/`cond` + projection-ready export + Node adapter | FR-047/081/116/117/118, AD-008/012/027/029/021 | ◐ |
+| M0 | Engine `switch`/`cond` + projection-ready export + Node adapter | FR-047/081/116/117/118, AD-008/012/027/029/021 | ☑ |
 | M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/011 | ☐ |
 | M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, §15.6/§15.8, AC-028/029/030/034/035 | ☐ |
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, NFR-046, AC-036, AD-017/018/026/031 | ☐ |

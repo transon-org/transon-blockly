@@ -1,0 +1,23 @@
+{
+  "name": "@transon/editor-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Transon Visual Editor monorepo (M0 scaffolding).",
+  "packageManager": "pnpm@10.27.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@changesets/cli": "2.31.0",
+    "turbo": "2.10.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vitest": "2.1.9"
+  }
+}

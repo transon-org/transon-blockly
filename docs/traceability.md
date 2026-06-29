@@ -161,19 +161,19 @@ dedicated tests:
 | ID | Summary | Verified by | Status |
 |----|---------|-------------|:------:|
 | NFR-001..005 / AD-003 / AD-004 | Correctness, semantic preservation, round-trip | round-trip corpus + engine parity | [ ] |
-| AD-008 | Engine is a host-provided port; authoring works engine-free | `EngineProvider` mock + integration tests | [ ] |
-| AD-011 | Execution-based round-trip verification | round-trip corpus (Node engine adapter) | [ ] |
+| AD-008 | Engine is a host-provided port; authoring works engine-free | `EngineProvider` mock + integration tests (`packages/editor-core/test/ports.test.ts`, `test/engine-node-adapter/test/adapter.test.ts`) | [~] |
+| AD-011 | Execution-based round-trip verification | round-trip corpus (Node engine adapter) (`test/engine-node-adapter/test/adapter.test.ts`, `…/adapter.markers.test.ts`) | [~] |
 | NFR-030 / §21.11 | No arbitrary Python outside the engine runtime | engine/runtime isolation tests | [ ] |
 | NFR-035 / AD-009 | `file` writes captured, not written to disk | execution tests (AC-024) | [ ] |
 | AD-010 | `include` resolved via host loader; missing loader reported | execution tests (AC-025) | [ ] |
-| NFR-036..039 / NFR-040 / AD-012 | Metadata schema versioning + mismatch detection | see metadata-contract.md §5 | [ ] |
+| NFR-036..039 / NFR-040 / AD-012 | Metadata schema versioning + mismatch detection | see metadata-contract.md §5; typed snapshot loader (`packages/editor-core/test/snapshot.test.ts`) | [~] |
 | AD-026 / FR-114/115/120 / AC-034 | Editor surface = projections of metadata; new rule, no editor/projection change | projection-coverage test + codec-regeneration check | [ ] |
-| AD-027 / FR-116 | Distinct-marker staging (`@`/`$`); `include` default-marker inheritance; no `eval` | generator staging tests; engine `include` marker test (engine repo) | [ ] |
+| AD-027 / FR-116 | Distinct-marker staging (`@`/`$`); `include` default-marker inheritance; no `eval` | generator staging tests (`test/engine-node-adapter/test/adapter.markers.test.ts`); engine `include` marker test (engine repo) | [~] |
 | AD-028 / FR-117 | Codec = skeleton + projected arms; skeleton owns invariants | codec-skeleton unit tests (recursion/ordering/marker-escape/surface) | [ ] |
 | AD-029 / FR-118 | `switch`/`cond` lazy dispatch in the generated codec | dispatch + lazy-branch tests (engine repo for the rules) | [ ] |
-| AD-030 / FR-119 | Build-time codegen of committed artifacts; runtime exec via host | codec-regeneration check + host execution tests | [ ] |
+| AD-030 / FR-119 | Build-time codegen of committed artifacts; runtime exec via host | codec-regeneration check + host execution tests (two-pass generate-then-run proven in `test/engine-node-adapter/test/adapter.markers.test.ts`) | [~] |
 | AD-031 / NFR-046 | Finite rule-agnostic behavior runtime; no per-rule growth | behavior-runtime size check | [ ] |
-| NFR-047 | Split structural / examples metadata payload | metadata-shape test (structural catalog excludes examples/docs) | [ ] |
+| NFR-047 | Split structural / examples metadata payload | metadata-shape test (structural catalog excludes examples/docs) (`packages/editor-core/test/snapshot.test.ts`) | [~] |
 
 ## Open questions
 
