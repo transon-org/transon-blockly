@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `ee58455` — harness: consolidate scripts/evals/githooks under harness/; add broken-link gate |
+| Repo HEAD | `abef638` — harness: add working memory + committed engine snapshot (M-04) |
 | Branch | `alternative-path` |
 | Engine pin | transon `v0.1.1-1-g5812b63` @ `5812b632dc2c` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -16,7 +16,9 @@
 
 ## Last action
 
-_M-04 landed: working-memory + committed-snapshot harness. Documenting state here for the first time._
+_M-05 landed: `.coderabbit.yaml` structurally triggers an external reviewer on every PR, scoped to the
+trust-critical surfaces (D4 L2→L3, 84% → 87%). M-04 before it added this working-memory + snapshot
+harness. Next non-deferred maturity item is M-06 (adversarial review workflow → D4 L4)._
 
 ## Status by milestone
 

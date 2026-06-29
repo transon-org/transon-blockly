@@ -2,9 +2,9 @@
   "generated_by": "harness/scripts/check_maturity.py",
   "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
   "pre_code": true,
-  "score_pct": 84,
+  "score_pct": 87,
   "tier": "L4 · Optimizing",
-  "weighted": 28.5,
+  "weighted": 29.5,
   "weighted_max": 34.0,
   "dimensions": {
     "D1": {
@@ -31,8 +31,8 @@
     "D4": {
       "name": "review / maker != checker",
       "weight": 1.0,
-      "level": 2,
-      "evidence": "distinct maker + checker agents, but review is advisory (not triggered)",
+      "level": 3,
+      "evidence": "maker != checker agents + review structurally triggered",
       "lifecycle_gated": false
     },
     "D5": {

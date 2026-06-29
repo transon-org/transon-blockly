@@ -43,15 +43,15 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ## Current snapshot
 
-`check_maturity.py` baseline (pre-code): **84% · L4 Optimizing** (`28.5 / 34` weighted) — after
-🔴 Critical (M-01, M-02), 🟠 M-03, M-07, and M-04 landed (63% → 84%).
+`check_maturity.py` baseline (pre-code): **87% · L4 Optimizing** (`29.5 / 34` weighted) — after
+🔴 Critical (M-01, M-02), 🟠 M-03, M-07, M-04, and M-05 landed (63% → 87%).
 
 | Dim | Level | Weight | Headroom |
 |---|---|---|---|
 | D1 context engineering | L3 | 1.0 | → L4 needs a documented rule-feedback loop (hard to auto-detect; not pursued) |
 | D2 spec & traceability | **L4** | 1.5 | ✅ maxed (M-01) |
 | D3 verification & gates · *gated* | **L4** | 1.5 | ✅ via harness evals (M-02); real-coverage evidence deferred (M-15) |
-| D4 review / maker ≠ checker | L2 | 1.0 | **→ L3 via M-05 → L4 via M-06** |
+| D4 review / maker ≠ checker | **L3** | 1.0 | done to L3 (M-05: CodeRabbit structural trigger); **→ L4 via M-06** |
 | D5 loop & orchestration | **L3** | 1.0 | done to L3 (M-01); **→ L4 via M-08** |
 | D6 memory & knowledge | **L4** | 1.0 | ✅ maxed (M-04: working handoff + committed engine snapshot) |
 | D7 portability & tooling | **L4** | 1.0 | ✅ maxed (M-03 + M-07: `.claude/` adapters + `docs/portability.md`) |
@@ -92,6 +92,12 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   signal reads both `.cursor/hooks` and `.claude/hooks`). Extended `eval_cross_tool_parity` to enforce
   bidirectional existence, the no-cross-reference rule, and the `harness/` source. Policy ("new tooling →
   both adapters, or an explicit exclusion") recorded in `AGENTS.md` + `docs/portability.md`.
+- [x] **M-05 · Structurally triggered review** — `.coderabbit.yaml` wires a free external reviewer that
+  fires on every PR, scoped by `path_instructions` to the trust-critical round-trip core, runtime-safety
+  surfaces, tests, contract docs, and the harness — each citing the SPEC/AD IDs the internal
+  `round-trip-review` checklist uses. A second independent checker at the PR boundary, not a replacement
+  for the `round-trip-reviewer` subagent. *(closes the structural-trigger half of **G-05**; D4 L2→L3,
+  +2.9 pts: 84% → 87%.)*
 - [x] **M-04 · Working memory + committed snapshot** — `docs/current-state.md` (working handoff) +
   `docs/metadata-snapshot.json` (engine export) + `docs/metadata-snapshot.md` (provenance, pinned to
   engine `v0.1.1-1-g5812b63`), all written by `harness/scripts/update_memory.py`; `--check` gates
@@ -161,11 +167,15 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   - **Acceptance:** `docs/current-state.md` + a committed `*snapshot*` file exist; `check_maturity.py` reports D6 L4. ✅
   - **Effort:** S.
 
-- [ ] **M-05 — Structurally triggered review.**  *Gap: **G-05**.*
-  Add `.coderabbit.yaml` (free external mentor reviewer) and/or a `.github/CODEOWNERS` requiring review
-  on trust-critical paths (codec, variant matcher, surface check, marker escape, round-trip).
-  - **Impact:** D4 L2→**L3** (+2.9) → ~84%.
-  - **Acceptance:** CodeRabbit or CODEOWNERS present; `check_maturity.py` reports D4 L3.
+- [x] **M-05 — Structurally triggered review.** ✅ *done — see Done above.*  *Gap: **G-05**.*
+  `.coderabbit.yaml` adds a free external "mentor" reviewer that fires automatically on every PR — a
+  second, independent checker beside the human-invoked `round-trip-reviewer` subagent. Its
+  `path_instructions` pin it to the same trust-critical surfaces (codec, variant matching, supported
+  surface, marker escape, ordering, runtime safety) and the same SPEC/AD IDs the
+  `round-trip-review` checklist uses, so both reviewers speak the contract. (CODEOWNERS deferred —
+  this repo has no GitHub remote/team yet; a fictional owner would be a silently non-functional gate.)
+  - **Impact:** D4 L2→**L3** (+2.9). ✅ landed (84% → **87%**).
+  - **Acceptance:** CodeRabbit or CODEOWNERS present; `check_maturity.py` reports D4 L3. ✅
   - **Effort:** S.
 
 ### 🟡 Medium (sequenced behind a High item)
@@ -218,8 +228,7 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 | ~~🔴 Critical (M-01, M-02)~~ | ~~75%~~ | done |
 | ~~🟠 M-03~~ | ~~78%~~ | done |
 | ~~🟠 M-04~~ | ~~84%~~ | done |
-| ✅ M-04 — **current** | **84%** | **L4 Optimizing** |
-| + 🟠 M-05 | ~87% | L4 Optimizing |
+| ✅ M-05 — **current** | **87%** | **L4 Optimizing** |
 | + 🟡 Medium (M-06, M-08) | ~93% | L4 Optimizing |
 
 Beyond ~93%, the only remaining headroom is D8 (proof) and D3's real-coverage evidence — both
