@@ -4,5 +4,6 @@ description: Manage docs/SPEC.md requirements with stable IDs and keep them mapp
 disable-model-invocation: true
 ---
 
-The full procedure is tool-neutral and lives in `harness/skills/spec-traceability.md` — read and
-follow it.
+The full procedure is tool-neutral and lives in `harness/skills/spec-traceability.md` — read it now
+and follow it.
+

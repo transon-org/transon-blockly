@@ -104,10 +104,22 @@ def _signals() -> Dict[str, object]:
     # Binding hooks run at the git layer (block the commit). Advisory editor
     # hooks (.cursor/hooks) only nudge — they never count as enforcement (L3).
     git_hooks = _glob(".githooks/*") + _glob(".husky/*")
+    # Advisory editor hooks from BOTH tool adapters (Cursor + Claude Code) — they nudge, never block.
     advisory_hooks = (
         _glob(".cursor/hooks/*")
         + ([PROJECT_ROOT / ".cursor/hooks.json"] if _exists(".cursor/hooks.json") else [])
+        + _glob(".claude/hooks/*")
+        + ([PROJECT_ROOT / ".claude/settings.json"] if _exists(".claude/settings.json") else [])
     )
+    # Always-on contract, per tool: Cursor `alwaysApply` rules; Claude CLAUDE.md + a SessionStart hook
+    # that injects AGENTS.md (Claude does not auto-load AGENTS.md). Counted symmetrically.
+    claude_skills_text = _concat(_glob(".claude/skills/**/SKILL.md"))
+    claude_settings_text = _read(PROJECT_ROOT / ".claude/settings.json")
+    cursor_always_on = "alwaysapply" in _concat(_glob(".cursor/rules/*.mdc")).lower()
+    claude_always_on = _exists("CLAUDE.md") and (
+        _exists(".claude/hooks/inject-rules.py") or "sessionstart" in claude_settings_text.lower()
+    )
+    always_on_surfaces = int(cursor_always_on) + int(claude_always_on)
     checkers = _glob("scripts/check_*.py") + _glob("scripts/check-*.mjs") + _glob("scripts/check-*.js")
     contract = _glob("docs/*.md")
     tool_surfaces = sum(
@@ -125,6 +137,10 @@ def _signals() -> Dict[str, object]:
         "agent_files": agent_dirs,
         "rule_files": rule_files,
         "rules_text": _concat(rule_files),
+        "claude_skills_text": claude_skills_text,
+        "cursor_always_on": cursor_always_on,
+        "claude_always_on": claude_always_on,
+        "always_on_surfaces": always_on_surfaces,
         "skill_files": skill_files,
         "workflows_text": _concat(workflows),
         "workflows": workflows,
@@ -169,20 +185,28 @@ def _enforced_by_hook(s: Dict[str, object], *needles: str) -> bool:
 # --------------------------------------------------------------------------- #
 
 def d1_context(s) -> Tuple[int, str]:
+    """Tool-symmetric: the static always-on layer counts for *each* tool that has it
+    (Cursor alwaysApply rules; Claude CLAUDE.md + SessionStart-injected AGENTS.md)."""
     if not (s["agents_md"] or _exists("CLAUDE.md")):
         return 0, "no AGENTS.md / CLAUDE.md"
-    has_layers = len(s["rule_files"]) >= 2 and len(s["skill_files"]) >= 1
-    if not has_layers:
-        return 1, "AGENTS.md present; no layered static/dynamic rules"
-    glob_scoped = "globs:" in str(s["rules_text"]).lower() or "glob" in str(s["rules_text"]).lower()
+    surfaces = int(s["always_on_surfaces"])
+    static = surfaces >= 1
+    dynamic = len(s["skill_files"]) >= 1
+    if not (static and dynamic):
+        return 1, "AGENTS.md present; no layered static/dynamic context"
+    scoped = (
+        "globs:" in str(s["rules_text"]).lower()
+        or "glob" in str(s["rules_text"]).lower()
+        or "paths:" in str(s["claude_skills_text"]).lower()
+    )
     negative = _negative_rules(s["agents_md"]) or _negative_rules(str(s["rules_text"]))
-    if glob_scoped and negative:
+    if scoped and negative:
         # L4 only if a documented rule-feedback loop is wired (rare to auto-detect).
         return 3, (
-            f"AGENTS.md + {len(s['rule_files'])} rules (always/glob) + "
-            f"{len(s['skill_files'])} skills; negative rules present"
+            f"always-on contract in {surfaces} tool(s) (Cursor rules + Claude CLAUDE.md/SessionStart) "
+            f"+ {len(s['skill_files'])} skills + scoped rules; negative rules present"
         )
-    return 2, f"AGENTS.md + {len(s['rule_files'])} rules + {len(s['skill_files'])} skills"
+    return 2, f"always-on in {surfaces} tool(s) + {len(s['skill_files'])} skills"
 
 
 def d2_spec_trace(s) -> Tuple[int, str]:

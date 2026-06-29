@@ -8,3 +8,6 @@ dist/
 .turbo/
 *.log
 .pnpm-store
+
+# Local, per-developer agent settings (the shared .claude/settings.json IS tracked)
+.claude/settings.local.json

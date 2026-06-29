@@ -124,15 +124,63 @@ def eval_loop_hooks() -> List[str]:
 
 
 def eval_loop_recipe() -> List[str]:
-    """The implement-requirement command still encodes the test-first + trace recipe."""
+    """The implement-requirement command (the tool-neutral canonical body) still encodes
+    the test-first + trace recipe."""
     out: List[str] = []
-    cmd = _read(CURSOR / "commands" / "implement-requirement.md").lower()
+    cmd = _read(PROJECT_ROOT / "harness" / "commands" / "implement-requirement.md").lower()
     if not cmd:
-        return ["loop-recipe: .cursor/commands/implement-requirement.md is missing"]
+        return ["loop-recipe: harness/commands/implement-requirement.md is missing"]
     if "test" not in cmd or "first" not in cmd:
         out.append("loop-recipe: implement-requirement.md no longer states the test-first rule")
     if "traceability" not in cmd:
         out.append("loop-recipe: implement-requirement.md no longer updates docs/traceability.md")
+    return out
+
+
+def eval_cross_tool_parity() -> List[str]:
+    """Cursor and Claude adapters stay symmetric: every command/skill/agent exists on
+    *both* sides, both reference the tool-neutral ``harness/`` core (neither references the
+    other — no second-class tool), and read-only roles stay read-only. This is the gate
+    behind the "new tooling lands in both tools" policy (see docs/portability.md)."""
+    claude = PROJECT_ROOT / ".claude"
+    harness = PROJECT_ROOT / "harness"
+    if not claude.exists():
+        return ["parity: no .claude/ adapters — Claude Code is not at parity with Cursor"]
+    out: List[str] = []
+
+    # 1. Bidirectional existence parity for agents, commands, skills.
+    kinds = (
+        ("agents", "*.md", lambda p: p.stem),
+        ("commands", "*.md", lambda p: p.stem),
+        ("skills", "*/SKILL.md", lambda p: p.parent.name),
+    )
+    for kind, pattern, key in kinds:
+        cur = {key(p) for p in (CURSOR / kind).glob(pattern)}
+        cl = {key(p) for p in (claude / kind).glob(pattern)}
+        for missing in sorted(cur - cl):
+            out.append(f"parity: .claude/{kind}/{missing} missing (Cursor has it)")
+        for missing in sorted(cl - cur):
+            out.append(f"parity: .cursor/{kind}/{missing} missing (Claude has it)")
+
+    # 2. Read-only Claude roles must not gain write tools.
+    for name in READERS:
+        tools = _frontmatter(claude / "agents" / f"{name}.md").get("tools", "")
+        if "Write" in tools or "Edit" in tools:
+            out.append(f"parity: .claude agent '{name}' must be read-only (no Write/Edit in tools)")
+
+    # 3. No second-class tool: neither adapter may reference the other's dir — both point at harness/.
+    for tool_dir, other in ((CURSOR, ".claude/"), (claude, ".cursor/")):
+        for sub in ("agents", "commands", "skills"):
+            for path in (tool_dir / sub).rglob("*.md"):
+                if other in _read(path):
+                    out.append(f"parity: {path.relative_to(PROJECT_ROOT)} references {other} — "
+                               "adapters must point at harness/, not each other")
+
+    # 4. Canonical bodies live in the tool-neutral harness/ core.
+    for sub in ("agents", "commands", "skills"):
+        if not list((harness / sub).glob("*.md")):
+            out.append(f"parity: harness/{sub}/ has no canonical bodies")
+
     return out
 
 
@@ -146,6 +194,7 @@ def check() -> List[str]:
     failures += eval_skills_deterministic()
     failures += eval_loop_hooks()
     failures += eval_loop_recipe()
+    failures += eval_cross_tool_parity()
     return failures
 
 
@@ -157,7 +206,7 @@ def main() -> int:
             print(f"  - {failure}")
         return 1
     print("evals: harness golden-path checks pass "
-          "(maker≠checker · cost-tiered routing · skill determinism · loop hooks · loop recipe).")
+          "(maker≠checker · cost-tiered routing · skill determinism · loop hooks · loop recipe · cross-tool parity).")
     return 0
 
 

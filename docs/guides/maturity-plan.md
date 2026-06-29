@@ -43,8 +43,8 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ## Current snapshot
 
-`check_maturity.py` baseline (pre-code): **75% · L3 Enforced** (`25.5 / 34` weighted) — after the
-🔴 Critical items M-01 + M-02 landed (63% → 75%).
+`check_maturity.py` baseline (pre-code): **81% · L4 Optimizing** (`27.5 / 34` weighted) — after
+🔴 Critical (M-01, M-02), 🟠 M-03, and M-07 landed (63% → 81%).
 
 | Dim | Level | Weight | Headroom |
 |---|---|---|---|
@@ -54,7 +54,7 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 | D4 review / maker ≠ checker | L2 | 1.0 | **→ L3 via M-05 → L4 via M-06** |
 | D5 loop & orchestration | **L3** | 1.0 | done to L3 (M-01); **→ L4 via M-08** |
 | D6 memory & knowledge | L3 | 1.0 | **→ L4 via M-04** |
-| D7 portability & tooling | L2 | 1.0 | **→ L3 via M-03 → L4 via M-07** |
+| D7 portability & tooling | **L4** | 1.0 | ✅ maxed (M-03 + M-07: `.claude/` adapters + `docs/portability.md`) |
 | D8 proof & observability · *gated* | L1 | 0.5 | → L2+ deferred to M3+ (M-14) |
 
 ---
@@ -75,6 +75,23 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 - [x] **M-09 (mechanism)** — `check_engine_parity.py --require-engine` flips skip→fail when the engine
   is absent; CI wired to flip it on once M0 makes `transon` installable. *(gate-integrity; see M-09 below
   for the remaining M0-gated step.)*
+- [x] **M-03 · Cross-tool portability (single source + thin adapter)** — root `CLAUDE.md` points Claude
+  Code at the canonical `AGENTS.md`; **no** agent/command bodies copied (would duplicate prompts and
+  drift). *(D7 L2→L3, +2.9 pts: 75% → 78%.)*
+- [x] **M-07 · Full Claude Code adapters + portability doc** — `.claude/{agents,commands,skills,hooks}`,
+  `.claude/settings.json`, `.mcp.json`, and [`docs/portability.md`](../portability.md). Every `.cursor`
+  mechanism now has a working Claude equivalent: thin adapter bodies read the single source at runtime;
+  a `SessionStart` hook injects `AGENTS.md` (always-on parity); read-only roles drop `Write`/`Edit` from
+  `tools:`; `model: opus/sonnet` mirrors the cost tiers. Parity is **gated** by a new `run_evals.py`
+  check. *(D7 L3→L4, +2.9 pts: 78% → 81% — crosses into L4.)*
+- [x] **M-16 · Tool-neutral core + symmetric assessment** *(score-neutral — fairness, not inflation)*.
+  Removed the "Claude references Cursor" asymmetry: canonical command/skill/agent-role bodies moved to a
+  tool-neutral **`harness/`** core; **both** `.cursor/` and `.claude/` are now thin adapters that
+  reference `harness/`, neither references the other. Made `check_maturity.py` tool-symmetric (D1 credits
+  the always-on contract per tool — Cursor `alwaysApply` *or* Claude `CLAUDE.md`+SessionStart; advisory-hook
+  signal reads both `.cursor/hooks` and `.claude/hooks`). Extended `eval_cross_tool_parity` to enforce
+  bidirectional existence, the no-cross-reference rule, and the `harness/` source. Policy ("new tooling →
+  both adapters, or an explicit exclusion") recorded in `AGENTS.md` + `docs/portability.md`.
 
 ---
 
@@ -106,12 +123,21 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ### 🟠 High (doable now, independent)
 
-- [ ] **M-03 — Cross-tool portability (`.claude/` mirror).**  *Proposal P10.*
-  Mirror `.cursor/agents` → `.claude/agents`, `.cursor/commands` → `.claude/commands/`, add a one-line
-  `CLAUDE.md` pointing at `AGENTS.md`. The harness currently does not load in Claude Code at all.
-  - **Impact:** D7 L2→**L3** (+2.9) → ~78%.
-  - **Acceptance:** ≥2 agent-tool surfaces detected; `check_maturity.py` reports D7 L3.
-  - **Effort:** S–M.
+- [x] **M-03 — Cross-tool portability (single source + thin adapter).** ✅ *done — see Done above.*  *Proposal P10; approach adjusted to avoid duplication.*
+  Two alternatives were weighed against "mirror `.cursor/agents`/`commands` into `.claude/`" (copy the
+  bodies — **rejected**, that is the drift the harness forbids) and "extract common parts into shared
+  files referenced from both tools" (**rejected for bodies**: no reliable cross-tool transclusion of an
+  agent's system prompt, and the two tools' frontmatter/invocation differ — a shared body needs a
+  build/sync step that is itself a new, ungated drift source). Chosen approach = the course's
+  portable-core + thin-adapter pattern: **one source** (`AGENTS.md` + tool-agnostic gates/hooks/CI) + a
+  **thin `CLAUDE.md` pointer**, no copied bodies. Two boundaries make it honest:
+  - **Rules** are single-sourced in `AGENTS.md`; the always-on `.cursor/rules` overlap is kept as
+    deliberate belt-and-suspenders (a Cursor `alwaysApply` rule must inject its *body* every turn — an
+    `@AGENTS.md` reference would trade the always-on guarantee for a few saved lines).
+  - **Agent/command/skill orchestration adapters** for Claude Code are deferred to **M-07**, to be
+    written as adapters that point at the source, not copies.
+  - **Impact:** D7 L2→**L3** (+2.9). ✅ landed (78%).
+  - **Acceptance:** ≥2 agent-tool surfaces detected; `check_maturity.py` reports D7 L3. ✅
 
 - [ ] **M-04 — Working memory + committed snapshot.**  *Gaps: **G-06**, **G-07**.*
   Add `docs/current-state.md` (last action / status / next steps, updated end-of-session); commit a
@@ -137,9 +163,10 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   - **Acceptance:** a `*review*` workflow file exists and is wired; `check_maturity.py` reports D4 L4.
   - **Effort:** M.
 
-- [ ] **M-07 — Portability doc.**  *Extends M-03.*
-  `docs/portability.md` describing the shared Node/Python + git core and the per-tool adapters.
-  - **Impact:** D7 L3→**L4** (+2.9).  **Acceptance:** D7 L4.  **Effort:** S.
+- [x] **M-07 — Full Claude Code adapters + portability doc.** ✅ *done — see Done above.*  *Extends M-03.*
+  `.claude/{agents,commands,skills,hooks}` + `settings.json` + `.mcp.json` + `docs/portability.md`, all
+  thin adapters that read the single source at runtime. Parity gated by `run_evals.py`.
+  - **Impact:** D7 L3→**L4** (+2.9). ✅ landed (81%, L4).  **Acceptance:** `docs/portability.md` present, ≥2 surfaces, `check_maturity.py` reports D7 L4. ✅
 
 - [ ] **M-08 — Loop automations / worktrees.**  *Extends M-01; Day-2 outer loop.*
   An `automations/` dir (propose-only watchers: drift / CI-triage) and/or documented worktree flow for
@@ -174,9 +201,11 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 | After clearing | Score | Tier |
 |---|---|---|
 | ~~CI gate + scorer~~ | ~~63%~~ | done |
-| ✅ 🔴 Critical (M-01, M-02) — **current** | **75%** | L3 Enforced |
-| + 🟠 High (M-03, M-04, M-05) | ~84% | **L4 Optimizing** |
-| + 🟡 Medium (M-06, M-07, M-08) | ~93% | L4 Optimizing |
+| ~~🔴 Critical (M-01, M-02)~~ | ~~75%~~ | done |
+| ~~🟠 M-03~~ | ~~78%~~ | done |
+| ✅ M-07 — **current** | **81%** | **L4 Optimizing** |
+| + 🟠 High (M-04, M-05) | ~87% | L4 Optimizing |
+| + 🟡 Medium (M-06, M-08) | ~93% | L4 Optimizing |
 
 Beyond ~93%, the only remaining headroom is D8 (proof) and D3's real-coverage evidence — both
 correctly **deferred** until code/UI exists. The plan deliberately stops there rather than inflating

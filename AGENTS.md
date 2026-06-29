@@ -43,9 +43,15 @@ Transon JSON, delegating all validation/execution to a host-provided engine.
 ## Where things live
 
 - Contract docs: `docs/`.
-- AI-dev harness: `.cursor/rules/`, `.cursor/commands/`, `.cursor/skills/`, `.cursor/hooks.json`,
-  `.cursor/mcp.json`.
-- Deterministic gates: `scripts/check_traceability.py`, `scripts/check_engine_parity.py`.
+- AI-dev harness — **single-source, multi-tool**:
+  - **Tool-neutral core** (canonical, edit here): `AGENTS.md`, `harness/` (commands, skills, agent
+    roles), the gates, git hooks, and CI.
+  - **Thin per-tool adapters** (point at the core, never copy it): `.cursor/` and `.claude/` + `.mcp.json`.
+  - **Governance** — single-source · both tools equally · gated · new tooling → both adapters or an
+    explicit exclusion. The rule lives in [`harness/README.md`](harness/README.md); the cross-tool map
+    is `docs/portability.md`. **Read it before changing the harness.**
+- Deterministic gates: `scripts/check_traceability.py`, `scripts/check_engine_parity.py`,
+  `scripts/check_maturity.py`, `evals/run_evals.py`.
 - Engine (separate repo): `../transon` — owns `get_editor_metadata()` (see its
   `docs/proposals/editor-metadata-export.md`). **M0 work lives there.**
 

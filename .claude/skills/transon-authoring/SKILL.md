@@ -4,6 +4,6 @@ description: Author, read, and verify Transon JSON-to-JSON templates — the rul
 disable-model-invocation: true
 ---
 
-The full procedure is tool-neutral and lives in `harness/skills/transon-authoring.md` — read and
-follow it. Authority for Transon semantics is the **running engine + engine SPECIFICATION**, never web
-docs, LLM memory, or Context7.
+The full procedure is tool-neutral and lives in `harness/skills/transon-authoring.md` — read it now
+and follow it. Authority for Transon semantics is the **running engine + engine SPECIFICATION**, never
+web docs, LLM memory, or Context7.

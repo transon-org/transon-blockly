@@ -2,16 +2,16 @@
   "generated_by": "scripts/check_maturity.py",
   "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
   "pre_code": true,
-  "score_pct": 75,
-  "tier": "L3 · Enforced",
-  "weighted": 25.5,
+  "score_pct": 81,
+  "tier": "L4 · Optimizing",
+  "weighted": 27.5,
   "weighted_max": 34.0,
   "dimensions": {
     "D1": {
       "name": "context engineering",
       "weight": 1.0,
       "level": 3,
-      "evidence": "AGENTS.md + 6 rules (always/glob) + 4 skills; negative rules present",
+      "evidence": "always-on contract in 2 tool(s) (Cursor rules + Claude CLAUDE.md/SessionStart) + 8 skills + scoped rules; negative rules present",
       "lifecycle_gated": false
     },
     "D2": {
@@ -52,8 +52,8 @@
     "D7": {
       "name": "portability & tooling",
       "weight": 1.0,
-      "level": 2,
-      "evidence": "AGENTS.md + MCP + skills, but single agent-tool surface",
+      "level": 4,
+      "evidence": "2 agent-tool surfaces + documented portability",
       "lifecycle_gated": false
     },
     "D8": {

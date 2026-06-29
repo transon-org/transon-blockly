@@ -4,5 +4,5 @@ description: Pre-merge review checklist for changes affecting Transon round-trip
 disable-model-invocation: true
 ---
 
-The full checklist is tool-neutral and lives in `harness/skills/round-trip-review.md` — read and
-follow it.
+The full checklist is tool-neutral and lives in `harness/skills/round-trip-review.md` — read it now
+and follow it.
