@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `56f1612` — harness: outer-loop propose-only automations + worktree flow (M-08) |
+| Repo HEAD | `8751707` — editor: M0 scaffolding + Node→Python engine adapter |
 | Branch | `m0-editor-scaffolding` |
 | Engine pin | transon `v0.1.1-1-g5812b63` @ `5812b632dc2c` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -31,33 +31,32 @@ correct via counterfactual tests; the one must-fix — a hardcoded `DEFAULT_VENV
 is fixed (the adapter now resolves `<transonRepo>/.venv/bin/python`, proven by the suite passing with
 `TRANSON_PYTHON` unset); a stale doc comment in `snapshot.ts` was also corrected. Gates re-run green.
 Traceability rows for AD-008/AD-011/AD-027·FR-116/FR-119·AD-030/NFR-047 stay `[~]` on purpose — those
-IDs are only *partially* covered by M0 and complete across M1/M2/M4. **Nothing committed yet — awaiting
-go-ahead; deferred follow-up: add a request-id to the bridge protocol (currently safe, see M1).**_
+IDs are only *partially* covered by M0 and complete across M1/M2/M4. **M0 editor-side slice committed
+as `8751707` on `m0-editor-scaffolding` (not pushed); ROADMAP M0 tracker flipped to ☑.** Deferred
+follow-up: add a request-id to the bridge protocol (currently safe, see M1)._
 
 ## Status by milestone
 
 The authoritative milestone tracker is [`ROADMAP.md`](ROADMAP.md#milestone-tracker); this is the
 living read of it.
 
-- **M0 — engine `switch`/`cond` + projection-ready export + Node adapter** — ◐ in progress, **both
-  halves now built**. Engine half (done earlier): `../transon` exports `get_editor_metadata()`
-  (`switch`/`cond` + projection-ready split catalog/docs, `metadata_version 2.0`) — captured in
-  [`metadata-snapshot.json`](metadata-snapshot.json). **Editor half (just built, branch
-  `m0-editor-scaffolding`, uncommitted)**: monorepo scaffolding + AD-021 pins, `@transon/editor-core`
-  stub (`EngineProvider` port + snapshot loader), and the Node→Python `test/engine-node-adapter` running
-  markers `@`/`$`. Remaining to close M0: finish the `round-trip-reviewer` sign-off, then commit/PR; the
-  CI engine-pin flip (M-09: `--require-engine`) still waits on `transon` being pip-installable in CI.
+- **M0 — engine `switch`/`cond` + projection-ready export + Node adapter** — ☑ done (committed
+  `8751707`, not pushed; CI pin flip deferred). Engine half: `../transon` exports
+  `get_editor_metadata()` (`switch`/`cond` + projection-ready split catalog/docs, `metadata_version
+  2.0`) — captured in [`metadata-snapshot.json`](metadata-snapshot.json). Editor half: monorepo
+  scaffolding + AD-021 pins, `@transon/editor-core` stub (`EngineProvider` port + snapshot loader), and
+  the Node→Python `test/engine-node-adapter` running markers `@`/`$` — reviewed + gate-green. Only the
+  CI engine-pin flip (M-09: `--require-engine`) remains, waiting on `transon` being pip-installable in CI.
 - **M1–M5** — ☐ not started. M1 (`editor-core` codec skeleton + `G_encode`/`G_decode` for one rule,
   e.g. `attr`) is the next milestone and consumes the M0 adapter + snapshot.
 
 ## Next steps (ordered)
 
-1. Commit the M0 editor-side slice onto `m0-editor-scaffolding` (scaffolding + `packages/` + `test/` +
-   the 3 doc edits; `node_modules`/`dist`/`.turbo` are gitignored) and flip the ROADMAP M0 tracker row
-   — pending the user's go-ahead (one branch/PR per milestone).
-2. Start **M1** (`/run-milestone M1`): `editor-core` codec skeleton + `G_encode`/`G_decode` for one
+1. Start **M1** (`/run-milestone M1`): `editor-core` codec skeleton + `G_encode`/`G_decode` for one
    rule (`attr`) with execution-based round-trip via the M0 adapter — the de-risk prototype. M1 also
    wires real `include` resolution through the adapter and should add the bridge request-id then.
+2. (Optional) push `m0-editor-scaffolding` + open a PR referencing the M0 IDs (one branch/PR per
+   milestone) — not yet done.
 3. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
    `update_memory.py --check --require-engine` on, once the engine is pip-installable in CI.
 
