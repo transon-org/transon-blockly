@@ -148,11 +148,12 @@ def eval_cross_tool_parity() -> List[str]:
         return ["parity: no .claude/ adapters — Claude Code is not at parity with Cursor"]
     out: List[str] = []
 
-    # 1. Bidirectional existence parity for agents, commands, skills.
+    # 1. Bidirectional existence parity for agents, commands, skills, workflows.
     kinds = (
         ("agents", "*.md", lambda p: p.stem),
         ("commands", "*.md", lambda p: p.stem),
         ("skills", "*/SKILL.md", lambda p: p.parent.name),
+        ("workflows", "*.md", lambda p: p.stem),
     )
     for kind, pattern, key in kinds:
         cur = {key(p) for p in (CURSOR / kind).glob(pattern)}
@@ -170,14 +171,17 @@ def eval_cross_tool_parity() -> List[str]:
 
     # 3. No second-class tool: neither adapter may reference the other's dir — both point at harness/.
     for tool_dir, other in ((CURSOR, ".claude/"), (claude, ".cursor/")):
-        for sub in ("agents", "commands", "skills"):
+        for sub in ("agents", "commands", "skills", "workflows"):
             for path in (tool_dir / sub).rglob("*.md"):
                 if other in _read(path):
                     out.append(f"parity: {path.relative_to(PROJECT_ROOT)} references {other} — "
                                "adapters must point at harness/, not each other")
 
-    # 4. Canonical bodies live in the tool-neutral harness/ core.
-    for sub in ("agents", "commands", "skills"):
+    # 4. Canonical bodies live in the tool-neutral harness/ core. (workflows only once one exists)
+    canonical_kinds = ["agents", "commands", "skills"]
+    if (claude / "workflows").exists() or (CURSOR / "workflows").exists():
+        canonical_kinds.append("workflows")
+    for sub in canonical_kinds:
         if not list((harness / sub).glob("*.md")):
             out.append(f"parity: harness/{sub}/ has no canonical bodies")
 

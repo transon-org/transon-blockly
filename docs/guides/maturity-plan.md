@@ -43,15 +43,15 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ## Current snapshot
 
-`check_maturity.py` baseline (pre-code): **87% · L4 Optimizing** (`29.5 / 34` weighted) — after
-🔴 Critical (M-01, M-02), 🟠 M-03, M-07, M-04, and M-05 landed (63% → 87%).
+`check_maturity.py` baseline (pre-code): **90% · L4 Optimizing** (`30.5 / 34` weighted) — after
+🔴 Critical (M-01, M-02), 🟠 M-03, M-07, M-04, M-05, and M-06 landed (63% → 90%).
 
 | Dim | Level | Weight | Headroom |
 |---|---|---|---|
 | D1 context engineering | L3 | 1.0 | → L4 needs a documented rule-feedback loop (hard to auto-detect; not pursued) |
 | D2 spec & traceability | **L4** | 1.5 | ✅ maxed (M-01) |
 | D3 verification & gates · *gated* | **L4** | 1.5 | ✅ via harness evals (M-02); real-coverage evidence deferred (M-15) |
-| D4 review / maker ≠ checker | **L3** | 1.0 | done to L3 (M-05: CodeRabbit structural trigger); **→ L4 via M-06** |
+| D4 review / maker ≠ checker | **L4** | 1.0 | ✅ maxed (M-05 trigger + M-06 adversarial `review-gate` workflow) |
 | D5 loop & orchestration | **L3** | 1.0 | done to L3 (M-01); **→ L4 via M-08** |
 | D6 memory & knowledge | **L4** | 1.0 | ✅ maxed (M-04: working handoff + committed engine snapshot) |
 | D7 portability & tooling | **L4** | 1.0 | ✅ maxed (M-03 + M-07: `.claude/` adapters + `docs/portability.md`) |
@@ -92,6 +92,12 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   signal reads both `.cursor/hooks` and `.claude/hooks`). Extended `eval_cross_tool_parity` to enforce
   bidirectional existence, the no-cross-reference rule, and the `harness/` source. Policy ("new tooling →
   both adapters, or an explicit exclusion") recorded in `AGENTS.md` + `docs/portability.md`.
+- [x] **M-06 · Adversarial review-gate workflow** — `harness/workflows/review-gate.md` (+ thin
+  `.claude/` and `.cursor/` adapters): a pre-merge gate that fans review across five dimensions and
+  **adversarially refutes each finding before it counts**, composing the `round-trip-reviewer` subagent,
+  `.coderabbit.yaml`, and the deterministic gates into one verdict. `run_evals.py` parity extended to
+  gate workflows on both tools + a `harness/` canonical body. *(closes the adversarial half of **G-05**;
+  D4 L3→L4, +2.9 pts: 87% → 90%.)*
 - [x] **M-05 · Structurally triggered review** — `.coderabbit.yaml` wires a free external reviewer that
   fires on every PR, scoped by `path_instructions` to the trust-critical round-trip core, runtime-safety
   surfaces, tests, contract docs, and the harness — each citing the SPEC/AD IDs the internal
@@ -180,11 +186,16 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ### 🟡 Medium (sequenced behind a High item)
 
-- [ ] **M-06 — Adversarial review workflow.**  *Extends M-05; Day-2 `review-gate`.*
-  A `.claude/workflows/review-gate` (or `.cursor/`) that fans review across dimensions and adversarially
-  verifies findings before merge. Depends on **M-03**/**M-05**.
-  - **Impact:** D4 L3→**L4** (+2.9).
-  - **Acceptance:** a `*review*` workflow file exists and is wired; `check_maturity.py` reports D4 L4.
+- [x] **M-06 — Adversarial review workflow.** ✅ *done — see Done above.*  *Extends M-05; Day-2 `review-gate`.*
+  `harness/workflows/review-gate.md` (canonical) + thin `.claude/workflows/` and `.cursor/workflows/`
+  adapters: a pre-merge gate that fans review across five dimensions (round-trip · runtime safety ·
+  catalog/metadata parity · spec/traceability · harness integrity), then **adversarially refutes every
+  finding before it blocks merge** (default-refuted-when-uncertain; prefer execution over textual
+  argument), composing the `round-trip-reviewer` subagent + `.coderabbit.yaml` + the deterministic
+  gates into one verdict. Parity is **gated** — `run_evals.py` now requires workflows on both tools +
+  a `harness/` canonical body (verified by a missing-workflow negative test).
+  - **Impact:** D4 L3→**L4** (+2.9). ✅ landed (87% → **90%**).
+  - **Acceptance:** a `*review*` workflow file exists and is wired; `check_maturity.py` reports D4 L4. ✅
   - **Effort:** M.
 
 - [x] **M-07 — Full Claude Code adapters + portability doc.** ✅ *done — see Done above.*  *Extends M-03.*
@@ -228,8 +239,9 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 | ~~🔴 Critical (M-01, M-02)~~ | ~~75%~~ | done |
 | ~~🟠 M-03~~ | ~~78%~~ | done |
 | ~~🟠 M-04~~ | ~~84%~~ | done |
-| ✅ M-05 — **current** | **87%** | **L4 Optimizing** |
-| + 🟡 Medium (M-06, M-08) | ~93% | L4 Optimizing |
+| ~~🟠 M-05~~ | ~~87%~~ | done |
+| ✅ M-06 — **current** | **90%** | **L4 Optimizing** |
+| + 🟡 M-08 (loop automations) | ~93% | L4 Optimizing |
 
 Beyond ~93%, the only remaining headroom is D8 (proof) and D3's real-coverage evidence — both
 correctly **deferred** until code/UI exists. The plan deliberately stops there rather than inflating

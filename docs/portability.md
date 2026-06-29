@@ -33,6 +33,7 @@ PRs **regardless of which agent tool authored the change**. They need no per-too
 | Subagents | `harness/agents/*.md` | `agents/*.md` (`model`, `readonly`) | `agents/*.md` (`tools:` = capability, `model:` = tier) |
 | Commands | `harness/commands/*.md` | `commands/*.md` | `commands/*.md` (`/run-milestone`, `/implement-requirement`) |
 | Skills | `harness/skills/*.md` | `skills/*/SKILL.md` (`disable-model-invocation`) | `skills/*/SKILL.md` (`disable-model-invocation`) |
+| Workflows | `harness/workflows/*.md` | `workflows/*.md` (e.g. `review-gate`) | `workflows/*.md` (e.g. `review-gate`) |
 | Advisory hooks | `harness/scripts/check_traceability.check()`, `update_memory.handoff_nudge()` | `hooks.json` → `check-docs-consistency` + `handoff-memory` (stop), `advance-requirement-loop` (subagentStop) | `settings.json` → `SessionStart`, `Stop` (`stop-traceability` + `handoff-memory`), `SubagentStop` |
 | Working memory / snapshot | `harness/scripts/update_memory.py` → `docs/current-state.md` + `docs/metadata-snapshot.json` | `hooks/handoff-memory.py` (stop nudge) | `hooks/handoff-memory.py` (Stop nudge) — both call `handoff_nudge()` |
 | MCP | — | `mcp.json` | `.mcp.json` |
@@ -45,11 +46,11 @@ differs.
 
 `harness/evals/run_evals.py` (`eval_cross_tool_parity`) runs in the pre-commit hook and CI, and fails if:
 
-- a command / skill / subagent exists on one tool but not the other (**bidirectional**);
+- a command / skill / subagent / **workflow** exists on one tool but not the other (**bidirectional**);
 - a read-only Claude subagent carries `Write`/`Edit` in `tools`;
 - **either adapter references the other tool's directory** (both must point at `harness/` — no
   second-class tool);
-- `harness/{agents,commands,skills}/` has no canonical bodies.
+- `harness/{agents,commands,skills,workflows}/` has no canonical bodies.
 
 The maturity scorer is likewise tool-symmetric: D1 (context) credits the always-on contract for *each*
 tool that has it (Cursor `alwaysApply` **or** Claude `CLAUDE.md` + SessionStart), and the advisory-hook

@@ -84,6 +84,10 @@ unchanged).
   and engine verification (authority = running engine + engine SPECIFICATION, **not** generative web
   docs, LLM memory, or Context7); **`blockly-authoring`** — Blockly/Zelos/workspace layer (Context7
   OK for Blockly API only).
+- **Workflows** (`harness/workflows/`): **`review-gate`** — the adversarial pre-merge review pass;
+  run it on any branch touching the codec, variant matcher, surface check, marker escape, ordering, or
+  a runtime-safety surface before merge (it fans review across dimensions and *refutes* each finding
+  before it blocks). Maker ≠ checker: never gate a slice you implemented.
 - MCP (`.cursor/mcp.json`): **Playwright** for UI/accessibility testing (§19.4, §19.5);
   **Context7** for current Blockly/React/Vite/Vitest API docs — **not** for Transon semantics.
 - The harness is designed so a less-capable executor model can work safely: small per-ID tasks,

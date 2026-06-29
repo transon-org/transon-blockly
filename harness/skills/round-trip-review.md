@@ -45,3 +45,7 @@ Apply when a change touches the trust-critical core or a security-sensitive surf
 ```
 
 Report findings as `🔴 Critical (must fix)`, `🟡 Suggestion`, or `🟢 Nice-to-have`, each with its ID.
+
+For a full pre-merge pass, this checklist is the **round-trip correctness** and **runtime safety**
+dimensions of the `harness/workflows/review-gate.md` workflow, which fans these alongside the catalog,
+spec/traceability, and harness dimensions and then *adversarially refutes* each finding before merge.

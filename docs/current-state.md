@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `abef638` — harness: add working memory + committed engine snapshot (M-04) |
+| Repo HEAD | `6c2b401` — harness: structurally triggered external review (M-05) |
 | Branch | `alternative-path` |
 | Engine pin | transon `v0.1.1-1-g5812b63` @ `5812b632dc2c` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -16,9 +16,11 @@
 
 ## Last action
 
-_M-05 landed: `.coderabbit.yaml` structurally triggers an external reviewer on every PR, scoped to the
-trust-critical surfaces (D4 L2→L3, 84% → 87%). M-04 before it added this working-memory + snapshot
-harness. Next non-deferred maturity item is M-06 (adversarial review workflow → D4 L4)._
+_M-06 landed: `harness/workflows/review-gate.md` (+ thin tool adapters) — an adversarial pre-merge
+review-gate that fans review across five dimensions and refutes each finding before it counts; workflow
+parity is now gated in `run_evals.py` (D4 L3→L4, 87% → 90%). M-05/M-04 preceded it. The only remaining
+non-deferred maturity item is M-08 (loop automations / worktrees → D5 L4, ~93%); everything past that is
+lifecycle-gated on code/UI (M-14/M-15, D8 + real coverage)._
 
 ## Status by milestone
 
