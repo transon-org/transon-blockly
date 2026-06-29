@@ -17,8 +17,8 @@ Implement a single requirement against a locked design. Follow
    Blockly/React/engine deps). When authoring blocks, follow `harness/skills/blockly-authoring.md`.
 4. Run Vitest for the touched package until green.
 5. Update the matching `docs/traceability.md` row (status + test reference) in the same change.
-6. Run `python scripts/check_traceability.py`, `python evals/run_evals.py`, and
-   `python scripts/check_engine_parity.py`; all green.
+6. Run `python harness/scripts/check_traceability.py`, `python harness/evals/run_evals.py`, and
+   `python harness/scripts/check_engine_parity.py`; all green.
 
 ## Hard rules (STOP and report instead of guessing)
 - One requirement per run; resist scope creep.

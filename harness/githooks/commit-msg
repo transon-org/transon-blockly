@@ -2,7 +2,7 @@
 # Binding traceability trailer (M-01). Any commit that touches *product code* must
 # carry a `Refs:` or `Slice:` trailer naming the requirement/slice it serves, so
 # `git log --grep FR-xxx` becomes a complete audit of where a requirement was
-# implemented. Harness/docs commits (scripts/, docs/, .githooks/, evals/, .github/)
+# implemented. Harness/docs commits (harness/scripts/, docs/, .githooks/, harness/evals/, .github/)
 # are exempt.
 #
 # Enable once per clone:

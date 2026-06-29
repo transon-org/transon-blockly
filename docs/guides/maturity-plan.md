@@ -14,7 +14,7 @@ It merges two sources into one prioritized, checkable list:
 2. The enhancement proposals from the agentic-maturity assessment.
 
 **Criticality is defined by maturity-score impact** — how many points each item moves the score
-produced by [`scripts/check_maturity.py`](../../scripts/check_maturity.py), against
+produced by [`harness/scripts/check_maturity.py`](../../harness/scripts/check_maturity.py), against
 [`docs/maturity-baseline.json`](../maturity-baseline.json). Each item lists the dimension it lifts,
 the level transition, and the point delta, plus an **acceptance criterion the scorer can detect**, so
 progress is machine-verifiable, not a matter of opinion.
@@ -64,13 +64,13 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 - [x] **CI gate** — `.github/workflows/agentic-checks.yml` runs traceability + harness evals +
   engine-parity + maturity ratchet on every PR/push. *(closes the CI half of **G-01**; lifted D2 L2→L3
   and D3 L2→L3, +8.8 pts: 54% → 63%.)*
-- [x] **Maturity scorer + baseline** — `scripts/check_maturity.py` + `docs/maturity-baseline.json`;
+- [x] **Maturity scorer + baseline** — `harness/scripts/check_maturity.py` + `docs/maturity-baseline.json`;
   the `--check` ratchet fails CI on regression. *(the L3→L4 self-improvement mechanism for the harness.)*
-- [x] **M-01 · Binding git hooks** — `.githooks/pre-commit` (traceability + evals + maturity ratchet)
-  and `.githooks/commit-msg` (`Refs:`/`Slice:` trailer on code-touching commits); enable with
-  `git config core.hooksPath .githooks`. *(D2 L3→L4, D5 L2→L3, +7.3 pts.)*
-- [x] **M-02 · Harness golden-path evals** — `evals/run_evals.py` (maker≠checker, cost-tiered routing,
-  skill determinism, loop hooks/recipe) + model-judged `evals/cases/`, run in CI + pre-commit.
+- [x] **M-01 · Binding git hooks** — `harness/githooks/pre-commit` (traceability + evals + maturity ratchet)
+  and `harness/githooks/commit-msg` (`Refs:`/`Slice:` trailer on code-touching commits); enable with
+  `git config core.hooksPath harness/githooks`. *(D2 L3→L4, D5 L2→L3, +7.3 pts.)*
+- [x] **M-02 · Harness golden-path evals** — `harness/evals/run_evals.py` (maker≠checker, cost-tiered routing,
+  skill determinism, loop hooks/recipe) + model-judged `harness/evals/cases/`, run in CI + pre-commit.
   *(closes **G-12**; D3 L3→L4, +4.4 pts.)*
 - [x] **M-09 (mechanism)** — `check_engine_parity.py --require-engine` flips skip→fail when the engine
   is absent; CI wired to flip it on once M0 makes `transon` installable. *(gate-integrity; see M-09 below
@@ -92,6 +92,11 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   signal reads both `.cursor/hooks` and `.claude/hooks`). Extended `eval_cross_tool_parity` to enforce
   bidirectional existence, the no-cross-reference rule, and the `harness/` source. Policy ("new tooling →
   both adapters, or an explicit exclusion") recorded in `AGENTS.md` + `docs/portability.md`.
+- [x] **M-17 · Broken-link gate** *(gate-integrity)*. `harness/scripts/check_links.py` validates every
+  relative Markdown file + anchor link (GitHub slug algorithm); wired into pre-commit + CI. Caught a real
+  link broken by the `harness/` folder consolidation that every other gate passed over. Also relocated
+  `scripts/` `evals/` `.githooks/` under `harness/` (root 8 → 5 folders) — the whole tool-agnostic harness
+  now lives in one folder.
 
 ---
 
@@ -100,18 +105,18 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 ### 🔴 Critical
 
 - [x] **M-01 — Binding git hooks (pre-commit + commit-msg).** ✅ *done — see Done above.*  *Gap: **G-01** (hook half), **G-05** spirit.*
-  `.githooks/pre-commit` runs `check_traceability.py` + `evals/run_evals.py` + `check_maturity.py --check`
-  (+ lint/test once code exists); `.githooks/commit-msg` rejects a code-touching commit lacking a
-  `Refs: FR-xxx` / `Slice:` trailer. Enable with `git config core.hooksPath .githooks`.
+  `harness/githooks/pre-commit` runs `check_traceability.py` + `harness/evals/run_evals.py` + `check_maturity.py --check`
+  (+ lint/test once code exists); `harness/githooks/commit-msg` rejects a code-touching commit lacking a
+  `Refs: FR-xxx` / `Slice:` trailer. Enable with `git config core.hooksPath harness/githooks`.
   - **Impact:** D2 L3→**L4** (+4.4) **and** D5 L2→**L3** (+2.9) = **+7.3 pts**. ✅ landed.
   - **Acceptance:** `check_maturity.py` reports D2 L4 + D5 L3; a trailerless code commit is rejected locally. ✅
 
 - [x] **M-02 — Harness golden-path evals.** ✅ *done — see Done above.*  *Gap: **G-12**.*
-  `evals/run_evals.py` asserts the agents behave (maker≠checker, cost-tiered routing, skill determinism,
-  loop hooks/recipe); `evals/cases/*.md` hold the model-judged behavioral cases (planner one-task-per-FR,
+  `harness/evals/run_evals.py` asserts the agents behave (maker≠checker, cost-tiered routing, skill determinism,
+  loop hooks/recipe); `harness/evals/cases/*.md` hold the model-judged behavioral cases (planner one-task-per-FR,
   implementer refuses ambiguous SPEC, round-trip catches a seeded meaning change — last one gated on M1).
   - **Impact:** D3 L3→**L4** (+4.4). ✅ landed.
-  - **Acceptance:** `evals/` present and run in CI; `check_maturity.py` reports D3 L4. ✅
+  - **Acceptance:** `harness/evals/` present and run in CI; `check_maturity.py` reports D3 L4. ✅
 
 - [~] **M-09 — Engine pin + fail-closed parity.**  *Gap: **G-02**. Mechanism done; flip gated on M0.*
   `check_engine_parity.py --require-engine` now fails (not skips) when the engine is absent, and CI is
@@ -214,9 +219,9 @@ the score with premature machinery.
 ## Re-measuring
 
 ```bash
-python scripts/check_maturity.py                 # per-dimension levels + evidence
-python scripts/check_maturity.py --check          # ratchet vs baseline (CI uses this)
-python scripts/check_maturity.py --update-baseline # after an item lands, re-baseline
+python harness/scripts/check_maturity.py                 # per-dimension levels + evidence
+python harness/scripts/check_maturity.py --check          # ratchet vs baseline (CI uses this)
+python harness/scripts/check_maturity.py --update-baseline # after an item lands, re-baseline
 ```
 
 When an item lands: tick its checkbox, run `--update-baseline`, and commit the bumped

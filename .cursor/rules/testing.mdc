@@ -23,5 +23,5 @@ change (§21.13, AC-027).
 ## Anti-drift
 
 - Never hardcode the rule/operator/function catalog in a test expectation — derive it from the engine
-  `get_editor_metadata()` export so `scripts/check_engine_parity.py` stays meaningful.
+  `get_editor_metadata()` export so `harness/scripts/check_engine_parity.py` stays meaningful.
 - Add a regression test for every generated-JSON, import/export, or round-trip bug (§19.7).

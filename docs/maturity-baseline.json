@@ -1,5 +1,5 @@
 {
-  "generated_by": "scripts/check_maturity.py",
+  "generated_by": "harness/scripts/check_maturity.py",
   "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
   "pre_code": true,
   "score_pct": 81,

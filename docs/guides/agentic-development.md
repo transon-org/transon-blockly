@@ -26,7 +26,7 @@ drive it, why it is shaped the way it is, and where it is thin. Its companion,
 ## 1. What the harness is
 
 The harness lives under a tool-neutral `harness/` core (canonical command/skill/agent-role bodies) with
-`.cursor/` and `.claude/` as thin adapters, the `scripts/` checkers and `evals/`, and a **binding**
+`.cursor/` and `.claude/` as thin adapters, the `harness/scripts/` checkers and `harness/evals/`, and a **binding**
 enforcement layer — git hooks plus a CI workflow. It is built around one idea: **the
 contract docs are the source of truth, and every layer of automation exists to keep generated code
 pinned to that contract.** The diagram reads top-to-bottom — contract feeds the harness, the harness
@@ -38,7 +38,7 @@ flowchart TB
     C["1 · Contract<br/>docs/"]
     H["2 · Harness<br/>.cursor/ + .claude/"]
     K["3 · Code<br/>packages/ @transon/*"]
-    G["4 · Gates<br/>scripts/ + evals/"]
+    G["4 · Gates<br/>harness/scripts/ + harness/evals/"]
     E["5 · Enforcement<br/>git hooks + CI"]
     EN(["transon engine<br/>get_editor_metadata()"])
 
@@ -75,9 +75,9 @@ Each numbered stage expands in the table below.
 | | Skills | `skills/transon-authoring` · `blockly-authoring` · `round-trip-review` · `spec-traceability` | On-demand procedures; all explicit-invocation (`disable-model-invocation: true`). |
 | | MCP | `mcp.json` | Playwright (UI / a11y) + Context7 (live Blockly/React/Vite docs — **not** Transon). |
 | **3 · Code** | Editor packages | `packages/@transon/*` *(future)* | What the harness produces, pinned to the contract; semantic core in `editor-core` (no Blockly/React/engine deps). |
-| **4 · Gates** | Deterministic checks | `scripts/check_traceability` · `check_engine_parity` · `check_maturity` · `evals/run_evals` | Model-independent truth checks: ID consistency, editor↔engine parity, harness maturity (+ratchet), agent golden-paths. |
+| **4 · Gates** | Deterministic checks | `harness/scripts/check_traceability` · `check_links` · `check_engine_parity` · `check_maturity` · `harness/evals/run_evals` | Model-independent truth checks: ID consistency, markdown links, editor↔engine parity, harness maturity (+ratchet), agent golden-paths. |
 | **5 · Enforcement** | Advisory | `.cursor/hooks.json` → `check-docs-consistency` (stop) · `advance-requirement-loop` (subagentStop) | Nudge mid-session (re-prompt on drift, self-advance the loop); **never block**. |
-| | Binding | `.githooks/pre-commit` · `commit-msg` · `.github/workflows/agentic-checks.yml` | Make the gates **mandatory**: red blocks the commit (pre-commit) or merge (CI); `Refs:`/`Slice:` trailer required on code commits. |
+| | Binding | `harness/githooks/pre-commit` · `commit-msg` · `.github/workflows/agentic-checks.yml` | Make the gates **mandatory**: red blocks the commit (pre-commit) or merge (CI); `Refs:`/`Slice:` trailer required on code commits. |
 
 Stages 1–2 are model-facing context; stages 4–5 are the model-independent backstop. The detail of the
 advisory-vs-binding split in stage 5 is in [§4](#two-enforcement-layers-advisory-and-binding).
@@ -98,7 +98,7 @@ second-class. Equal effectiveness comes from mechanisms that duplicate nothing:
   Claude `tools:` list (vs Cursor's `readonly`); `model: opus|sonnet` mirrors the opus/composer split.
 
 The full cross-tool map is [`docs/portability.md`](../portability.md). Parity is **gated**, not hoped
-for: `evals/run_evals.py` fails if a command/skill/subagent is missing on *either* side (bidirectional),
+for: `harness/evals/run_evals.py` fails if a command/skill/subagent is missing on *either* side (bidirectional),
 if a read-only Claude subagent gains write tools, or if either adapter references the other tool. The
 maturity scorer is likewise **tool-symmetric** (D1 credits the always-on contract per tool). New tooling
 must land in `harness/` + both adapters, or carry an explicit exclusion (policy in `AGENTS.md`). The one
@@ -159,11 +159,11 @@ contract, defined in `AGENTS.md` / `spec-discipline` and enforced by the gates.
 
 ### 2.3 Bootstrapping (do this first)
 
-**Enable the binding git hooks** — they are committed under `.githooks/` but git only runs them once
+**Enable the binding git hooks** — they are committed under `harness/githooks/` but git only runs them once
 you point it there (one command per clone):
 
 ```bash
-git config core.hooksPath .githooks
+git config core.hooksPath harness/githooks
 ```
 
 After this, `pre-commit` runs the gates and `commit-msg` requires a `Refs:`/`Slice:` trailer on
@@ -175,10 +175,10 @@ export is used). To make it deterministic:
 
 ```bash
 pip install transon                 # or: export TRANSON_REPO=/path/to/transon
-python scripts/check_traceability.py
-python scripts/check_engine_parity.py   # add --require-engine to fail (not skip) if absent
-python evals/run_evals.py
-python scripts/check_maturity.py         # see the per-dimension maturity levels
+python harness/scripts/check_traceability.py
+python harness/scripts/check_engine_parity.py   # add --require-engine to fail (not skip) if absent
+python harness/evals/run_evals.py
+python harness/scripts/check_maturity.py         # see the per-dimension maturity levels
 ```
 
 If neither the package nor `TRANSON_REPO`/sibling is present, plain `check_engine_parity.py` **skips
@@ -203,7 +203,7 @@ is not duplicated here.
 - **Determinism where it matters.** The checkers are pure-stdlib Python with no model in the loop.
   They answer questions a model cannot rationalize away: *does the editor's catalog match the engine?*
   (`check_engine_parity`), *is every cited/"done" requirement ID real and tested?* (`check_traceability`),
-  *do the agents still obey maker≠checker and cost-tiered routing?* (`evals/run_evals`), and *has the
+  *do the agents still obey maker≠checker and cost-tiered routing?* (`harness/evals/run_evals`), and *has the
   harness regressed?* (`check_maturity --check`).
 - **Binding, not advisory.** Those gates run in a `pre-commit` git hook and in CI — a red check blocks
   the commit or the merge, it does not merely nudge. The editor hooks still nudge mid-session, but
@@ -230,7 +230,7 @@ visible hole for a couple. This table is the heart of the guide.
 |---|---|---|---|
 | **Engine/spec drift** | Editor supports a rule/operator/function the engine doesn't (or vice-versa); variant signatures or enum domains diverge | `check_engine_parity.py` compares `SPEC.md` §14 + the editor's derived catalog against the engine `get_editor_metadata()` export (names, variant signatures, resolved enums, export shape) | **Strong — when the engine is present** (see G-02) |
 | **Intent / requirement drift** | Code does something the SPEC never sanctioned; a "done" feature has no test; tests cite IDs that don't exist | SPEC-first rule (§21.2), ID-stability rule (§21.1), `check_traceability.py` (no dead/deprecated IDs; "done" FR/AC must have a citing test), the `commit-msg` `Refs:`/`Slice:` trailer, STOP-and-escalate hard rules | **Strong now binding** — runs in pre-commit + CI; citation is still a proxy for coverage, not proof (G-04 / M-13) |
-| **Harness / agent drift** | A subagent loses `readonly`, the cost tier collapses (writer == judge model), a skill becomes auto-invoked, the loop recipe is edited away | `evals/run_evals.py` golden-path checks (maker≠checker · model routing · skill determinism · loop hooks/recipe), run in CI + pre-commit | **Strong** — deterministic, binding (M-02) |
+| **Harness / agent drift** | A subagent loses `readonly`, the cost tier collapses (writer == judge model), a skill becomes auto-invoked, the loop recipe is edited away | `harness/evals/run_evals.py` golden-path checks (maker≠checker · model routing · skill determinism · loop hooks/recipe), run in CI + pre-commit | **Strong** — deterministic, binding (M-02) |
 | **Maturity regression** | A later change quietly drops a gate or weakens enforcement | `check_maturity.py --check` ratchets the per-dimension levels against `docs/maturity-baseline.json`; CI fails on any drop | **Strong** — binding in CI |
 | **Semantic / round-trip drift** | Import→export silently changes meaning; a variant matches zero/many; ordering or marker-escape regresses | `round-trip-review` skill + `round-trip-reviewer` subagent; execution-based round-trip corpus (AD-011); editor-core invariants rule | **Design-strong, enforcement-weak** — nothing *forces* a review pass (G-05) |
 | **Tech-debt drift** | Hand-written per-rule codec/IR/block code creeps back; UI metadata leaks into templates; core grows engine/DOM deps | "Projections, not hand-written mappings" (§21.15, AD-026), UI≠semantics (§21.12), one-way package dependency rule, ROADMAP DoD line "no hand-written codec/IR/per-rule block code reintroduced" | **Medium** — these are prose rules + review, not automated checks yet |
@@ -269,7 +269,7 @@ flowchart LR
 `loop_limit` times (`stop` = 3, `subagentStop` = 12) — it re-prompts on traceability drift and
 self-advances the per-requirement loop, but it cannot stop a commit.
 
-**Binding layer (commit + merge).** `.githooks/pre-commit` re-runs the gates and `.githooks/commit-msg`
+**Binding layer (commit + merge).** `harness/githooks/pre-commit` re-runs the gates and `harness/githooks/commit-msg`
 demands the trailer, so a drifting change is **rejected locally**; `.github/workflows/agentic-checks.yml`
 re-runs the same gates on every PR, so it is **blocked at merge** even if the local hooks were bypassed.
 The one remaining soft spot is engine parity, which still self-skips until M0 makes `transon`
@@ -286,11 +286,11 @@ restated across docs:
 - **[maturity-plan.md](maturity-plan.md)** — the gap backlog (G-01 … G-12) merged with the improvement
   proposals into a checklist; each item carries a criticality = its maturity-score delta, a
   machine-detectable acceptance criterion, and a status checkbox.
-- **[`scripts/check_maturity.py`](../../scripts/check_maturity.py)** +
+- **[`harness/scripts/check_maturity.py`](../../harness/scripts/check_maturity.py)** +
   **[`docs/maturity-baseline.json`](../maturity-baseline.json)** — the deterministic scorecard (eight
   dimensions on a 0-4 enforcement ladder) and its committed baseline; the CI ratchet fails on regression.
 
-Run `python scripts/check_maturity.py` for the current per-dimension levels and the evidence behind each.
+Run `python harness/scripts/check_maturity.py` for the current per-dimension levels and the evidence behind each.
 
 ---
 
@@ -299,46 +299,33 @@ Run `python scripts/check_maturity.py` for the current per-dimension levels and 
 ```text
 AGENTS.md                    portable cross-tool source: rules + subagent topology (single source)
 CLAUDE.md                    thin Claude Code adapter → points at AGENTS.md (no copied rules)
-docs/portability.md          the cross-tool map (portable core vs thin per-tool adapters)
-harness/ (tool-neutral canonical bodies — edit here; both adapters reference these)
-  agents/       milestone-planner · requirement-implementer · round-trip-reviewer  (role bodies)
-  commands/     run-milestone · implement-requirement  (procedures)
+.mcp.json                    Claude project MCP (playwright · context7); Cursor reads .cursor/mcp.json
+docs/                        contract (SPEC · ARCHITECTURE · …) + portability.md + guides/
+harness/ (the whole tool-agnostic harness — edit canonical bodies AND gates here)
+  agents/       milestone-planner · requirement-implementer · round-trip-reviewer   (role bodies)
+  commands/     run-milestone · implement-requirement   (procedures)
   skills/       transon-authoring · blockly-authoring · round-trip-review · spec-traceability
+  scripts/      check_traceability · check_links · check_engine_parity · check_maturity   (deterministic gates)
+  evals/        run_evals.py + cases/   (maker≠checker · routing · skill determinism · cross-tool parity)
+  githooks/     pre-commit · commit-msg   (binding; enable: git config core.hooksPath harness/githooks)
+  README.md     harness governance (single-source · both tools equally · gated)
 .cursor/ (Cursor adapter — thin; rules + frontmatter, bodies → harness/)
-  rules/        project-overview*, spec-discipline*  (always)   + editor-core, editor-blockly, testing, monorepo-build (glob)
-  agents/       milestone-planner (opus, ro) · requirement-implementer (composer, rw) · round-trip-reviewer (opus, ro)
-  commands/     /run-milestone · /implement-requirement
-  skills/       transon-authoring · blockly-authoring · round-trip-review · spec-traceability   (all explicit-invocation)
-  hooks/        check-docs-consistency.py (stop) · advance-requirement-loop.py (subagentStop)   ← advisory nudges
-  mcp.json      playwright · context7
+  rules/ (always + glob) · agents/ · commands/ · skills/ · hooks/ (advisory nudges) · mcp.json
 .claude/ (Claude Code adapter — thin; bodies read harness/ + AGENTS.md at runtime)
-  agents/       same 3 roles; read-only via tools: (no Write/Edit); model: opus/sonnet
-  commands/     /run-milestone · /implement-requirement  (run the .cursor procedure)
-  skills/       same 4 skills (disable-model-invocation; body → .cursor source)
-  hooks/        inject-rules (SessionStart: injects AGENTS.md) · stop-traceability · advance-loop
-  settings.json wires the three hooks
-.mcp.json                    playwright · context7 (Claude reads this; Cursor reads .cursor/mcp.json)
-scripts/ (deterministic gates)
-  check_traceability.py      no dead/deprecated IDs; every "done" FR/AC has a citing test
-  check_engine_parity.py     SPEC §14 + derived catalog == engine get_editor_metadata()   (--require-engine to fail, not skip)
-  check_maturity.py          harness maturity score (8 dims, 0-4 ladder) + ratchet vs baseline
-evals/ (harness golden-path evals)
-  run_evals.py               maker≠checker · cost-tiered routing · skill determinism · loop hooks/recipe · cross-tool parity
-  cases/                     model-judged behavioral cases (manual / LM-judge)
-.githooks/ (binding — enable: git config core.hooksPath .githooks)
-  pre-commit                 runs trace + evals + maturity ratchet before a commit lands
-  commit-msg                 requires Refs:/Slice: trailer on code-touching commits
+  agents/ (read-only via tools:) · commands/ · skills/ · settings.json
+  hooks/ — inject-rules (SessionStart: injects AGENTS.md) · stop-traceability · advance-loop
 .github/workflows/
   agentic-checks.yml         re-runs trace + evals + parity + maturity on every PR/push (binding)
 ```
 
-One-time setup (per clone): `git config core.hooksPath .githooks`.
+One-time setup (per clone): `git config core.hooksPath harness/githooks`.
 
 Run before finishing any change that touches `docs/`, code, or tests (the hooks run these for you):
 
 ```bash
-python scripts/check_traceability.py
-python evals/run_evals.py
-python scripts/check_engine_parity.py    # needs transon installed or TRANSON_REPO set; --require-engine to enforce
-python scripts/check_maturity.py --check  # ratchet vs docs/maturity-baseline.json
+python harness/scripts/check_traceability.py
+python harness/scripts/check_links.py             # relative markdown file + anchor links resolve
+python harness/evals/run_evals.py
+python harness/scripts/check_engine_parity.py    # needs transon installed or TRANSON_REPO set; --require-engine to enforce
+python harness/scripts/check_maturity.py --check  # ratchet vs docs/maturity-baseline.json
 ```

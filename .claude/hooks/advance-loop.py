@@ -6,7 +6,7 @@ identity check the Cursor hook does by key-sniffing is handled by the matcher.
 After the implementer completes, run the deterministic traceability gate; if it is
 red, block so the loop stays on the same requirement until it is green.
 
-Reuses `scripts/check_traceability.check()`. Fail-open: any problem -> `{}`.
+Reuses `harness/scripts/check_traceability.check()`. Fail-open: any problem -> `{}`.
 """
 import json
 import sys
@@ -21,7 +21,7 @@ def main() -> int:
     except (json.JSONDecodeError, ValueError):
         pass
 
-    sys.path.insert(0, str(ROOT / "scripts"))
+    sys.path.insert(0, str(ROOT / "harness" / "scripts"))
     try:
         from check_traceability import check
         problems = check()

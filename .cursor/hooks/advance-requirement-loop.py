@@ -10,7 +10,7 @@ Stays silent (`{}`) for any other subagent, for non-completed stops, and when it
 cannot identify the subagent — so it never disrupts planner/reviewer/explore runs.
 The follow-up chain is capped by `loop_limit` in hooks.json.
 
-Pure stdlib; imports `scripts/check_traceability.py` directly (no subprocess).
+Pure stdlib; imports `harness/scripts/check_traceability.py` directly (no subprocess).
 """
 import json
 import sys
@@ -48,7 +48,7 @@ def main() -> int:
         print("{}")
         return 0
 
-    sys.path.insert(0, str(PROJECT_DIR / "scripts"))
+    sys.path.insert(0, str(PROJECT_DIR / "harness" / "scripts"))
     try:
         from check_traceability import check
     except ImportError:
@@ -60,14 +60,14 @@ def main() -> int:
         details = "\n".join(f"  - {p}" for p in problems)
         message = (
             "The traceability gate is failing after that requirement. Do NOT move on "
-            "yet — fix these and re-run `python scripts/check_traceability.py`:\n" + details
+            "yet — fix these and re-run `python harness/scripts/check_traceability.py`:\n" + details
         )
     else:
         message = (
             "Gate green for that requirement. If the current milestone still has unchecked "
             "requirements in docs/traceability.md, implement the next one with the "
             "`requirement-implementer` subagent (one requirement per run) and keep "
-            "`python scripts/check_engine_parity.py` green. If none remain, stop and "
+            "`python harness/scripts/check_engine_parity.py` green. If none remain, stop and "
             "complete the milestone Definition of Done."
         )
 

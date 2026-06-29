@@ -5,7 +5,7 @@ Only speaks up when the agent touched the docs or code/tests *and* the determini
 traceability checker reports a problem — so it stays quiet during unrelated work. The
 ``loop_limit`` in ``hooks.json`` caps how many times it re-prompts.
 
-Pure stdlib; imports ``scripts/check_traceability.py`` directly (no subprocess).
+Pure stdlib; imports ``harness/scripts/check_traceability.py`` directly (no subprocess).
 """
 import json
 import subprocess
@@ -51,7 +51,7 @@ def main() -> int:
         print("{}")
         return 0
 
-    sys.path.insert(0, str(PROJECT_DIR / "scripts"))
+    sys.path.insert(0, str(PROJECT_DIR / "harness" / "scripts"))
     try:
         from check_traceability import check
     except ImportError:
@@ -68,7 +68,7 @@ def main() -> int:
         "Traceability is inconsistent: every requirement ID cited in code/tests or in "
         "`docs/traceability.md` must be defined in the contract docs, and every FR/AC "
         "marked done must have a test that cites its ID. Fix these, then re-run "
-        "`python scripts/check_traceability.py`:\n" + details
+        "`python harness/scripts/check_traceability.py`:\n" + details
     )
     print(json.dumps({"followup_message": followup}))
     return 0

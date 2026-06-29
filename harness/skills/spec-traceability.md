@@ -42,8 +42,8 @@ Keeps `docs/SPEC.md` and the codebase in sync without breaking the stable requir
 Run the deterministic checkers, then resolve every gap reported:
 
 ```bash
-python scripts/check_traceability.py
-python scripts/check_engine_parity.py
+python harness/scripts/check_traceability.py
+python harness/scripts/check_engine_parity.py
 ```
 
 `check_traceability.py` flags IDs cited in code/tests or in `traceability.md` that aren't defined in

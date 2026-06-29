@@ -24,17 +24,21 @@ jobs:
 
       # 1. Requirement-ID consistency: no dead/deprecated IDs; done rows have a citing test.
       - name: Traceability
-        run: python scripts/check_traceability.py
+        run: python harness/scripts/check_traceability.py
 
-      # 2. Harness golden-path evals: maker≠checker, cost-tiered routing, skill determinism, loop recipe.
+      # 2. Broken-link check: every relative Markdown file/anchor link must resolve.
+      - name: Markdown links
+        run: python harness/scripts/check_links.py
+
+      # 3. Harness golden-path evals: maker≠checker, cost-tiered routing, skill determinism, loop recipe.
       - name: Harness evals
-        run: python evals/run_evals.py
+        run: python harness/evals/run_evals.py
 
       # 3. Engine/spec drift. Self-skips today (the engine is not yet installable here). Once M0 lands,
       #    pin + `pip install transon` above and add `--require-engine` to make parity binding (M-09).
       - name: Engine parity
-        run: python scripts/check_engine_parity.py
+        run: python harness/scripts/check_engine_parity.py
 
       # 4. Agentic-maturity ratchet: fail if the harness regresses below the committed baseline.
       - name: Agentic maturity (ratchet)
-        run: python scripts/check_maturity.py --check
+        run: python harness/scripts/check_maturity.py --check

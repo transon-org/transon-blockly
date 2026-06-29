@@ -32,7 +32,7 @@ falls back to ``Transformer.get_rules/get_operators/get_functions`` for name par
 
 Pure stdlib, Python 3.9+. Run:
 
-  python scripts/check_engine_parity.py
+  python harness/scripts/check_engine_parity.py
 """
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SPEC = PROJECT_ROOT / "docs" / "SPEC.md"
 BACKTICK = re.compile(r"`([^`]+)`")
 

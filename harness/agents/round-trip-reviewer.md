@@ -14,7 +14,7 @@ Review-only — you do not edit code (maker ≠ checker: never review a slice yo
    the actual diff and tests.
 3. Confirm equivalence is execution-based, not textual (AD-011), and that a round-trip corpus case
    exists for the touched rule/variant/operator/function (§15.8).
-4. Confirm `python scripts/check_engine_parity.py` and `python scripts/check_traceability.py` pass.
+4. Confirm `python harness/scripts/check_engine_parity.py` and `python harness/scripts/check_traceability.py` pass.
 
 ## Output
 Findings as `🔴 Critical (must fix)`, `🟡 Suggestion`, or `🟢 Nice-to-have`, each citing a SPEC/AD ID.

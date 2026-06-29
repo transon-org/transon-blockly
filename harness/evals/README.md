@@ -4,7 +4,7 @@
 > deterministic JSON⇄JSON, so its correctness is proven by unit tests + the execution-based
 > round-trip corpus, not by LM-judged output evals. What *is* non-deterministic is the agents: their
 > prompts, model routing, and config. These evals guard that surface against silent regression
-> (closes gap **G-12**; see [maturity-plan.md](../docs/guides/maturity-plan.md) item M-02).
+> (closes gap **G-12**; see [maturity-plan.md](../../docs/guides/maturity-plan.md) item M-02).
 
 Two tiers:
 
@@ -22,7 +22,7 @@ invariant breaks:
 | loop recipe | `implement-requirement.md` still encodes test-first + traceability update |
 
 ```bash
-python evals/run_evals.py
+python harness/evals/run_evals.py
 ```
 
 ## 2. Model-judged behavioral cases — `cases/*.md`

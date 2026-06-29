@@ -50,8 +50,8 @@ Transon JSON, delegating all validation/execution to a host-provided engine.
   - **Governance** — single-source · both tools equally · gated · new tooling → both adapters or an
     explicit exclusion. The rule lives in [`harness/README.md`](harness/README.md); the cross-tool map
     is `docs/portability.md`. **Read it before changing the harness.**
-- Deterministic gates: `scripts/check_traceability.py`, `scripts/check_engine_parity.py`,
-  `scripts/check_maturity.py`, `evals/run_evals.py`.
+- Deterministic gates: `harness/scripts/check_traceability.py`, `harness/scripts/check_engine_parity.py`,
+  `harness/scripts/check_maturity.py`, `harness/evals/run_evals.py`.
 - Engine (separate repo): `../transon` — owns `get_editor_metadata()` (see its
   `docs/proposals/editor-metadata-export.md`). **M0 work lives there.**
 
@@ -60,8 +60,8 @@ Transon JSON, delegating all validation/execution to a host-provided engine.
 Write the test **first**, citing the ID (e.g. `// FR-035`) → implement → update the matching
 `docs/traceability.md` row in the **same change** → keep engine-parity + round-trip corpus green →
 satisfy the milestone Definition of Done. Drive a milestone with `/run-milestone`; do a single
-requirement with `/implement-requirement`. Before finishing, run `scripts/check_traceability.py`
-and `scripts/check_engine_parity.py`.
+requirement with `/implement-requirement`. Before finishing, run `harness/scripts/check_traceability.py`
+and `harness/scripts/check_engine_parity.py`.
 
 ## Data flow (one-way, plus gated reverse)
 

@@ -14,8 +14,8 @@ reference the single source and read it at runtime, so there is nothing to drift
 | Rules + subagent topology + per-requirement loop | `AGENTS.md` |
 | **Canonical agent / command / skill bodies** | `harness/agents/` · `harness/commands/` · `harness/skills/` |
 | Contract | `docs/SPEC.md` · `ARCHITECTURE.md` · `metadata-contract.md` · `ROADMAP.md` · `traceability.md` |
-| Deterministic gates | `scripts/check_*.py` · `evals/run_evals.py` |
-| Binding enforcement | `.githooks/` (pre-commit, commit-msg) · `.github/workflows/agentic-checks.yml` |
+| Deterministic gates | `harness/scripts/check_*.py` · `harness/evals/run_evals.py` |
+| Binding enforcement | `harness/githooks/` (pre-commit, commit-msg) · `.github/workflows/agentic-checks.yml` |
 
 The agent/command/skill **bodies live once** in `harness/`. Both `.cursor/` and `.claude/` carry only a
 thin adapter — tool-specific frontmatter plus "read `harness/...` and follow it". Neither tool
@@ -33,7 +33,7 @@ PRs **regardless of which agent tool authored the change**. They need no per-too
 | Subagents | `harness/agents/*.md` | `agents/*.md` (`model`, `readonly`) | `agents/*.md` (`tools:` = capability, `model:` = tier) |
 | Commands | `harness/commands/*.md` | `commands/*.md` | `commands/*.md` (`/run-milestone`, `/implement-requirement`) |
 | Skills | `harness/skills/*.md` | `skills/*/SKILL.md` (`disable-model-invocation`) | `skills/*/SKILL.md` (`disable-model-invocation`) |
-| Advisory hooks | `scripts/check_traceability.check()` | `hooks.json` → `check-docs-consistency` (stop), `advance-requirement-loop` (subagentStop) | `settings.json` → `SessionStart`, `Stop`, `SubagentStop` hooks |
+| Advisory hooks | `harness/scripts/check_traceability.check()` | `hooks.json` → `check-docs-consistency` (stop), `advance-requirement-loop` (subagentStop) | `settings.json` → `SessionStart`, `Stop`, `SubagentStop` hooks |
 | MCP | — | `mcp.json` | `.mcp.json` |
 
 Each adapter cell is *thin*: tool-specific frontmatter + "read the canonical source and follow it". The
@@ -42,7 +42,7 @@ differs.
 
 ## Invariant: parity is gated, not hoped for
 
-`evals/run_evals.py` (`eval_cross_tool_parity`) runs in the pre-commit hook and CI, and fails if:
+`harness/evals/run_evals.py` (`eval_cross_tool_parity`) runs in the pre-commit hook and CI, and fails if:
 
 - a command / skill / subagent exists on one tool but not the other (**bidirectional**);
 - a read-only Claude subagent carries `Write`/`Edit` in `tools`;
@@ -57,7 +57,7 @@ signal reads both `.cursor/hooks` and `.claude/hooks`.
 ## Adding new tooling (policy)
 
 The governing rule is the harness charter — [`harness/README.md`](../harness/README.md) → *Harness
-governance*. In short: new tooling lands in `harness/` (or shared `scripts/`) **and both** adapters, or
+governance*. In short: new tooling lands in `harness/` (or shared `harness/scripts/`) **and both** adapters, or
 carries an explicit exclusion documented here. The parity eval enforces the default; exclusions must be
 reasoned about, not silent.
 

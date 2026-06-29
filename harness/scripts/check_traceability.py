@@ -13,7 +13,7 @@ and the code/tests (SPEC §21.1, §21.13, AC-027):
 
 Pure stdlib, Python 3.9+, no project imports. Run:
 
-  python scripts/check_traceability.py
+  python harness/scripts/check_traceability.py
 
 Exit 0 when consistent, 1 otherwise. Check (3) becomes meaningful once tests exist.
 Also importable: ``check()`` returns the list of problems (used by the stop hook).
@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Set
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DOCS = PROJECT_ROOT / "docs"
 
 ID_RE = re.compile(r"\b(FR|NFR|AC|UC|AD|OQ)-(\d+)\b")

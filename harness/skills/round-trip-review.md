@@ -30,7 +30,7 @@ Apply when a change touches the trust-critical core or a security-sensitive surf
 ```
 - [ ] The catalog comes from the engine get_editor_metadata() export; no parallel hand-list added.
 - [ ] Generic and specialized blocks emit IDENTICAL JSON per variant (AD-014).
-- [ ] python scripts/check_engine_parity.py passes (rules/operators/functions match the engine).
+- [ ] python harness/scripts/check_engine_parity.py passes (rules/operators/functions match the engine).
 ```
 
 ## Runtime safety (AD-008, AD-009, AD-010, §21.11)

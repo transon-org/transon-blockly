@@ -11,13 +11,13 @@ quietly breaks.
 
 This tier runs in CI and in the pre-commit hook. The model-judged behavioral
 cases (planner emits one task per FR, implementer refuses an ambiguous SPEC, the
-round-trip corpus catches a seeded meaning change) live in `evals/cases/*.md` and
+round-trip corpus catches a seeded meaning change) live in `harness/evals/cases/*.md` and
 are run by a human / LM-judge — they need a model in the loop and, for the
-round-trip case, code that does not exist yet (see `evals/README.md`).
+round-trip case, code that does not exist yet (see `harness/evals/README.md`).
 
 Pure stdlib, Python 3.9+. Run:
 
-  python evals/run_evals.py            # exit 0 if all golden-path evals pass
+  python harness/evals/run_evals.py            # exit 0 if all golden-path evals pass
 
 Also importable: ``check()`` returns the list of failures.
 """
@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CURSOR = PROJECT_ROOT / ".cursor"
 
 # The expected maker≠checker topology (the harness's central invariant).

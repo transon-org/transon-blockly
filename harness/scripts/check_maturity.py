@@ -35,10 +35,10 @@ Tiers: 0-20 L0 Vibe · 21-40 L1 Emerging · 41-60 L2 Repeatable ·
 
 Usage:
 
-  python scripts/check_maturity.py                 # human summary + ratchet
-  python scripts/check_maturity.py --json          # machine-readable measure
-  python scripts/check_maturity.py --check         # CI: fail if below baseline
-  python scripts/check_maturity.py --update-baseline
+  python harness/scripts/check_maturity.py                 # human summary + ratchet
+  python harness/scripts/check_maturity.py --json          # machine-readable measure
+  python harness/scripts/check_maturity.py --check         # CI: fail if below baseline
+  python harness/scripts/check_maturity.py --update-baseline
 
 The ratchet (``--check``) fails (exit 1) if any dimension regresses below the
 committed ``docs/maturity-baseline.json`` (or the overall score drops). That is
@@ -56,7 +56,7 @@ import sys
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 BASELINE = PROJECT_ROOT / "docs" / "maturity-baseline.json"
 
 ID_RE = re.compile(r"\b(FR|NFR|AC|UC|AD|OQ)-\d+\b")
@@ -103,7 +103,7 @@ def _signals() -> Dict[str, object]:
     workflows = _glob(".github/workflows/*.yml") + _glob(".github/workflows/*.yaml")
     # Binding hooks run at the git layer (block the commit). Advisory editor
     # hooks (.cursor/hooks) only nudge — they never count as enforcement (L3).
-    git_hooks = _glob(".githooks/*") + _glob(".husky/*")
+    git_hooks = _glob("harness/githooks/*") + _glob(".husky/*")
     # Advisory editor hooks from BOTH tool adapters (Cursor + Claude Code) — they nudge, never block.
     advisory_hooks = (
         _glob(".cursor/hooks/*")
@@ -120,7 +120,7 @@ def _signals() -> Dict[str, object]:
         _exists(".claude/hooks/inject-rules.py") or "sessionstart" in claude_settings_text.lower()
     )
     always_on_surfaces = int(cursor_always_on) + int(claude_always_on)
-    checkers = _glob("scripts/check_*.py") + _glob("scripts/check-*.mjs") + _glob("scripts/check-*.js")
+    checkers = _glob("harness/scripts/check_*.py") + _glob("harness/scripts/check-*.mjs") + _glob("harness/scripts/check-*.js")
     contract = _glob("docs/*.md")
     tool_surfaces = sum(
         bool(x)
@@ -154,7 +154,7 @@ def _signals() -> Dict[str, object]:
         "agents_md": _read(PROJECT_ROOT / "AGENTS.md"),
         "tool_surfaces": tool_surfaces,
         "has_code": _any_of("packages", "package.json", "src"),
-        "has_evals": _any_of("evals", "evals/cases"),
+        "has_evals": _any_of("harness/evals", "harness/evals/cases"),
         "has_current_state": _any_of("docs/current-state.md", "docs/CURRENT-STATE.md"),
         "has_snapshot": bool(_glob("**/*metadata*snapshot*") + _glob("snapshots/*") + _glob("docs/**/*snapshot*")),
         "has_adr": _any_of("docs/adr", "docs/ADR") or bool(re.search(r"\bAD-\d+\b", _concat(contract))),
@@ -213,14 +213,14 @@ def d2_spec_trace(s) -> Tuple[int, str]:
     has_ids = bool(ID_RE.search(str(s["contract_text"])))
     if not has_ids:
         return 0, "no numbered requirement IDs in docs/"
-    has_checker = _exists("scripts/check_traceability.py")
+    has_checker = _exists("harness/scripts/check_traceability.py")
     if not has_checker:
         return 1, "numbered IDs present; no traceability checker"
     in_ci = _runs_in_ci(s, "check_traceability")
     by_hook = _enforced_by_hook(s, "check_traceability", "check-traceability")
     if not (in_ci or by_hook):
         return 2, "numbered IDs + check_traceability.py, but run voluntarily (no CI/hook)"
-    trailer = _enforced_by_hook(s, "refs:", "slice:") or bool(_glob(".githooks/commit-msg*") + _glob(".husky/commit-msg*"))
+    trailer = _enforced_by_hook(s, "refs:", "slice:") or bool(_glob("harness/githooks/commit-msg*") + _glob(".husky/commit-msg*"))
     if in_ci and trailer:
         return 4, "traceability gated in CI + commit-trailer convention enforced"
     return 3, "traceability checker runs in CI/hook (blocking)"
@@ -236,7 +236,7 @@ def d3_verify_gates(s) -> Tuple[int, str]:
     if not (in_ci or by_hook):
         return 2, f"{len(s['checkers'])} deterministic checker(s), run voluntarily (no CI/hook)"
     # L4 needs a real coverage/eval ratchet, not the (self-referential) maturity ratchet.
-    if s["has_evals"] or _exists("scripts/check-coverage-ratchet.mjs") or _runs_in_ci(s, "coverage"):
+    if s["has_evals"] or _exists("harness/scripts/check-coverage-ratchet.mjs") or _runs_in_ci(s, "coverage"):
         return 4, "gates run in CI + coverage/eval ratchet guards regression"
     return 3, "deterministic gates run in CI/hook (blocking)"
 
@@ -310,7 +310,7 @@ def d8_proof(s) -> Tuple[int, str]:
     a11y_mcp = "playwright" in (
         _read(PROJECT_ROOT / ".cursor/mcp.json").lower() + _read(PROJECT_ROOT / ".mcp.json").lower()
     )
-    recordings = bool(_glob("scripts/record-*.mjs") + _glob("scripts/*record*.py"))
+    recordings = bool(_glob("harness/scripts/record-*.mjs") + _glob("harness/scripts/*record*.py"))
     if not (a11y_mcp or s["transcripts"] or recordings):
         return 0, "no UI-test MCP, recordings, or transcripts"
     if not recordings:
@@ -360,7 +360,7 @@ def measure() -> Dict[str, object]:
         }
     pct = round(weighted / max_weighted * 100) if max_weighted else 0
     return {
-        "generated_by": "scripts/check_maturity.py",
+        "generated_by": "harness/scripts/check_maturity.py",
         "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
         "pre_code": not bool(s["has_code"]),
         "score_pct": pct,

@@ -22,7 +22,7 @@ given, pick the first unchecked row for the active milestone in `docs/traceabili
 4. If the requirement touches `JSON⇄IR`, variant matching, the surface check, marker escape, or
    round-trip, run the `round-trip-review` skill and add/extend a round-trip corpus case (§15.8).
 5. Update the matching `docs/traceability.md` row (status + test reference) in the same change.
-6. Run `python scripts/check_traceability.py` and `python scripts/check_engine_parity.py`; both green.
+6. Run `python harness/scripts/check_traceability.py` and `python harness/scripts/check_engine_parity.py`; both green.
 
 ## Hard rules
 

@@ -24,11 +24,11 @@ focused pass.
    `// FR-035`), then implement the minimal code. Keep the semantic core in `@transon/editor-core`
    (no Blockly/React/engine dependency).
 4. Run the package tests with Vitest until green (`pnpm -r test`, or the touched package).
-5. Keep the gates green: `python scripts/check_engine_parity.py` and the execution-based round-trip
+5. Keep the gates green: `python harness/scripts/check_engine_parity.py` and the execution-based round-trip
    corpus (§15.8, AD-011). If the slice touches the codec, variant matcher, surface check, marker
    escape, or round-trip, run the `round-trip-review` skill.
 6. Update `docs/traceability.md` (status + test reference per ID) and the milestone tracker row in
-   `docs/ROADMAP.md` — in the same change. Run `python scripts/check_traceability.py`.
+   `docs/ROADMAP.md` — in the same change. Run `python harness/scripts/check_traceability.py`.
 7. Satisfy the milestone's **Definition of Done** in `docs/ROADMAP.md` before finishing.
 
 ## Notes

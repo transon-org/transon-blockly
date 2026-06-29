@@ -4,13 +4,14 @@
 # be committed locally, not just blocked at the PR.
 #
 # Enable once per clone:
-#   git config core.hooksPath .githooks
+#   git config core.hooksPath harness/githooks
 #
 # Skip in an emergency with --no-verify (CI still enforces the same checks).
 set -e
 
-python3 scripts/check_traceability.py
-python3 evals/run_evals.py
-python3 scripts/check_maturity.py --check
+python3 harness/scripts/check_traceability.py
+python3 harness/scripts/check_links.py
+python3 harness/evals/run_evals.py
+python3 harness/scripts/check_maturity.py --check
 # check_engine_parity self-skips until the engine is importable; CI is authoritative.
-python3 scripts/check_engine_parity.py
+python3 harness/scripts/check_engine_parity.py

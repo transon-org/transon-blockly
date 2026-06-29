@@ -20,7 +20,7 @@ alwaysApply: true
 ## Traceability (§21.13, AC-027)
 - Cite the requirement ID in each test name/comment (e.g. `// FR-054`).
 - Update the matching `docs/traceability.md` row in the same change that implements a requirement.
-- Before finishing, run `python scripts/check_traceability.py` and `python scripts/check_engine_parity.py`.
+- Before finishing, run `python harness/scripts/check_traceability.py` and `python harness/scripts/check_engine_parity.py`.
 
 ## Engine authority & semantics (NFR-004, §21.3, §21.4)
 - The Transon engine is authoritative for validation/execution; Blockly constraints improve UX but

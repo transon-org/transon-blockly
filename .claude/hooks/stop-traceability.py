@@ -3,7 +3,7 @@
 
 Nudges the agent to fix traceability drift before finishing — but only when it
 touched docs/code/tests *and* the deterministic checker reports a problem, so it
-stays quiet during unrelated work. Reuses `scripts/check_traceability.check()`;
+stays quiet during unrelated work. Reuses `harness/scripts/check_traceability.check()`;
 the I/O glue is the only thing that differs per tool.
 
 Fail-open: any problem -> emit `{}` (do not block).
@@ -47,7 +47,7 @@ def main() -> int:
         print("{}")
         return 0
 
-    sys.path.insert(0, str(ROOT / "scripts"))
+    sys.path.insert(0, str(ROOT / "harness" / "scripts"))
     try:
         from check_traceability import check
         problems = check()
