@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `6c2b401` — harness: structurally triggered external review (M-05) |
+| Repo HEAD | `d482bba` — harness: adversarial pre-merge review-gate workflow (M-06) |
 | Branch | `alternative-path` |
 | Engine pin | transon `v0.1.1-1-g5812b63` @ `5812b632dc2c` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -16,11 +16,13 @@
 
 ## Last action
 
-_M-06 landed: `harness/workflows/review-gate.md` (+ thin tool adapters) — an adversarial pre-merge
-review-gate that fans review across five dimensions and refutes each finding before it counts; workflow
-parity is now gated in `run_evals.py` (D4 L3→L4, 87% → 90%). M-05/M-04 preceded it. The only remaining
-non-deferred maturity item is M-08 (loop automations / worktrees → D5 L4, ~93%); everything past that is
-lifecycle-gated on code/UI (M-14/M-15, D8 + real coverage)._
+_M-08 landed: `harness/automations/` propose-only outer-loop watchers (`drift_watch`, `ci_triage`,
+`worktrees.md`) + the scheduled `drift-watch.yml` workflow (D5 L3→L4, 90% → **93%**). **This is the
+pre-code maturity ceiling** — every non-deferred backlog item (M-01…M-08) has landed. The remaining
+headroom is lifecycle-gated and should NOT be chased now: D8 proof/observability (M-14) and D3
+real-coverage evidence (M-15) are premature until UI/tests exist (M3+), and M-09's hard-fail engine-pin
+flip waits on M0 making `transon` pip-installable in CI. Next real work is the **product**: M0 editor
+side (Node→Python EngineProvider adapter + monorepo scaffolding), per ROADMAP._
 
 ## Status by milestone
 

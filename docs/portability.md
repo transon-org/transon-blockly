@@ -63,8 +63,12 @@ governance*. In short: new tooling lands in `harness/` (or shared `harness/scrip
 carries an explicit exclusion documented here. The parity eval enforces the default; exclusions must be
 reasoned about, not silent.
 
-**Current exclusions:** glob-scoped rules — dormant in both tools until `packages/` land at M0 (see
-*Known boundary*).
+**Current exclusions:**
+- **Glob-scoped rules** — dormant in both tools until `packages/` land at M0 (see *Known boundary*).
+- **`harness/automations/`** (outer-loop, propose-only watchers + the `drift-watch` scheduled workflow)
+  — harness-*core* infrastructure like `scripts/` / `evals/` / `githooks/`, driven by a scheduler or a
+  human, **not** by either agent tool. So it is not a per-tool adapter and is not duplicated into
+  `.cursor/` / `.claude/`.
 
 ## Known boundary
 

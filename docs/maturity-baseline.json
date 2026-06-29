@@ -2,9 +2,9 @@
   "generated_by": "harness/scripts/check_maturity.py",
   "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
   "pre_code": true,
-  "score_pct": 90,
+  "score_pct": 93,
   "tier": "L4 · Optimizing",
-  "weighted": 30.5,
+  "weighted": 31.5,
   "weighted_max": 34.0,
   "dimensions": {
     "D1": {
@@ -38,8 +38,8 @@
     "D5": {
       "name": "loop & orchestration",
       "weight": 1.0,
-      "level": 3,
-      "evidence": "binding git hook gates the loop (green before commit)",
+      "level": 4,
+      "evidence": "loops + scheduled automations / worktrees",
       "lifecycle_gated": false
     },
     "D6": {

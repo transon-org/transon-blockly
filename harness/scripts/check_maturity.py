@@ -161,7 +161,7 @@ def _signals() -> Dict[str, object]:
         "mcp": _any_of(".cursor/mcp.json", ".mcp.json", ".cursor/mcp"),
         "coderabbit": _any_of(".coderabbit.yaml", ".coderabbit.yml"),
         "transcripts": _any_of("agent-transcripts", "agent-transcripts/"),
-        "automations": _any_of("automations", ".cursor/automations"),
+        "automations": _any_of("harness/automations", "automations", ".cursor/automations"),
     }
 
 

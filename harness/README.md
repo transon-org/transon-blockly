@@ -8,9 +8,13 @@ the root). Everything else lives here. The full cross-tool map is
 - `agents/` — subagent role bodies (milestone-planner · requirement-implementer · round-trip-reviewer)
 - `commands/` — command procedures (run-milestone · implement-requirement)
 - `skills/` — skill procedures (transon-authoring · blockly-authoring · round-trip-review · spec-traceability)
-- `scripts/` — deterministic gates (`check_traceability` · `check_engine_parity` · `check_maturity` · `check_links`)
+- `workflows/` — workflow procedures (`review-gate` — adversarial pre-merge review)
+- `scripts/` — deterministic gates (`check_traceability` · `check_engine_parity` · `check_maturity` · `check_links` · `update_memory`)
 - `evals/` — harness golden-path evals (`run_evals.py` + model-judged `cases/`)
 - `githooks/` — binding git hooks (`pre-commit` · `commit-msg`); enable with `git config core.hooksPath harness/githooks`
+- `automations/` — **outer-loop, propose-only** watchers (`drift_watch` · `ci_triage` · `worktrees.md`); the
+  scheduled half lives in `.github/workflows/drift-watch.yml`. **Harness-core, not adapters** → exempt
+  from rule 2's "both tools" requirement (explicit exclusion; see `docs/portability.md`)
 
 ## Harness governance (the rules for changing the harness)
 

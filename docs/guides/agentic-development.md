@@ -234,7 +234,7 @@ visible hole for a couple. This table is the heart of the guide.
 | **Maturity regression** | A later change quietly drops a gate or weakens enforcement | `check_maturity.py --check` ratchets the per-dimension levels against `docs/maturity-baseline.json`; CI fails on any drop | **Strong** — binding in CI |
 | **Semantic / round-trip drift** | Import→export silently changes meaning; a variant matches zero/many; ordering or marker-escape regresses | `round-trip-review` skill + `round-trip-reviewer` subagent; **`.coderabbit.yaml` structurally triggers an external reviewer on every PR** (M-05); **`review-gate` workflow fans review across dimensions and adversarially refutes each finding pre-merge** (M-06); execution-based round-trip corpus (AD-011); editor-core invariants rule | **Strong (design)** — review fires structurally (G-05 trigger) *and* findings are adversarially verified (G-05 adversarial half); the residual gap is execution-based corpus *enforcement*, which lands with code (M1) |
 | **Tech-debt drift** | Hand-written per-rule codec/IR/block code creeps back; UI metadata leaks into templates; core grows engine/DOM deps | "Projections, not hand-written mappings" (§21.15, AD-026), UI≠semantics (§21.12), one-way package dependency rule, ROADMAP DoD line "no hand-written codec/IR/per-rule block code reintroduced" | **Medium** — these are prose rules + review, not automated checks yet |
-| **Continuity drift** (context/session) | A new chat forgets the locked decisions; an executor re-litigates settled ADs; status trackers lag reality | Always-on rules re-inject invariants every turn; "locked decisions / do not relitigate" lists in ROADMAP and skills; transcripts archived under `agent-transcripts/` | **Medium** — depends on the human re-pointing at the contract; status fields are hand-maintained (G-06) |
+| **Continuity drift** (context/session) | A new chat forgets the locked decisions; an executor re-litigates settled ADs; status trackers lag reality | Always-on rules re-inject invariants every turn; "locked decisions / do not relitigate" lists in ROADMAP and skills; **`docs/current-state.md` working handoff + committed metadata snapshot** (M-04), nudged by a stop hook; **`drift-watch` outer-loop watcher** flags accumulated drift on a schedule (M-08); transcripts archived under `agent-transcripts/` | **Strong** — handoff + snapshot carry state across sessions and the outer loop catches drift with no PR open (G-06 closed); residual is human re-pointing for genuinely new chats |
 | **Catalog drift** | A parallel hand-maintained rule list grows beside the engine | "metadata-driven, no parallel hand-list" rule + parity check | **Strong** |
 | **Toolchain drift** | Versions float; "works on my machine" | Version pins recorded in ROADMAP (AD-021); `monorepo-build.mdc` stub to be filled at M0 | **Pending** — no `package.json`/lockfile exists yet |
 
@@ -309,6 +309,7 @@ harness/ (the whole tool-agnostic harness — edit canonical bodies AND gates he
   scripts/      check_traceability · check_links · check_engine_parity · check_maturity · update_memory   (deterministic gates)
   evals/        run_evals.py + cases/   (maker≠checker · routing · skill determinism · cross-tool parity incl. workflows)
   githooks/     pre-commit · commit-msg   (binding; enable: git config core.hooksPath harness/githooks)
+  automations/  drift_watch · ci_triage · worktrees.md   (outer-loop, propose-only; harness-core)
   README.md     harness governance (single-source · both tools equally · gated)
 .cursor/ (Cursor adapter — thin; rules + frontmatter, bodies → harness/)
   rules/ (always + glob) · agents/ · commands/ · skills/ · workflows/ · hooks/ (advisory nudges) · mcp.json
@@ -317,6 +318,7 @@ harness/ (the whole tool-agnostic harness — edit canonical bodies AND gates he
   hooks/ — inject-rules (SessionStart: injects AGENTS.md) · stop-traceability · advance-loop · handoff-memory
 .github/workflows/
   agentic-checks.yml         re-runs trace + evals + parity + maturity on every PR/push (binding)
+  drift-watch.yml            scheduled outer loop — runs the read-only gates, opens an issue on drift (propose-only)
 ```
 
 One-time setup (per clone): `git config core.hooksPath harness/githooks`.

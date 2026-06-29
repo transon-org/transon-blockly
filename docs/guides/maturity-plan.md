@@ -43,8 +43,9 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ## Current snapshot
 
-`check_maturity.py` baseline (pre-code): **90% · L4 Optimizing** (`30.5 / 34` weighted) — after
-🔴 Critical (M-01, M-02), 🟠 M-03, M-07, M-04, M-05, and M-06 landed (63% → 90%).
+`check_maturity.py` baseline (pre-code): **93% · L4 Optimizing** (`31.5 / 34` weighted) — after
+🔴 Critical (M-01, M-02), 🟠 M-03, M-07, M-04, M-05, M-06, and M-08 landed (63% → 93%). This is the
+ceiling until code/UI lands: the only headroom left (D8 proof, D3 real-coverage) is lifecycle-gated.
 
 | Dim | Level | Weight | Headroom |
 |---|---|---|---|
@@ -52,7 +53,7 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 | D2 spec & traceability | **L4** | 1.5 | ✅ maxed (M-01) |
 | D3 verification & gates · *gated* | **L4** | 1.5 | ✅ via harness evals (M-02); real-coverage evidence deferred (M-15) |
 | D4 review / maker ≠ checker | **L4** | 1.0 | ✅ maxed (M-05 trigger + M-06 adversarial `review-gate` workflow) |
-| D5 loop & orchestration | **L3** | 1.0 | done to L3 (M-01); **→ L4 via M-08** |
+| D5 loop & orchestration | **L4** | 1.0 | ✅ maxed (M-01 binding loop + M-08 propose-only outer-loop watchers) |
 | D6 memory & knowledge | **L4** | 1.0 | ✅ maxed (M-04: working handoff + committed engine snapshot) |
 | D7 portability & tooling | **L4** | 1.0 | ✅ maxed (M-03 + M-07: `.claude/` adapters + `docs/portability.md`) |
 | D8 proof & observability · *gated* | L1 | 0.5 | → L2+ deferred to M3+ (M-14) |
@@ -92,6 +93,12 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   signal reads both `.cursor/hooks` and `.claude/hooks`). Extended `eval_cross_tool_parity` to enforce
   bidirectional existence, the no-cross-reference rule, and the `harness/` source. Policy ("new tooling →
   both adapters, or an explicit exclusion") recorded in `AGENTS.md` + `docs/portability.md`.
+- [x] **M-08 · Loop automations / worktrees (outer loop)** — `harness/automations/` propose-only watchers
+  (`drift_watch.py` runs the read-only gates and reports drift that accumulates with no PR open;
+  `ci_triage.py` maps a failing gate → its fix) + the scheduled `.github/workflows/drift-watch.yml`
+  (cron + manual; opens/updates an issue on drift, never writes the repo) + a documented `worktrees.md`
+  flow. Harness-core (explicit exclusion, not per-tool); scorer's `automations` signal now reads
+  `harness/automations`. *(D5 L3→L4, +2.9 pts: 90% → 93% — the pre-code ceiling.)*
 - [x] **M-06 · Adversarial review-gate workflow** — `harness/workflows/review-gate.md` (+ thin
   `.claude/` and `.cursor/` adapters): a pre-merge gate that fans review across five dimensions and
   **adversarially refutes each finding before it counts**, composing the `round-trip-reviewer` subagent,
@@ -203,10 +210,13 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   thin adapters that read the single source at runtime. Parity gated by `run_evals.py`.
   - **Impact:** D7 L3→**L4** (+2.9). ✅ landed (81%, L4).  **Acceptance:** `docs/portability.md` present, ≥2 surfaces, `check_maturity.py` reports D7 L4. ✅
 
-- [ ] **M-08 — Loop automations / worktrees.**  *Extends M-01; Day-2 outer loop.*
-  An `automations/` dir (propose-only watchers: drift / CI-triage) and/or documented worktree flow for
-  disjoint parallel slices.
-  - **Impact:** D5 L3→**L4** (+2.9).  **Acceptance:** D5 L4.  **Effort:** M.
+- [x] **M-08 — Loop automations / worktrees.** ✅ *done — see Done above.*  *Extends M-01; Day-2 outer loop.*
+  `harness/automations/` (propose-only outer-loop watchers — `drift_watch.py` runs the read-only gates
+  and reports accumulated drift, `ci_triage.py` maps a failing gate to its fix) + the scheduled
+  `.github/workflows/drift-watch.yml` (cron + manual; opens/updates an issue on drift, never writes the
+  repo) + a documented `worktrees.md` flow for disjoint parallel slices. Recorded as a harness-core
+  explicit exclusion (not duplicated per tool). Scorer's `automations` signal extended to `harness/`.
+  - **Impact:** D5 L3→**L4** (+2.9). ✅ landed (90% → **93%**).  **Acceptance:** D5 L4. ✅  **Effort:** M.
 
 ### 🟢 Low (score-neutral correctness / polish)
 
@@ -240,8 +250,9 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 | ~~🟠 M-03~~ | ~~78%~~ | done |
 | ~~🟠 M-04~~ | ~~84%~~ | done |
 | ~~🟠 M-05~~ | ~~87%~~ | done |
-| ✅ M-06 — **current** | **90%** | **L4 Optimizing** |
-| + 🟡 M-08 (loop automations) | ~93% | L4 Optimizing |
+| ~~🟡 M-06~~ | ~~90%~~ | done |
+| ✅ M-08 — **current** | **93%** | **L4 Optimizing** |
+| _(ceiling until code/UI)_ | — | D8 + real-coverage deferred |
 
 Beyond ~93%, the only remaining headroom is D8 (proof) and D3's real-coverage evidence — both
 correctly **deferred** until code/UI exists. The plan deliberately stops there rather than inflating
