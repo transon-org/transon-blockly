@@ -2,9 +2,9 @@
   "generated_by": "harness/scripts/check_maturity.py",
   "scale": "0-4 enforcement ladder (L0 absent .. L4 optimizing)",
   "pre_code": true,
-  "score_pct": 81,
+  "score_pct": 84,
   "tier": "L4 · Optimizing",
-  "weighted": 27.5,
+  "weighted": 28.5,
   "weighted_max": 34.0,
   "dimensions": {
     "D1": {
@@ -45,8 +45,8 @@
     "D6": {
       "name": "memory & knowledge",
       "weight": 1.0,
-      "level": 3,
-      "evidence": "structured contract + AD/OQ intent ledger (no working handoff/snapshot)",
+      "level": 4,
+      "evidence": "intent ledger + working handoff + committed snapshot",
       "lifecycle_gated": false
     },
     "D7": {

@@ -39,6 +39,11 @@ jobs:
       - name: Engine parity
         run: python harness/scripts/check_engine_parity.py
 
-      # 4. Agentic-maturity ratchet: fail if the harness regresses below the committed baseline.
+      # 4. Committed metadata snapshot drift. Self-skips until the engine is pinned; add
+      #    `--require-engine` alongside the parity flip at M-09 so the snapshot can't go stale.
+      - name: Metadata snapshot
+        run: python harness/scripts/update_memory.py --check
+
+      # 5. Agentic-maturity ratchet: fail if the harness regresses below the committed baseline.
       - name: Agentic maturity (ratchet)
         run: python harness/scripts/check_maturity.py --check

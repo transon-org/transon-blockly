@@ -10,7 +10,8 @@
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "python3 .claude/hooks/stop-traceability.py" }
+          { "type": "command", "command": "python3 .claude/hooks/stop-traceability.py" },
+          { "type": "command", "command": "python3 .claude/hooks/handoff-memory.py" }
         ]
       }
     ],

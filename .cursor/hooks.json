@@ -5,6 +5,10 @@
       {
         "command": "python3 .cursor/hooks/check-docs-consistency.py",
         "loop_limit": 3
+      },
+      {
+        "command": "python3 .cursor/hooks/handoff-memory.py",
+        "loop_limit": 2
       }
     ],
     "subagentStop": [

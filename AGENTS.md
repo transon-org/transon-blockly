@@ -63,6 +63,14 @@ satisfy the milestone Definition of Done. Drive a milestone with `/run-milestone
 requirement with `/implement-requirement`. Before finishing, run `harness/scripts/check_traceability.py`
 and `harness/scripts/check_engine_parity.py`.
 
+**Working memory (end of session).** When a session changed code/docs, refresh the handoff so the
+next session resumes cleanly: run `python harness/scripts/update_memory.py --state` to regenerate the
+[`docs/current-state.md`](docs/current-state.md) header, then update its **Last action** / **Next
+steps** narrative. The committed engine-metadata pin lives in
+[`docs/metadata-snapshot.json`](docs/metadata-snapshot.json) (+ `metadata-snapshot.md` provenance);
+regenerate it with `update_memory.py --snapshot` whenever the engine contract moves — the
+`update_memory.py --check` gate (pre-commit + CI) fails if it drifts. A stop hook nudges this for you.
+
 ## Data flow (one-way, plus gated reverse)
 
 Blockly canvas → change event → debounced `JSON⇄IR` codec → `{json, validation, execution}` in the

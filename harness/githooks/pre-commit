@@ -13,5 +13,7 @@ python3 harness/scripts/check_traceability.py
 python3 harness/scripts/check_links.py
 python3 harness/evals/run_evals.py
 python3 harness/scripts/check_maturity.py --check
+# Committed metadata snapshot must not have drifted from the engine (skip-safe until pinned).
+python3 harness/scripts/update_memory.py --check
 # check_engine_parity self-skips until the engine is importable; CI is authoritative.
 python3 harness/scripts/check_engine_parity.py

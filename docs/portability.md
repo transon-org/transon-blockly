@@ -33,7 +33,8 @@ PRs **regardless of which agent tool authored the change**. They need no per-too
 | Subagents | `harness/agents/*.md` | `agents/*.md` (`model`, `readonly`) | `agents/*.md` (`tools:` = capability, `model:` = tier) |
 | Commands | `harness/commands/*.md` | `commands/*.md` | `commands/*.md` (`/run-milestone`, `/implement-requirement`) |
 | Skills | `harness/skills/*.md` | `skills/*/SKILL.md` (`disable-model-invocation`) | `skills/*/SKILL.md` (`disable-model-invocation`) |
-| Advisory hooks | `harness/scripts/check_traceability.check()` | `hooks.json` → `check-docs-consistency` (stop), `advance-requirement-loop` (subagentStop) | `settings.json` → `SessionStart`, `Stop`, `SubagentStop` hooks |
+| Advisory hooks | `harness/scripts/check_traceability.check()`, `update_memory.handoff_nudge()` | `hooks.json` → `check-docs-consistency` + `handoff-memory` (stop), `advance-requirement-loop` (subagentStop) | `settings.json` → `SessionStart`, `Stop` (`stop-traceability` + `handoff-memory`), `SubagentStop` |
+| Working memory / snapshot | `harness/scripts/update_memory.py` → `docs/current-state.md` + `docs/metadata-snapshot.json` | `hooks/handoff-memory.py` (stop nudge) | `hooks/handoff-memory.py` (Stop nudge) — both call `handoff_nudge()` |
 | MCP | — | `mcp.json` | `.mcp.json` |
 
 Each adapter cell is *thin*: tool-specific frontmatter + "read the canonical source and follow it". The

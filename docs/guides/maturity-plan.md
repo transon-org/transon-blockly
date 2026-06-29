@@ -43,8 +43,8 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 
 ## Current snapshot
 
-`check_maturity.py` baseline (pre-code): **81% · L4 Optimizing** (`27.5 / 34` weighted) — after
-🔴 Critical (M-01, M-02), 🟠 M-03, and M-07 landed (63% → 81%).
+`check_maturity.py` baseline (pre-code): **84% · L4 Optimizing** (`28.5 / 34` weighted) — after
+🔴 Critical (M-01, M-02), 🟠 M-03, M-07, and M-04 landed (63% → 84%).
 
 | Dim | Level | Weight | Headroom |
 |---|---|---|---|
@@ -53,7 +53,7 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 | D3 verification & gates · *gated* | **L4** | 1.5 | ✅ via harness evals (M-02); real-coverage evidence deferred (M-15) |
 | D4 review / maker ≠ checker | L2 | 1.0 | **→ L3 via M-05 → L4 via M-06** |
 | D5 loop & orchestration | **L3** | 1.0 | done to L3 (M-01); **→ L4 via M-08** |
-| D6 memory & knowledge | L3 | 1.0 | **→ L4 via M-04** |
+| D6 memory & knowledge | **L4** | 1.0 | ✅ maxed (M-04: working handoff + committed engine snapshot) |
 | D7 portability & tooling | **L4** | 1.0 | ✅ maxed (M-03 + M-07: `.claude/` adapters + `docs/portability.md`) |
 | D8 proof & observability · *gated* | L1 | 0.5 | → L2+ deferred to M3+ (M-14) |
 
@@ -92,6 +92,12 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   signal reads both `.cursor/hooks` and `.claude/hooks`). Extended `eval_cross_tool_parity` to enforce
   bidirectional existence, the no-cross-reference rule, and the `harness/` source. Policy ("new tooling →
   both adapters, or an explicit exclusion") recorded in `AGENTS.md` + `docs/portability.md`.
+- [x] **M-04 · Working memory + committed snapshot** — `docs/current-state.md` (working handoff) +
+  `docs/metadata-snapshot.json` (engine export) + `docs/metadata-snapshot.md` (provenance, pinned to
+  engine `v0.1.1-1-g5812b63`), all written by `harness/scripts/update_memory.py`; `--check` gates
+  snapshot drift in pre-commit + CI (skip-safe), and a symmetric `handoff-memory` stop hook nudges the
+  end-of-session handoff. Reconciled ROADMAP M0 ☐→◐ (engine export already exists). *(closes **G-06** +
+  **G-07**; D6 L3→L4, +2.9 pts: 81% → 84%.)*
 - [x] **M-17 · Broken-link gate** *(gate-integrity)*. `harness/scripts/check_links.py` validates every
   relative Markdown file + anchor link (GitHub slug algorithm); wired into pre-commit + CI. Caught a real
   link broken by the `harness/` folder consolidation that every other gate passed over. Also relocated
@@ -144,12 +150,15 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
   - **Impact:** D7 L2→**L3** (+2.9). ✅ landed (78%).
   - **Acceptance:** ≥2 agent-tool surfaces detected; `check_maturity.py` reports D7 L3. ✅
 
-- [ ] **M-04 — Working memory + committed snapshot.**  *Gaps: **G-06**, **G-07**.*
-  Add `docs/current-state.md` (last action / status / next steps, updated end-of-session); commit a
-  metadata snapshot and record the exact engine commit it came from; reconcile the ROADMAP milestone
-  tracker against reality (e.g. the export already exists).
-  - **Impact:** D6 L3→**L4** (+2.9) → ~81%.
-  - **Acceptance:** `docs/current-state.md` + a committed `*snapshot*` file exist; `check_maturity.py` reports D6 L4.
+- [x] **M-04 — Working memory + committed snapshot.** ✅ *done — see Done above.*  *Gaps: **G-06**, **G-07**.*
+  `docs/current-state.md` (working handoff: last action / status / next steps; generated *At a glance*
+  header + hand-written narrative), `docs/metadata-snapshot.json` (the engine `get_editor_metadata()`
+  export) + `docs/metadata-snapshot.md` (provenance — pinned to engine `v0.1.1-1-g5812b63`). One
+  generator `harness/scripts/update_memory.py` writes all three and gates snapshot drift (`--check`,
+  skip-safe like parity; pre-commit + CI); a symmetric `handoff-memory` stop hook (both tools) nudges
+  the end-of-session handoff. ROADMAP M0 reconciled ☐→◐ (the engine export already exists).
+  - **Impact:** D6 L3→**L4** (+2.9). ✅ landed (81% → **84%**).
+  - **Acceptance:** `docs/current-state.md` + a committed `*snapshot*` file exist; `check_maturity.py` reports D6 L4. ✅
   - **Effort:** S.
 
 - [ ] **M-05 — Structurally triggered review.**  *Gap: **G-05**.*
@@ -208,8 +217,9 @@ The score is `Σ(level × weight) / 34 × 100`. One level step is worth `weight 
 | ~~CI gate + scorer~~ | ~~63%~~ | done |
 | ~~🔴 Critical (M-01, M-02)~~ | ~~75%~~ | done |
 | ~~🟠 M-03~~ | ~~78%~~ | done |
-| ✅ M-07 — **current** | **81%** | **L4 Optimizing** |
-| + 🟠 High (M-04, M-05) | ~87% | L4 Optimizing |
+| ~~🟠 M-04~~ | ~~84%~~ | done |
+| ✅ M-04 — **current** | **84%** | **L4 Optimizing** |
+| + 🟠 M-05 | ~87% | L4 Optimizing |
 | + 🟡 Medium (M-06, M-08) | ~93% | L4 Optimizing |
 
 Beyond ~93%, the only remaining headroom is D8 (proof) and D3's real-coverage evidence — both
