@@ -145,7 +145,7 @@ Transon repo (this editor repo consumes the contract; see `metadata-contract.md`
   with markers `@` and `$`.
 - **Status (☑ done; CI pin flip deferred to M-09).** The **engine half has landed** in the sibling `transon` repo: the
   `switch`/`cond` rules and the projection-ready `get_editor_metadata()` export exist and are pinned
-  in [`docs/metadata-snapshot.json`](metadata-snapshot.json) (engine `v0.1.1-1-g5812b63`,
+  in [`docs/metadata-snapshot.json`](metadata-snapshot.json) (engine `v0.1.3`,
   `metadata_version 2.0`, see [`metadata-snapshot.md`](metadata-snapshot.md)); the export/variant/enum
   parity checks run against it. **Editor side (landed, reviewed):** the monorepo scaffolding
   + pinned tooling (AD-021), the engine-free `EngineProvider` port (`@transon/editor-core`, AD-008),

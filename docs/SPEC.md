@@ -1259,7 +1259,7 @@ safely apply to an unknown node; it is the node-type-dispatch primitive the gene
 
 ### 14.16 Conditional Dispatch
 
-`switch` and `cond` are **lazy multi-way dispatch** rules (engine v0.1.1, `ARCHITECTURE.md`
+`switch` and `cond` are **lazy multi-way dispatch** rules (engine v0.1.3, `ARCHITECTURE.md`
 AD-029), supported as **first-class authored blocks** like every other rule (FR-040, category
 *Control Flow* in §12.4):
 

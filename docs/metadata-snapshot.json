@@ -15,6 +15,11 @@
         "input": "str",
         "name": "float",
         "output": "float"
+      },
+      {
+        "input": "any",
+        "name": "type",
+        "output": "string"
       }
     ],
     "operators": [
@@ -583,7 +588,8 @@
             "options": [
               "str",
               "int",
-              "float"
+              "float",
+              "type"
             ]
           },
           {
@@ -833,6 +839,112 @@
           }
         ],
         "name": "float"
+      },
+      {
+        "doc": "Return the JSON type of a value: one of `object`, `array`, `string`, `int`, `float`, `boolean`, or `null`. Total — never raises on well-formed JSON, so it is the one operation a `switch`/`cond` key can safely apply to an unknown node.",
+        "examples": [
+          {
+            "data": {
+              "a": 1
+            },
+            "doc": "Reports the JSON type of an object with the `type` function.",
+            "name": "TypeOfObject",
+            "result": "object",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": [
+              1,
+              2,
+              3
+            ],
+            "doc": "Reports the JSON type of an array with the `type` function.",
+            "name": "TypeOfArray",
+            "result": "array",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": "hello",
+            "doc": "Reports the JSON type of a string with the `type` function.",
+            "name": "TypeOfString",
+            "result": "string",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": 7,
+            "doc": "Reports the JSON type of an integer with the `type` function.",
+            "name": "TypeOfInt",
+            "result": "int",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": 2.5,
+            "doc": "Reports the JSON type of a floating-point number with the `type` function.",
+            "name": "TypeOfFloat",
+            "result": "float",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": true,
+            "doc": "Reports the JSON type of a boolean with the `type` function (note booleans are\ndistinguished from integers).",
+            "name": "TypeOfBoolean",
+            "result": "boolean",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": null,
+            "doc": "Reports the JSON type of `null` with the `type` function.",
+            "name": "TypeOfNull",
+            "result": "null",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": [
+              1,
+              2
+            ],
+            "doc": "Dispatches on a node's JSON type with a non-throwing `switch` whose key is the\n`type` function — the canonical pattern a generated codec uses to walk an\narbitrary document.",
+            "name": "TypeDispatchWithSwitch",
+            "result": "is-array",
+            "template": {
+              "$": "switch",
+              "cases": {
+                "array": "is-array",
+                "object": "is-object"
+              },
+              "default": "is-scalar",
+              "key": {
+                "$": "call",
+                "name": "type",
+                "value": {
+                  "$": "this"
+                }
+              }
+            }
+          }
+        ],
+        "name": "type"
       }
     ],
     "operators": [
@@ -6772,12 +6884,112 @@
               "$": "call",
               "name": "float"
             }
+          },
+          {
+            "data": {
+              "a": 1
+            },
+            "doc": "Reports the JSON type of an object with the `type` function.",
+            "name": "TypeOfObject",
+            "result": "object",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": [
+              1,
+              2,
+              3
+            ],
+            "doc": "Reports the JSON type of an array with the `type` function.",
+            "name": "TypeOfArray",
+            "result": "array",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": "hello",
+            "doc": "Reports the JSON type of a string with the `type` function.",
+            "name": "TypeOfString",
+            "result": "string",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": 7,
+            "doc": "Reports the JSON type of an integer with the `type` function.",
+            "name": "TypeOfInt",
+            "result": "int",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": 2.5,
+            "doc": "Reports the JSON type of a floating-point number with the `type` function.",
+            "name": "TypeOfFloat",
+            "result": "float",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": true,
+            "doc": "Reports the JSON type of a boolean with the `type` function (note booleans are\ndistinguished from integers).",
+            "name": "TypeOfBoolean",
+            "result": "boolean",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": null,
+            "doc": "Reports the JSON type of `null` with the `type` function.",
+            "name": "TypeOfNull",
+            "result": "null",
+            "template": {
+              "$": "call",
+              "name": "type"
+            }
+          },
+          {
+            "data": [
+              1,
+              2
+            ],
+            "doc": "Dispatches on a node's JSON type with a non-throwing `switch` whose key is the\n`type` function — the canonical pattern a generated codec uses to walk an\narbitrary document.",
+            "name": "TypeDispatchWithSwitch",
+            "result": "is-array",
+            "template": {
+              "$": "switch",
+              "cases": {
+                "array": "is-array",
+                "object": "is-object"
+              },
+              "default": "is-scalar",
+              "key": {
+                "$": "call",
+                "name": "type",
+                "value": {
+                  "$": "this"
+                }
+              }
+            }
           }
         ],
         "name": "call",
         "params": [
           {
-            "description": "Defines the name of function. This is always constant.\n\n###### Possible values:\n\n| name  | input | output |\n|-------|:-----:|:------:|\n| str   |  any  |  str   | \n| int   |  str  |  int   | \n| float |  str  | float  | ",
+            "description": "Defines the name of function. This is always constant.\n\n###### Possible values:\n\n| name  | input | output |\n|-------|:-----:|:------:|\n| str   |  any  |  str   | \n| int   |  str  |  int   | \n| float |  str  | float  | \n| type  |  any  | string | ",
             "examples": [
               {
                 "data": 123,
@@ -7091,7 +7303,7 @@
         ]
       },
       {
-        "description": "Loads and runs another template using the `template_loader` delegate\n(a parameter to `Transformer` constructor).\n\nOnly the current context value is passed to the included template — variables\nstored with `set`/`get` and iteration accessors do not cross the boundary.\n\nWhen the loaded sub-template still uses the default marker (`$`), it inherits\nthe **parent transformer's marker** so staged templates stay consistent across\n`include` boundaries. A sub-template that pins a non-default marker keeps it.\n\nNested includes are limited by `max_include_depth` on `Transformer` (default 50).\nExceeding the limit raises `TransformationError` with the include name chain.\n\nIf the included template produces no result, this rule produces no result unless\n`default` is provided.",
+        "description": "Loads and runs another template using the `template_loader` delegate\n(a parameter to `Transformer` constructor).\n\nOnly the current context value is passed to the included template — variables\nstored with `set`/`get` and iteration accessors do not cross the boundary.\n\nThe `template_loader` is always called as `loader(name, context=...)`, where\n`context` is an `IncludeContext` carrying the parent's loader, marker, depth\nguard, and include-stack. The loader is responsible for **constructing** the\nsub-`Transformer` with them (e.g. via `context.transformer(template)`), which\ninherits the parent's marker by default — so a sub-template using the default\nmarker stays consistent across the boundary, recursive / self-`include`ing\ntemplates re-resolve without each host re-patching the loader, and the loaded\ninstance is never mutated. Pass an explicit `marker` to `context.transformer`\nto pin a different marker for the sub-template.\n\nNested includes are limited by `max_include_depth` on `Transformer` (default 50).\nExceeding the limit raises `TransformationError` with the include name chain.\n\nIf the included template produces no result, this rule produces no result unless\n`default` is provided.",
         "examples": [
           {
             "data": {},
@@ -7270,6 +7482,30 @@
                 "name": "kind"
               }
             }
+          },
+          {
+            "data": [
+              1,
+              2
+            ],
+            "doc": "Dispatches on a node's JSON type with a non-throwing `switch` whose key is the\n`type` function — the canonical pattern a generated codec uses to walk an\narbitrary document.",
+            "name": "TypeDispatchWithSwitch",
+            "result": "is-array",
+            "template": {
+              "$": "switch",
+              "cases": {
+                "array": "is-array",
+                "object": "is-object"
+              },
+              "default": "is-scalar",
+              "key": {
+                "$": "call",
+                "name": "type",
+                "value": {
+                  "$": "this"
+                }
+              }
+            }
           }
         ],
         "name": "switch",
@@ -7293,6 +7529,30 @@
                   "key": {
                     "$": "attr",
                     "name": "kind"
+                  }
+                }
+              },
+              {
+                "data": [
+                  1,
+                  2
+                ],
+                "doc": "Dispatches on a node's JSON type with a non-throwing `switch` whose key is the\n`type` function — the canonical pattern a generated codec uses to walk an\narbitrary document.",
+                "name": "TypeDispatchWithSwitch",
+                "result": "is-array",
+                "template": {
+                  "$": "switch",
+                  "cases": {
+                    "array": "is-array",
+                    "object": "is-object"
+                  },
+                  "default": "is-scalar",
+                  "key": {
+                    "$": "call",
+                    "name": "type",
+                    "value": {
+                      "$": "this"
+                    }
                   }
                 }
               }

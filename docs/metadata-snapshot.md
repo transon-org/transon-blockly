@@ -9,8 +9,8 @@ built against a fixed, reproducible metadata contract rather than a moving engin
 
 | Field | Value |
 |---|---|
-| Engine commit | `5812b632dc2cad5bf7f3a2f235c69e588cbf6857` |
-| Engine describe | `v0.1.1-1-g5812b63` |
+| Engine commit | `7b6c9342980d7edd62ff2d72780678a952841bb0` |
+| Engine describe | `v0.1.3` |
 | `metadata_version` | `2.0` |
 | `engine_version` | `—` |
 | Catalog rules | 22 |

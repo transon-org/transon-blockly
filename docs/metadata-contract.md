@@ -167,7 +167,7 @@ via `cond`/`switch` from the facts (`kind` + presence of `options`, FR-118), nev
 engine. The engine says "valid invocation facts"; the projection turns facts into widgets.
 Likewise **presentation** — `title`, `category`, and `advanced` (progressive disclosure) — is not an
 engine fact: the editor owns it for built-in rules and the export omits it (§2.1, §2.7). The engine
-verified `get_editor_metadata()` (v0.1.1) accordingly emits neither widget choices nor these
+verified `get_editor_metadata()` (v0.1.3) accordingly emits neither widget choices nor these
 presentation fields.
 
 ### 2.9 Editor-owned presentation is projection-template data (not TypeScript)

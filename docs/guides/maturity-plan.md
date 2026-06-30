@@ -113,7 +113,7 @@ ceiling until code/UI lands: the only headroom left (D8 proof, D3 real-coverage)
   +2.9 pts: 84% → 87%.)*
 - [x] **M-04 · Working memory + committed snapshot** — `docs/current-state.md` (working handoff) +
   `docs/metadata-snapshot.json` (engine export) + `docs/metadata-snapshot.md` (provenance, pinned to
-  engine `v0.1.1-1-g5812b63`), all written by `harness/scripts/update_memory.py`; `--check` gates
+  engine `v0.1.3`), all written by `harness/scripts/update_memory.py`; `--check` gates
   snapshot drift in pre-commit + CI (skip-safe), and a symmetric `handoff-memory` stop hook nudges the
   end-of-session handoff. Reconciled ROADMAP M0 ☐→◐ (engine export already exists). *(closes **G-06** +
   **G-07**; D6 L3→L4, +2.9 pts: 81% → 84%.)*
@@ -172,7 +172,7 @@ ceiling until code/UI lands: the only headroom left (D8 proof, D3 real-coverage)
 - [x] **M-04 — Working memory + committed snapshot.** ✅ *done — see Done above.*  *Gaps: **G-06**, **G-07**.*
   `docs/current-state.md` (working handoff: last action / status / next steps; generated *At a glance*
   header + hand-written narrative), `docs/metadata-snapshot.json` (the engine `get_editor_metadata()`
-  export) + `docs/metadata-snapshot.md` (provenance — pinned to engine `v0.1.1-1-g5812b63`). One
+  export) + `docs/metadata-snapshot.md` (provenance — pinned to engine `v0.1.3`). One
   generator `harness/scripts/update_memory.py` writes all three and gates snapshot drift (`--check`,
   skip-safe like parity; pre-commit + CI); a symmetric `handoff-memory` stop hook (both tools) nudges
   the end-of-session handoff. ROADMAP M0 reconciled ☐→◐ (the engine export already exists).
