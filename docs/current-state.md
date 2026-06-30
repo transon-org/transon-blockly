@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `69d1472` — editor: M2 D4 — AC-034 synthetic-rule projection proof + runCodecArtifact |
+| Repo HEAD | `b624a6f` — docs: M2 cleanup — address review NITs + refresh handoff |
 | Branch | `m2-full-catalog` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
