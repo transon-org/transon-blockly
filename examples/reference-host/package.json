@@ -1,0 +1,22 @@
+{
+  "name": "@transon/reference-host",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference EngineProvider for the Transon Visual Editor: in-browser Python `transon` via Pyodide (AD-025), pinned to the metadata-snapshot engine version. Runs both user templates and the projection codecs across the host boundary (AD-030). Reference/demo only — production embedders supply any EngineProvider (AD-008).",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@transon/editor-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.9",
+    "jsdom": "27.4.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vitest": "2.1.9"
+  }
+}
