@@ -57,13 +57,18 @@ Reviewer signed off (maker≠checker). **Since `d4c550e`:** (a) **`a913514`** �
 source, regen holds them byte-equal. (b) **`4efc0e2`** — **T5 literal-marker escape** (FR-059/060/061/062/123):
 the skeleton owns the `{<marker>:object,fields:X}` escape (exact shape, precedence over rule dispatch →
 `transon_object_literal`; decode re-wraps when content carries the marker); centralized the inspected
-DOCUMENT marker as `DOC_MARKER`. **121 tests; all gates green.** **Next (remaining M1):** **T7
-`JsonPathBlockMap`** (FR-091/094/122 — the big piece: thread `{node,path}` through the recursion to emit
-`block_id`/`template_path` during the walk; consumed in M4) and **FR-063 custom marker** (isolated:
-parameterize `DOC_MARKER` through the generators+skeleton; committed codec stays `$`). T6 full surface
-check is effectively covered by the exact-variant-match fix (diagnostic reporting is M4). **Before
-merge:** run the review-gate / round-trip-reviewer on the T5 marker-escape surface (maker≠checker).
-Then M2 (fold the catalog by extending `generateCodec`'s rule list + the `G_*` arms; no skeleton change, AC-034).
+DOCUMENT marker as `DOC_MARKER`. (c) **`d3280df`** — **T7 `JsonPathBlockMap`** (FR-091/094/122): a fixed,
+metadata-free block-map encoder (`artifacts/blockmap.json`) walks the document and emits a segment tree;
+`run.ts` flattens it into the flat map (the main codec is untouched). **+ FR-063 custom marker:** the codec
+carries a marker placeholder (`DOC_MARKER_PLACEHOLDER`); `run.ts` substitutes the configured marker
+(default `$`) at runtime, so one codec serves any marker. (d) **`db451c0`** — should-fix from the 2nd
+reviewer pass: `block_id`/`template_path` now use RFC-6901 escaping (assembled in `run.ts`) so paths are
+unique even for keys containing `/`. **M1 is COMPLETE (ROADMAP ☑):** the 2nd independent `round-trip-reviewer`
+pass signed off escape + custom marker + blockMap as sound; **133 tests; all gates green** (parity 4 fns,
+traceability, no-codec-mapping + selftest, snapshot-drift, maturity 93%, evals). **Next:** push
+`m1-codec-skeleton` + open a PR referencing the M1 IDs (one branch/PR per milestone — not yet done), then
+**M2** (`/run-milestone M2`): fold the full 22-rule catalog by extending `generateCodec`'s `M1_RULES` list +
+the committed `G_*` arms (no skeleton change, AC-034; watch field-`kind` disposition, FR-118).
 (Prior: RFC-002 absorption + coherence fixes committed `b3e6669`/`cb5b738`; M0 editor build `8751707`.)_
 
 ### Prior last action (M0)
@@ -99,35 +104,30 @@ living read of it.
   scaffolding + AD-021 pins, `@transon/editor-core` stub (`EngineProvider` port + snapshot loader), and
   the Node→Python `test/engine-node-adapter` running markers `@`/`$` — reviewed + gate-green. Only the
   CI engine-pin flip (M-09: `--require-engine`) remains, waiting on `transon` being pip-installable in CI.
-- **M1 — `editor-core` codec skeleton + `G_encode`/`G_decode` for `attr`** — ◐ in progress (codec
-  committed `d4c550e`, reviewer-signed-off; all gates green). Codec lives in
-  `packages/editor-core/src/codec/`; engine-executed tests in `test/engine-node-adapter/test/codec/`.
-  `decode(encode(T)) == T` structurally + by execution over the M1 corpus (AC-035); arms projected from
-  metadata with byte-equal regen (AD-026/030); workspace-shape + FR-126 gates pass; clean recursion
-  ceiling (§6.5). **Remaining M1 scope:** literal-marker escape (FR-123), full surface check (§15.7),
-  `JsonPathBlockMap` (FR-091/094/122).
-- **M2–M5** — ☐ not started. M2 folds the full catalog in by adding per-rule `include` fragments (the
-  M1 mechanism already supports it: `generateCodec`'s rule list + `G_*` arms; AC-034).
+- **M1 — `editor-core` codec skeleton + `G_encode`/`G_decode` for `attr`** — ☑ done (committed, not
+  pushed; two `round-trip-reviewer` sign-offs). Codec in `packages/editor-core/src/codec/`;
+  engine-executed tests in `test/engine-node-adapter/test/codec/`. `decode(encode(T)) == T` structurally
+  + by execution (AC-035); arms projected from committed-JSON generators with byte-equal regen
+  (AD-026/030); literal-marker escape (FR-059…063/123), exact-variant surface check (§15.7),
+  `JsonPathBlockMap` (FR-091/094/122), custom marker (FR-063); workspace-shape + FR-126 gates pass; clean
+  recursion ceiling (§6.5). 133 tests.
+- **M2–M5** — ☐ not started. M2 folds the full 22-rule catalog in by extending `generateCodec`'s
+  `M1_RULES` list + the committed `G_*` arms (the M1 mechanism already supports it; no skeleton change,
+  AC-034; watch field-`kind` disposition, FR-118).
 
 ## Next steps (ordered)
 
-1. **Resolve the `round-trip-reviewer` verdict** on the M1 codec (in flight). Address any must-fix
-   (re-run `pnpm -r test` + `UPDATE_ARTIFACTS=1 …` if a generator changes so the regen gate stays
-   byte-equal), then **commit the codec slice as one change** — the staged `packages/editor-core/src/codec/`
-   + `test/engine-node-adapter/test/codec/` + `check_no_codec_mapping.py` + the traceability/ROADMAP
-   updates already made. Then re-run `update_memory.py --state` so the header points at the codec commit.
-2. **Finish the remaining M1 scope** (each its own `/implement-requirement`, test-first; all build on the
-   proven codec): **T5** literal-marker escape — recognize the exact `{$:object,fields:…}` shape →
-   `transon_object_literal` (FR-123) + a configurable document marker (FR-063), order-independent
-   key-set check (engine key order is insertion order, not sorted); **T6** full surface check beyond
-   unknown-rule — undeclared params / zero-or-multiple variant match → `import_unsupported` (§15.7, §16.4);
-   **T7** `JsonPathBlockMap` produced during the codec walk (FR-091/094/122) — needs threading
-   `{node, path}` context through the recursion to emit `block_id`/`template_path` (consumed in M4).
-3. Then **M2** (`/run-milestone M2`): fold the full catalog by adding per-rule fragments to
-   `generateCodec`'s rule list + the `G_*` arms (no skeleton change; AC-034). Watch field-`kind` params
-   (attr is all-dynamic; M2/M3 introduce field-vs-input disposition, FR-118).
-4. (Optional) push `m1-codec-skeleton` + open a PR referencing the M1 IDs (one branch/PR per milestone).
-5. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
+1. **Push `m1-codec-skeleton` + open a PR** referencing the M1 IDs (one branch/PR per milestone — M1 is
+   ☑ done, reviewed, all gates green, but **not pushed**). 11+ commits from `197d034` (re-pin) through
+   `db451c0` (blockMap path fix).
+2. **M2** (`/run-milestone M2`): fold the full 22-rule catalog by extending `generateCodec`'s `M1_RULES`
+   list + adding the committed `G_*` arms (no skeleton change; AC-034). The mechanism is proven; the new
+   work is per-rule metadata coverage + the full §15.8 round-trip corpus. **Watch:** field-`kind` params
+   — `attr` is all-dynamic (all value inputs); other rules have `kind:"field"` params that need the
+   field-vs-input disposition in `G_encode` (FR-118), and operators/functions via resolved enums.
+   Regen flow when a generator changes: write generators → rebuild (dist imports them) → regenerate
+   artifacts → rebuild (the double-build, or `UPDATE_ARTIFACTS=1` twice).
+3. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
    `update_memory.py --check --require-engine` on, once the engine is pip-installable in CI.
 
 ## Open blockers / waiting-on

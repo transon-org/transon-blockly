@@ -198,22 +198,28 @@ prove round-trip identity — before folding over the catalog. Pure data + host 
   - **Host recursion ceiling** — codec recursion is host-stack-bound (~25 levels), below the engine's
     `max_include_depth` (50); deeper nesting should fail cleanly with an `include_loader` error, not a
     raw stack overflow ([`metadata-contract.md`](metadata-contract.md) §6.5).
-- **Status (◐ in progress — de-risk proven, round-trip + DoD gates green).** The compiler model is
-  **validated end-to-end** for the `attr` prototype: `G_encode`/`G_decode` arms are projected from the
-  pinned metadata via `@`-staging over a fixed rule-agnostic skeleton; the committed encoder/decoder
+- **Status (☑ done — round-trip-reviewer-signed-off, all DoD gates green; not pushed).** The compiler
+  model is **validated end-to-end** for the `attr` prototype: `G_encode`/`G_decode` arms are projected
+  from the pinned metadata via `@`-staging over a fixed rule-agnostic skeleton (the generators are
+  committed as inspectable JSON data and run load-bearing; AD-026); the committed encoder/decoder
   artifacts execute through the host `EngineProvider` and **round-trip by construction** —
   `decode(encode(T)) == T` structurally **and** semantic-identity by execution (AC-035) — over the M1
   corpus (literals incl. scalar-type fidelity, arrays/objects, both `attr` variants + optional
-  `default`, nesting, out-of-surface → `transon_unsupported`). DoD additions met: the **FR-124
-  workspace-shape validator** and the **FR-126 no-mapping repo-scan** pass; the codec artifacts are
-  **byte-equal** to a fresh `G_*` run (strict compare-only regen, AD-030); the codec output is Blockly
-  workspace-serialization JSON directly (AD-032). Deep nesting fails **cleanly** with a `CodecError`
-  below the host-stack limit (§6.5, codec `maxIncludeDepth` cap), not a raw stack overflow. The M0
-  adapter gained the v0.1.3 `include` `IncludeContext` loader + the `includes` bundle + `maxIncludeDepth`
-  plumbing (engine-free; AD-008/011). **Remaining M1-scope (do not affect the de-risk/round-trip):**
-  the **literal-marker escape** (FR-059…063/123 — marker-key objects currently round-trip via
-  `transon_unsupported`), the **full surface check** beyond unknown-rule (§15.7), and **`JsonPathBlockMap`
-  production** (FR-091/094/122, *consumed* in M4). Living status: [`docs/current-state.md`](current-state.md).
+  `default`, nesting, out-of-surface → `transon_unsupported`). **Full M1 scope landed:** the
+  skeleton-owned **literal-marker escape** with exact precedence (FR-059/060/061/062/123); the **exact
+  variant-match surface check** (ambiguous/foreign `attr` → `transon_unsupported`, never silently
+  rewritten — §15.7); the **`JsonPathBlockMap`** emitted alongside the workspace with unique,
+  RFC-6901-escaped paths (FR-091/094/122, §9.12; *consumed* in M4); and **custom marker keys** via
+  runtime marker substitution (FR-063). DoD additions met: the **FR-124 workspace-shape validator** and
+  **FR-126 no-mapping repo-scan** pass; artifacts + generators are **byte-equal** to a fresh build
+  (strict compare-only regen, AD-030); the codec output is Blockly workspace-serialization JSON directly
+  (AD-032). Deep nesting fails **cleanly** with a `CodecError` below the host-stack limit (§6.5, codec
+  `maxIncludeDepth` cap), not a raw stack overflow. The M0 adapter gained the v0.1.3 `include`
+  `IncludeContext` loader + the `includes` bundle + `maxIncludeDepth` plumbing (engine-free;
+  AD-008/011). Two independent `round-trip-reviewer` passes (maker≠checker) found + fixed two must-fix
+  correctness bugs (value-sentinel collision; silent out-of-surface rewrite) and one should-fix
+  (blockMap path uniqueness); all resolved + regression-locked. **133 tests pass.** Living status:
+  [`docs/current-state.md`](current-state.md).
 
 ## M2 — Full catalog: fold every rule into the generated codec
 
@@ -299,7 +305,7 @@ self-hosting demonstration.
 | Milestone | Focus | Key IDs | Status |
 |-----------|-------|---------|:------:|
 | M0 | Engine `switch`/`cond` + projection-ready export + Node adapter | FR-047/081/116/117/118, AD-008/012/027/029/021 | ☑ |
-| M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 122/123/124/126, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/032/011 | ◐ |
+| M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 122/123/124/126, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/032/011 | ☑ |
 | M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☐ |
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☐ |
 | M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-033; NFR-028; AD-019/020/024/025/030 | ☐ |
