@@ -8,30 +8,53 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `cb5b738` — docs: post-absorption coherence fixes (close audit findings) |
-| Branch | `alternative-path` |
-| Engine pin | transon `v0.1.1-1-g5812b63` @ `5812b632dc2c` (see [metadata-snapshot.md](metadata-snapshot.md)) |
+| Repo HEAD | `bb9c0d9` — editor: M1 T0 — adapter resolves include fragments for the codec (FR-119, §6.5) |
+| Branch | `m1-codec-skeleton` |
+| Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
 
-_**RFC-002 absorbed + post-absorption coherence fixes — both committed** on `alternative-path`
-(`b3e6669`, `cb5b738`). (1) The codec output contract + projection guardrails RFC was fully applied:
-append-only IDs **FR-122…FR-127, NFR-048, AC-037** (SPEC), **AD-032** (ARCHITECTURE); §D.3
-encapsulation finding folded into **AD-018** (shadow DOM not viable), strict-regen lesson into
-**AD-030**; engine prerequisites (`type` fn, `include` `IncludeContext` loader, v0.1.3+ pin) +
-codec-metaprogramming lessons as **metadata-contract §6.4/§6.5** and **§2.9** (presentation =
-projection-data); ROADMAP M1/M2/M3 scope+DoD deltas; traceability gate + coverage rows. The RFC is now
-an "APPLIED / non-normative" tombstone. (2) A tri-dimensional doc audit (referential / semantic /
-intent-drift) drove the coherence pass: added the engine **`type` function to SPEC §14.15** (was in
-the engine, missing from the catalog; now load-bearing per §6.4) — **`check_engine_parity` is now
-consistent (4 functions)**; ROADMAP M2 "20 rules" → **22**; refreshed **AGENTS.md** (AD range
-AD-001..AD-032; corrected the superseded "IR" wording); added the missing **FR-122** anti-drift gate
-row; made ARCH §5.4/§5.6 **cite FR-124** instead of restating the block vocabulary. Both commits used
-`--no-verify` only for the **pre-existing committed-snapshot drift** (engine moved v0.1.1 → v0.1.3);
-all other gates green (traceability, links, maturity, evals, engine-parity). (Prior session: **M0
-editor-side build** committed as `8751707` — see "Status by milestone".)_
+_**M1 codec de-risk built + green; round-trip-reviewer review in progress, commit pending.** Branch
+`m1-codec-skeleton`. (0) **Engine re-pin to v0.1.3** committed (`197d034`) — the M1 prerequisite (`type`
+fn + `include` `IncludeContext` loader); cascaded `v0.1.1`→`v0.1.3` doc refs. (1) **T0 adapter fix**
+committed (`bb9c0d9`): the v0.1.3 `include` loader is `loader(name, context=…)` → must build via
+`context.transformer(…)` (self-`include` recursion + depth guard); added the `EngineProvider.transform`
+`includes` bundle channel + fixed `collectIncludes`. (2) **The codec is built + tested but NOT yet
+committed** (staged in the working tree): `packages/editor-core/src/codec/` = `codegen.ts` (the `@`-staged
+`G_encode`/`G_decode` arms projected from `attr` metadata + fixed skeleton + `generateCodec`/`serializeArtifact`),
+`run.ts` (engine-free encode/decode via the host port, `CODEC_MAX_INCLUDE_DEPTH=25`), `vocabulary.ts`
+(block types + `WorkspaceBlock`/`JsonPathBlockMap`), committed `artifacts/{encoder,decoder}.json`;
+codec tests live in `test/engine-node-adapter/test/codec/` (round-trip structural+execution, encode,
+decode, workspace-shape, ceiling, regen) + `harness/scripts/check_no_codec_mapping.py` (FR-126). The
+**de-risk is proven**: `decode(encode(T)) == T` structurally AND by execution (AC-035) over the M1
+corpus; per-rule arms are projected from metadata (AD-026) with **byte-equal regen** (AD-030);
+out-of-surface → `transon_unsupported`; deep nesting fails cleanly with a `CodecError` (§6.5 — found +
+fixed a real raw-stack-overflow via the `maxIncludeDepth` cap). **Independent `round-trip-reviewer`
+found 2 must-fix correctness bugs — both fixed + independently re-verified (sign-off: round-trip sound,
+safe to merge for the M1 prototype scope):** (#1) presence was decided
+by comparing a param's VALUE to a sentinel, so a valid `attr` whose `default` equalled the sentinel
+string was silently dropped (AC-035/AD-004 break); (#2) variant matching only checked required-present
++ first-match, so ambiguous (`name`+`names`) / foreign-param `attr` nodes were silently rewritten
+instead of → `transon_unsupported`. **Fix:** presence is now KEY-based (the codec `set`s the node,
+compares key NAMES against generation-time-known param names; no value sentinel — `ABSENT` deleted),
+and variant matching is EXACT (all required present AND no foreign key → else the cond default →
+unsupported); decode `decInput` is key-based too. Also hardened the FR-126 scan (bracket/destructuring
+access) and fixed a dead regex in `isRuleBlockType`. Regression coverage added (sentinel-default,
+ambiguous, foreign). **107 tests pass**; typecheck + build + all gates green (parity 4 fns, traceability,
+no-codec-mapping + selftest, snapshot-drift, maturity 93%, evals). Traceability rows + ROADMAP M1
+tracker (☐→◐) updated. **Key codec mechanics learned** (load-bearing):
+`map`/`filter` iterate `this` (not a `value` source — chain into `this` first); `set` stores `this` (no
+`value` param); `include` passes only `this` (navigate via `chain` before recursing); `switch.cases`
+must be a literal mapping (merge fixed+generated cases at codegen time, not via runtime `join`); `join`
+merges dicts; `object key+value` builds a single dynamic-key dict; `object/fields` omits NO_CONTENT
+values (drives optional-param omission); **presence/membership must be KEY-based** (a value-sentinel
+collides — review #1) and the engine `!`/`not` operator does NOT negate (use `!=` / restructure).
+Reviewer signed off (maker≠checker). **Next:** finish the remaining M1 scope — T5 literal-marker escape
+(FR-123), T6 full surface check (§15.7), T7 `JsonPathBlockMap` (FR-091/094/122) — then M2 (fold the full
+catalog by extending `generateCodec`'s rule list + the `G_*` arms; no skeleton change, AC-034).
+(Prior: RFC-002 absorption + coherence fixes committed `b3e6669`/`cb5b738`; M0 editor build `8751707`.)_
 
 ### Prior last action (M0)
 
@@ -66,28 +89,35 @@ living read of it.
   scaffolding + AD-021 pins, `@transon/editor-core` stub (`EngineProvider` port + snapshot loader), and
   the Node→Python `test/engine-node-adapter` running markers `@`/`$` — reviewed + gate-green. Only the
   CI engine-pin flip (M-09: `--require-engine`) remains, waiting on `transon` being pip-installable in CI.
-- **M1–M5** — ☐ not started. M1 (`editor-core` codec skeleton + `G_encode`/`G_decode` for one rule,
-  e.g. `attr`) is the next milestone and consumes the M0 adapter + snapshot.
+- **M1 — `editor-core` codec skeleton + `G_encode`/`G_decode` for `attr`** — ◐ in progress (de-risk
+  proven; round-trip + DoD gates green; review pending; not yet committed). Codec lives in
+  `packages/editor-core/src/codec/`; engine-executed tests in `test/engine-node-adapter/test/codec/`.
+  `decode(encode(T)) == T` structurally + by execution over the M1 corpus (AC-035); arms projected from
+  metadata with byte-equal regen (AD-026/030); workspace-shape + FR-126 gates pass; clean recursion
+  ceiling (§6.5). **Remaining M1 scope:** literal-marker escape (FR-123), full surface check (§15.7),
+  `JsonPathBlockMap` (FR-091/094/122).
+- **M2–M5** — ☐ not started. M2 folds the full catalog in by adding per-rule `include` fragments (the
+  M1 mechanism already supports it: `generateCodec`'s rule list + `G_*` arms; AC-034).
 
 ## Next steps (ordered)
 
-1. **Decide the engine re-pin to v0.1.3** (resolves the one outstanding gate). The local engine
-   (`../transon`) is at **v0.1.3**, which adds the `type` fn (§6.4) + the `include` `IncludeContext`
-   loader (§6.5) — exactly the M1 prerequisites. `update_memory.py --check` currently fails (committed
-   snapshot still pins v0.1.1-1-g5812b63); a previewed `--snapshot` regen cleanly adds `type` +
-   updates the `include` doc to the IncludeContext model. Re-pinning is a deliberate contract move
-   that also cascades the `v0.1.1` references in current-state, ROADMAP M0, SPEC §14.16, and
-   metadata-contract §2.8 → do it as its own commit. Until then, doc commits need `--no-verify` for
-   that pre-existing drift.
-2. Start **M1** (`/run-milestone M1`): `editor-core` codec skeleton + `G_encode`/`G_decode` for one
-   rule (`attr`) with execution-based round-trip via the M0 adapter — the de-risk prototype. M1 also
-   wires real `include` resolution through the adapter and should add the bridge request-id then.
-   Codec output target is **Blockly workspace JSON directly** (FR-124/126, AD-032) with the FR-124
-   shape validator + FR-126 repo-scan in the M1 DoD; see ROADMAP M1 implementation notes. Depends on
-   step 1's re-pin.
-3. (Optional) push `m0-editor-scaffolding` + open a PR referencing the M0 IDs (one branch/PR per
-   milestone) — not yet done.
-4. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
+1. **Resolve the `round-trip-reviewer` verdict** on the M1 codec (in flight). Address any must-fix
+   (re-run `pnpm -r test` + `UPDATE_ARTIFACTS=1 …` if a generator changes so the regen gate stays
+   byte-equal), then **commit the codec slice as one change** — the staged `packages/editor-core/src/codec/`
+   + `test/engine-node-adapter/test/codec/` + `check_no_codec_mapping.py` + the traceability/ROADMAP
+   updates already made. Then re-run `update_memory.py --state` so the header points at the codec commit.
+2. **Finish the remaining M1 scope** (each its own `/implement-requirement`, test-first; all build on the
+   proven codec): **T5** literal-marker escape — recognize the exact `{$:object,fields:…}` shape →
+   `transon_object_literal` (FR-123) + a configurable document marker (FR-063), order-independent
+   key-set check (engine key order is insertion order, not sorted); **T6** full surface check beyond
+   unknown-rule — undeclared params / zero-or-multiple variant match → `import_unsupported` (§15.7, §16.4);
+   **T7** `JsonPathBlockMap` produced during the codec walk (FR-091/094/122) — needs threading
+   `{node, path}` context through the recursion to emit `block_id`/`template_path` (consumed in M4).
+3. Then **M2** (`/run-milestone M2`): fold the full catalog by adding per-rule fragments to
+   `generateCodec`'s rule list + the `G_*` arms (no skeleton change; AC-034). Watch field-`kind` params
+   (attr is all-dynamic; M2/M3 introduce field-vs-input disposition, FR-118).
+4. (Optional) push `m1-codec-skeleton` + open a PR referencing the M1 IDs (one branch/PR per milestone).
+5. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
    `update_memory.py --check --require-engine` on, once the engine is pip-installable in CI.
 
 ## Open blockers / waiting-on

@@ -58,11 +58,11 @@ defense against spec/engine drift:
 | Variant-signature parity | each rule's pre-derived `variants` are well-formed (ids + `required` flags, params drawn from the rule) | engine editor-metadata export, pre-derived `variants` ([`metadata-contract.md`](metadata-contract.md) §2.5, §3) | [x] `harness/scripts/check_engine_parity.py` |
 | Resolved-enum parity | `expr.op`/`call.name` `options` == engine operator/function catalogs | engine export `options` ([`metadata-contract.md`](metadata-contract.md) §2.6) | [x] `harness/scripts/check_engine_parity.py` |
 | Metadata export parity | export has the contract shape (split `catalog`/`docs`, per-rule `name`/`params`/`variants`, per-param `kind`, `metadata_version`) | engine `get_editor_metadata()` ([`metadata-contract.md`](metadata-contract.md) §3) | [x] `harness/scripts/check_engine_parity.py` |
-| Codec-regeneration | committed codec artifacts (encoder/decoder + palette/toolbox) == re-running `G_*` on the current metadata (compare-only; writes only under `UPDATE_ARTIFACTS=1`) | `G_*` projections + build-time codegen (`SPEC.md` FR-119, AD-030) | [ ] |
+| Codec-regeneration | committed codec artifacts (encoder/decoder + palette/toolbox) == re-running `G_*` on the current metadata (compare-only; writes only under `UPDATE_ARTIFACTS=1`) | `G_*` projections + build-time codegen (`SPEC.md` FR-119, AD-030) | [~] encoder/decoder: `test/engine-node-adapter/test/codec/regen.test.ts` (palette/toolbox M3) |
 | Behavior-runtime size | the rule-agnostic behavior runtime gains no per-rule branch as the catalog grows | `SPEC.md` NFR-046, AD-031 | [ ] |
-| Workspace-shape validity | encoder output is valid Blockly workspace-serialization JSON over the fixed block vocabulary (`transon_rule_<rule>__<variant>`, `transon_literal`/`transon_array`/`transon_object_literal`/`transon_unsupported`) across the §15.8 corpus | `SPEC.md` FR-124, AD-032 | [ ] |
+| Workspace-shape validity | encoder output is valid Blockly workspace-serialization JSON over the fixed block vocabulary (`transon_rule_<rule>__<variant>`, `transon_literal`/`transon_array`/`transon_object_literal`/`transon_unsupported`) across the §15.8 corpus | `SPEC.md` FR-124, AD-032 | [~] M1 corpus subset: `test/engine-node-adapter/test/codec/workspace-shape.test.ts` (full §15.8 in M2) |
 | `JsonPathBlockMap` produced as the codec walks | the encoder emits the path→block map during the codec walk (not a separate post-pass); every JSON path maps to its block or nearest enclosing block over the §15.8 corpus | `SPEC.md` FR-122, §9.12 | [ ] |
-| No codec↔workspace mapping (repo-scan) | no module under `packages/*/src` maps codec artifacts to/from a `{type, inputs, fields}` block structure | `SPEC.md` FR-126, AD-032 | [ ] |
+| No codec↔workspace mapping (repo-scan) | no module under `packages/*/src` maps codec artifacts to/from a `{type, inputs, fields}` block structure | `SPEC.md` FR-126, AD-032 | [x] `harness/scripts/check_no_codec_mapping.py` (+ `--selftest`) |
 | Encoder output loads in Blockly | encoder output deserializes via Blockly's workspace loader without error (headless) | `SPEC.md` FR-126 | [ ] |
 | Palette definitions load | every complete-metadata rule yields a loadable/instantiable Zelos block definition (headless) | `SPEC.md` FR-125 | [ ] |
 | Presentation source-scan | no §12.4 category names / order / category→colour map / per-rule title/category/advanced as TypeScript literals under `packages/*/src`; every metadata rule has a presentation-data entry | `SPEC.md` FR-127, NFR-048; [`metadata-contract.md`](metadata-contract.md) §2.9 | [ ] |
@@ -80,17 +80,17 @@ docs/example-corpus templates; custom marker configuration; and import-failure c
 
 | Corpus group | SPEC ref | Status | Test reference |
 |--------------|----------|:------:|----------------|
-| Literals (scalar/array/object) | §15.8 | [ ] | |
-| Literal marker-key object | §15.8, §11.4 | [ ] | |
+| Literals (scalar/array/object) | §15.8 | [~] | `test/engine-node-adapter/test/codec/roundtrip.test.ts` (scalar type fidelity, empties, nesting) |
+| Literal marker-key object | §15.8, §11.4 | [ ] | escape (FR-123) deferred past M1; marker-key objects currently round-trip via `transon_unsupported` |
 | Every built-in rule | §15.8, §14 | [ ] | |
 | Every block variant | §15.8, §7.7 | [ ] | |
 | Nested templates | §15.8 | [ ] | |
 | Docs/example-corpus templates | §15.8 | [ ] | |
 | Custom marker configuration | §15.8, FR-063 | [ ] | |
 | Import-failure cases | §15.8, §17 | [ ] | |
-| Round-trip by construction (per rule, generated codec) | §15.1, FR-115, AC-035 | [ ] | encoder+decoder from one metadata source; semantic identity via engine |
+| Round-trip by construction (per rule, generated codec) | §15.1, FR-115, AC-035 | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity); full catalog M2 |
 | Self-hosting projection template | §7.16, FR-121, UC-016, AC-036 | [ ] | a `G_*`/codec template imports + round-trips as a normal in-surface template |
-| Workspace-shape invariant (per corpus entry) | §15.8, FR-124, AD-032 | [ ] | encoder output asserted against the fixed Blockly block vocabulary, not only via round-trip identity |
+| Workspace-shape invariant (per corpus entry) | §15.8, FR-124, AD-032 | [~] | `test/engine-node-adapter/test/codec/workspace-shape.test.ts` (M1 corpus subset; asserts the fixed vocabulary + catches malformed blocks) |
 
 ## Acceptance criteria coverage (§20)
 
@@ -106,9 +106,9 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-006 | All built-in rules available | [ ] | |
 | AC-007 | Operators available | [ ] | |
 | AC-008 | Functions available | [ ] | |
-| AC-009 | Import supported template | [ ] | |
-| AC-010 | Export generated template | [ ] | |
-| AC-011 | Strict semantic round-trip | [ ] | |
+| AC-009 | Import supported template | [~] | `attr` + structural via the generated decoder: `test/engine-node-adapter/test/codec/decode.test.ts` (full UI import M4) |
+| AC-010 | Export generated template | [~] | generated encoder: `test/engine-node-adapter/test/codec/encode.test.ts` (full UI export M4) |
+| AC-011 | Strict semantic round-trip | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts`; full catalog M2 |
 | AC-012 | Validation with engine | [ ] | |
 | AC-013 | Runtime execution with engine | [ ] | |
 | AC-014 | Output preview | [ ] | |
@@ -132,7 +132,7 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-032 | Compact editor mode | [ ] | |
 | AC-033 | Bidirectional JSON editing (strict in-surface) | [ ] | |
 | AC-034 | Projection coverage: new rule across all surfaces, no editor/projection change | [ ] | |
-| AC-035 | Round-trip by construction (generated encoder/decoder, per rule) | [ ] | |
+| AC-035 | Round-trip by construction (generated encoder/decoder, per rule) | [~] | `attr` prototype (encoder+decoder from one metadata source; structural + execution identity): `test/engine-node-adapter/test/codec/roundtrip.test.ts`; full catalog M2 |
 | AC-036 | Self-hosting projection template loads + round-trips | [ ] | |
 | AC-037 | Presentation (title/category/advanced/colour) from data, not TypeScript; synthetic-rule projection test | [ ] | |
 
@@ -145,9 +145,9 @@ implementing module and the test that cites the ID.
 |------------|-----------------|:------:|-------|
 | §7.1 Editor shell and modes | FR-001..FR-011 | [ ] | sandbox/compact modes, panels, embedding callbacks |
 | §7.2 Blockly workspace | FR-012..FR-018 | [ ] | blocks, literals, rule-vs-literal distinction |
-| §7.3 Transon JSON generation | FR-019..FR-026 | [ ] | marker key, params, stable JSON |
-| §7.4 Import from Transon JSON | FR-027..FR-034 | [ ] | supported-surface boundary (§15.7) |
-| §7.5 Round-trip | FR-035..FR-039 | [ ] | semantic equivalence; corpus above |
+| §7.3 Transon JSON generation | FR-019..FR-026 | [~] | encoder over `attr` + literals/array/object: `test/engine-node-adapter/test/codec/encode.test.ts` (marker key, params, omit-empty) |
+| §7.4 Import from Transon JSON | FR-027..FR-034 | [~] | decoder + unsupported placeholder: `test/engine-node-adapter/test/codec/decode.test.ts`, `encode.test.ts` (out-of-surface → `transon_unsupported`, §13.11); full surface check (§15.7) continues past M1 |
+| §7.5 Round-trip | FR-035..FR-039 | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution); full corpus M2 |
 | §7.6 Rule coverage | FR-040..FR-044 | [ ] | parity checks above |
 | §7.7 Rule parameters and variants | FR-045..FR-058 | [ ] | required/optional/kind + variant model & import matcher (§15.6) |
 | §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [ ] | object/fields escape; skeleton-owned escape precedence + `transon_object_literal` naming (FR-123) |
@@ -158,7 +158,7 @@ implementing module and the test that cites the ID.
 | §7.13 Import / export UX | FR-096..FR-101 | [ ] | |
 | §7.14 Component embedding | FR-102..FR-110 | [ ] | component API |
 | §7.15 Bidirectional JSON editing | FR-111..FR-113 | [ ] | strict in-surface sync (AD-024); now via the generated decoder/encoder |
-| §7.16 Template-driven projection surface | FR-114..FR-121, FR-124..FR-126 | [ ] | `G_*` projections, generated codec, build-time codegen + runtime exec (AD-026..AD-031); codec output = Blockly workspace JSON directly, no mapping layer (FR-124/125/126, AD-032) |
+| §7.16 Template-driven projection surface | FR-114..FR-121, FR-124..FR-126 | [~] | M1 de-risk: `G_encode`/`G_decode` for `attr`, generated codec + skeleton, build-time codegen + runtime exec, regen + workspace-shape + no-mapping gates (`packages/editor-core/src/codec/`, `test/engine-node-adapter/test/codec/`). FR-121 self-hosting M5; FR-125 palette M3 |
 
 ## Non-functional & architecture decisions
 
@@ -175,13 +175,13 @@ dedicated tests:
 | NFR-035 / AD-009 | `file` writes captured, not written to disk | execution tests (AC-024) | [ ] |
 | AD-010 | `include` resolved via host loader; missing loader reported | execution tests (AC-025) | [ ] |
 | NFR-036..039 / NFR-040 / AD-012 | Metadata schema versioning + mismatch detection | see metadata-contract.md §5; typed snapshot loader (`packages/editor-core/test/snapshot.test.ts`) | [~] |
-| AD-026 / FR-114/115/120 / AC-034 | Editor surface = projections of metadata; new rule, no editor/projection change | projection-coverage test + codec-regeneration check | [ ] |
-| AD-027 / FR-116 | Distinct-marker staging (`@`/`$`); `include` default-marker inheritance; no `eval` | generator staging tests (`test/engine-node-adapter/test/adapter.markers.test.ts`); engine `include` marker test (engine repo) | [~] |
-| AD-028 / FR-117 | Codec = skeleton + projected arms; skeleton owns invariants | codec-skeleton unit tests (recursion/ordering/marker-escape/surface) | [ ] |
+| AD-026 / FR-114/115/120 / AC-034 | Editor surface = projections of metadata; new rule, no editor/projection change | projection-coverage test + codec-regeneration check | [~] `attr` arm projected from metadata; codec-regeneration byte-equal (`test/engine-node-adapter/test/codec/regen.test.ts`); AC-034 multi-rule M2 |
+| AD-027 / FR-116 | Distinct-marker staging (`@`/`$`); `include` default-marker inheritance; no `eval` | generator staging tests (`test/engine-node-adapter/test/adapter.markers.test.ts`); engine `include` marker test (engine repo) | [~] codec `@`→`$` projection + self-`include` recursion: `…/adapter.markers.test.ts`, `…/adapter.includes.test.ts`, `…/codec/regen.test.ts` |
+| AD-028 / FR-117 | Codec = skeleton + projected arms; skeleton owns invariants | codec-skeleton unit tests (recursion/ordering/marker-escape/surface) | [~] skeleton (dispatch/recursion/ordering/unsupported): `test/engine-node-adapter/test/codec/encode.test.ts`, `roundtrip.test.ts`, `ceiling.test.ts` (marker-escape M1-follow-on) |
 | AD-029 / FR-118 | `switch`/`cond` lazy dispatch in the generated codec | dispatch + lazy-branch tests (engine repo for the rules) | [ ] |
-| AD-030 / FR-119 | Build-time codegen of committed artifacts; runtime exec via host | codec-regeneration check + host execution tests (two-pass generate-then-run proven in `test/engine-node-adapter/test/adapter.markers.test.ts`) | [~] |
+| AD-030 / FR-119 | Build-time codegen of committed artifacts; runtime exec via host | codec-regeneration check + host execution tests (two-pass generate-then-run proven in `test/engine-node-adapter/test/adapter.markers.test.ts`) | [~] committed artifacts + byte-equal regen + host-executed round-trip: `test/engine-node-adapter/test/codec/{regen,roundtrip}.test.ts` |
 | AD-031 / NFR-046 | Finite rule-agnostic behavior runtime; no per-rule growth | behavior-runtime size check | [ ] |
-| AD-032 / FR-124/126 | No hand-written codec↔Blockly mapping; codec emits/consumes workspace JSON directly | workspace-shape validator + encoder-loads-in-Blockly + repo-scan gates | [ ] |
+| AD-032 / FR-124/126 | No hand-written codec↔Blockly mapping; codec emits/consumes workspace JSON directly | workspace-shape validator + encoder-loads-in-Blockly + repo-scan gates | [~] workspace-shape validator + FR-126 repo-scan: `test/engine-node-adapter/test/codec/workspace-shape.test.ts`, `harness/scripts/check_no_codec_mapping.py` (Blockly-load gate M3) |
 | FR-125 | Palette block definitions are valid/loadable Zelos | headless palette-load gate | [ ] |
 | FR-127 / NFR-048 | Presentation/category/colour from metadata or projection data, single committed source | presentation source-scan + completeness check; AC-037 synthetic-rule test | [ ] |
 | NFR-047 | Split structural / examples metadata payload | metadata-shape test (structural catalog excludes examples/docs) (`packages/editor-core/test/snapshot.test.ts`) | [~] |

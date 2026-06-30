@@ -140,6 +140,7 @@ class NodeEngineProvider implements EngineProvider {
       marker: string;
       includeLoader?(name: string): Json | undefined;
       includes?: Record<string, Json>;
+      maxIncludeDepth?: number;
     },
   ): Promise<ExecutionResult> {
     // `include` resolution maps onto the engine `template_loader` delegate (AD-010). The
@@ -158,6 +159,7 @@ class NodeEngineProvider implements EngineProvider {
       input,
       marker: o.marker,
       includes,
+      ...(o.maxIncludeDepth !== undefined ? { maxIncludeDepth: o.maxIncludeDepth } : {}),
     })) as Record<string, unknown>;
 
     // Map engine-native snake_case files_written -> camelCase filesWritten (§5.2).

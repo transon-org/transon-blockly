@@ -8,8 +8,9 @@ import dts from 'vite-plugin-dts';
 export default defineConfig({
   plugins: [
     dts({
-      // Only ship declarations for the package's own source, not the imported JSON.
-      include: ['src/**/*.ts'],
+      // Process .ts sources and the committed codec-artifact JSON they import (so the dts
+      // program's file list is complete); rollupTypes bundles everything into one index.d.ts.
+      include: ['src/**/*.ts', 'src/**/*.json'],
       rollupTypes: true,
     }),
   ],

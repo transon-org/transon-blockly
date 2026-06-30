@@ -112,6 +112,13 @@ export interface EngineProvider {
       marker: string;
       includeLoader?(name: string): Json | undefined;
       includes?: Record<string, Json>;
+      /**
+       * Cap the engine `include` recursion depth for this run. The generated codec recurses
+       * by self-`include`, which is host-stack-bound below the engine default (50); the codec
+       * sets a lower ceiling so deep nesting fails cleanly with an engine depth error instead
+       * of a raw host stack overflow (metadata-contract §6.5, §16.4).
+       */
+      maxIncludeDepth?: number;
     },
   ): Promise<ExecutionResult>;
 

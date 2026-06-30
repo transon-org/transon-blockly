@@ -140,6 +140,7 @@ def _op_transform(req):
     data = req.get("input")
     marker = req.get("marker", "$")
     includes = req.get("includes") or {}
+    max_include_depth = req.get("maxIncludeDepth")
 
     files_written = {}
 
@@ -151,6 +152,10 @@ def _op_transform(req):
     kwargs = {"marker": marker, "file_writer": file_writer}
     if template_loader is not None:
         kwargs["template_loader"] = template_loader
+    if max_include_depth is not None:
+        # Cap include recursion below the host-stack limit so deep nesting fails cleanly with
+        # an engine depth error rather than a raw stack overflow (metadata-contract §6.5).
+        kwargs["max_include_depth"] = max_include_depth
 
     try:
         transformer = Transformer(template, **kwargs)
