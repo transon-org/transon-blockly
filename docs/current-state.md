@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `4efc0e2` — editor: M1 T5 — literal-marker escape (FR-059/060/061/062/123, §11.4) |
+| Repo HEAD | `c77d029` — docs: M1 done — ROADMAP ☑ + handoff (escape, blockMap, custom marker) |
 | Branch | `m1-codec-skeleton` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
