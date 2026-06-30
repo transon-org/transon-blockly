@@ -26,7 +26,7 @@ export async function validateTemplate(
     return;
   }
   const error: EditorError = {
-    code: engineErrorCode(res.error_type, 'validate'),
+    code: engineErrorCode(res.error_type, res.error_message, 'validate'),
     message: res.error_message ?? 'validation failed',
     template_path: res.template_path,
     block_id: res.block_id,

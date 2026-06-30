@@ -40,16 +40,22 @@ export interface EditorError {
 }
 
 /**
- * Map the engine's exception class string (as carried on ValidationResult/ExecutionResult/
- * CodecError) to the §16.4 taxonomy. The engine raises `DefinitionError` for static/definition
- * problems and `TransformationError` at runtime; `phase` disambiguates which call surfaced it.
+ * Map the engine's exception class string + message (as carried on ValidationResult/
+ * ExecutionResult/CodecError) to the §16.4 taxonomy. The engine raises `DefinitionError` for
+ * static/definition problems and `TransformationError` at runtime; an unresolved `include` surfaces
+ * as a `TransformationError` whose message says "include not resolvable", so we detect it by message
+ * to map it to `include_loader` (§16.6). `phase` disambiguates an otherwise-ambiguous failure.
  */
 export function engineErrorCode(
   errorType: string | undefined,
+  message: string | undefined,
   phase: 'validate' | 'transform' | 'codec',
 ): ErrorCode {
   const t = (errorType ?? '').toLowerCase();
-  if (t.includes('include')) return 'include_loader';
+  const m = (message ?? '').toLowerCase();
+  if (t.includes('include') || m.includes('include not resolvable') || m.includes('include_loader')) {
+    return 'include_loader';
+  }
   if (t.includes('definition')) return 'template_definition';
   if (t.includes('transformation')) return 'runtime_transformation';
   // Fall back by the call that produced it.

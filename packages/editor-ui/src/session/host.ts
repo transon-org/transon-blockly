@@ -31,4 +31,8 @@ export interface TransonEditorHost {
   examples?: ExampleCase[];
   metadata?: EditorMetadata;
   theme?: unknown;
+  /** Dynamic include resolver (AD-010, §16.6) — for an in-process host that can call back. */
+  includeLoader?(name: string): Json | undefined;
+  /** Pre-resolved `name → fragment` includes (§16.6) — for a stateless host (the Node bridge). */
+  includes?: Record<string, Json>;
 }

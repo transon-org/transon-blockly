@@ -109,20 +109,20 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-009 | Import supported template | [~] | `attr` + structural via the generated decoder: `test/engine-node-adapter/test/codec/decode.test.ts` (full UI import M4) |
 | AC-010 | Export generated template | [~] | generated encoder: `test/engine-node-adapter/test/codec/encode.test.ts` (full UI export M4) |
 | AC-011 | Strict semantic round-trip | [x] | full 22-rule catalog: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity for all corpus entries) |
-| AC-012 | Validation with engine | [ ] | |
-| AC-013 | Runtime execution with engine | [ ] | |
-| AC-014 | Output preview | [ ] | |
-| AC-015 | Runtime error visibility | [ ] | |
-| AC-016 | Validation error visibility | [ ] | |
+| AC-012 | Validation with engine | [x] | validate flow via host engine (valid/invalid → template_definition): `test/engine-node-adapter/test/ui/host-exec.test.ts` |
+| AC-013 | Runtime execution with engine | [x] | execute flow via host engine: `test/engine-node-adapter/test/ui/host-exec.test.ts` |
+| AC-014 | Output preview | [x] | execution output folded into the session + Output panel: `host-exec.test.ts`, `packages/editor-ui/src/components/panels.tsx` |
+| AC-015 | Runtime error visibility | [x] | runtime_transformation surfaced + prior output kept stale (§17.8): `test/engine-node-adapter/test/ui/host-exec.test.ts` |
+| AC-016 | Validation error visibility | [x] | validation error → template_definition in the error list (FR-095, §16.4): `host-exec.test.ts`, `panels.tsx` |
 | AC-017 | Error-to-block mapping | [ ] | |
 | AC-018 | Example loading | [ ] | |
 | AC-019 | Example expected output | [ ] | |
 | AC-020 | Tooltip from metadata | [ ] | |
 | AC-021 | No backend persistence | [ ] | |
 | AC-022 | Embeddable component | [ ] | |
-| AC-023 | Host engine runtime loading state | [~] | M4 D1: the store mirrors `EngineProvider.status` (absent/idle/loading/ready/failed) and gates validate/execute accordingly: `packages/editor-ui/test/engine-status.test.ts` (NFR-028); UI display + the Pyodide host transitions land D2/D3 |
-| AC-024 | Captured file writes | [ ] | |
-| AC-025 | Include loader behavior | [ ] | |
+| AC-023 | Host engine runtime loading state | [x] | store mirrors `EngineProvider.status` (absent/idle/loading/ready/failed) + StatusBar display (NFR-028): `packages/editor-ui/test/engine-status.test.ts`, `panels.tsx`; the Pyodide host lifecycle idle→loading→ready/failed: `examples/reference-host/test/provider.test.ts` |
+| AC-024 | Captured file writes | [x] | `file` writes captured into files_written (no fs write) + Files panel: `test/engine-node-adapter/test/ui/host-exec.test.ts`, `panels.tsx` (FilesPanel) |
+| AC-025 | Include loader behavior | [x] | include resolves through configured includes, unresolved → include_loader (§16.6): `test/engine-node-adapter/test/ui/host-exec.test.ts`; dynamic JS callback in the Pyodide host: `examples/reference-host/test/provider.test.ts` |
 | AC-026 | Custom marker | [ ] | |
 | AC-027 | Tests (generation/import/export/round-trip/...) | [ ] | |
 | AC-028 | Metadata-driven generic block (gated on metadata-contract §3) | [x] | a synthetic rule's blocks (constant field + dynamic input, 2 variants) are projected from metadata alone via the committed generators: `test/engine-node-adapter/test/codec/projection-coverage.test.ts` |
@@ -152,8 +152,8 @@ implementing module and the test that cites the ID.
 | §7.6 Rule coverage | FR-040..FR-044 | [~] | FR-040 all 22 rules folded in + CATALOG_RULES metadata-derived: `catalog-coverage.test.ts`; FR-041 all 28 operator tokens (14+14 aliases): `operators.test.ts`; FR-042 all 4 functions: `operators.test.ts`; FR-044 toolbox grouping by §12.4 category + FR-043 metadata-derived rule/category names: `toolbox.test.ts` (`G_toolbox` projection); FR-043 palette labels show title+rule name (OQ-008): `palette.test.ts` |
 | §7.7 Rule parameters and variants | FR-045..FR-058 | [~] | FR-045 required params, FR-046 optional omission, FR-052/053/054 variant model + per-variant matching: `roundtrip.test.ts` (all corpus entries), `catalog-coverage.test.ts` (dec case per variant); FR-055 no silent rewrite: unsupported entries in corpus + `encode.test.ts`; FR-047 constant-vs-dynamic distinction + FR-118 field-vs-input disposition: `operators.test.ts` (constant `op`/`name` → `fields`, dynamic params → `inputs`; encoder+decoder, all variants); FR-058 constant-choice UI (M5, pending) |
 | §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [x] | skeleton-owned escape, precedence + `transon_object_literal` (FR-059/060/061/062/123); **M2 FR-123 refinement**: escape fires only for a marker-bearing `fields` payload — a marker-free `{<marker>:object,fields:X}` is the `object`/`fields` RULE (`transon_rule_object__fields`), not the escape: `escape.test.ts`; custom marker (FR-063): `marker.test.ts` |
-| §7.9 Validation | FR-064..FR-070 | [ ] | engine `Transformer.validate()` via host `EngineProvider` |
-| §7.10 Execution preview | FR-071..FR-076 | [ ] | engine `transform()` via host `EngineProvider` |
+| §7.9 Validation | FR-064..FR-070 | [~] | engine `Transformer.validate()` via host `EngineProvider`, folded into the session + error list (AC-012/016, §16.4 template_definition): `test/engine-node-adapter/test/ui/host-exec.test.ts`, `packages/editor-ui/src/session/validate.ts`; gated when no engine (§10.4); FR-068 incomplete-workspace detection deferred (D-future) |
+| §7.10 Execution preview | FR-071..FR-076 | [~] | engine `transform()` via host `EngineProvider`: output + captured `file` writes + `include` loader + runtime errors with stale output (AC-013/014/015/024/025, §16.4/§16.5/§17.8): `test/engine-node-adapter/test/ui/host-exec.test.ts`, `packages/editor-ui/src/session/execute.ts`; `json_input` validation: `packages/editor-ui/test/input.test.tsx`; expected-vs-actual examples M5 |
 | §7.11 Documentation, metadata & block generation | FR-077..FR-090, FR-127 | [~] | FR-084/088/089 metadata-projected Zelos block defs (`G_palette`): labels, param inputs, FR-118 widget (dynamic→`input_value`, constant+options→`field_dropdown`, constant→`field_input`), required structure — `test/engine-node-adapter/test/codec/palette.test.ts`; FR-090 baseline-not-polished; FR-127 presentation/category/colour from data (`presentation.json` + `check_presentation.py`); headless load FR-125 in editor-blockly (D3); FR-077..083/085..087 host/diagnostics M4/M5 |
 | §7.12 Error mapping | FR-091..FR-095, FR-122 | [~] | `JsonPathBlockMap` produced alongside the workspace (FR-091/094/122, §9.12): `test/engine-node-adapter/test/codec/blockmap.test.ts`; M4 D1 wires the map into the session forward flow (`test/engine-node-adapter/test/ui/forward.test.ts`); highlighting/consumption (FR-092/093/095) is M4 D4 |
 | §7.13 Import / export UX | FR-096..FR-101 | [ ] | |

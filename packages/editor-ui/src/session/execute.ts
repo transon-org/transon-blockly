@@ -9,8 +9,12 @@ import { isEngineReady } from './engine-status.js';
 import { engineErrorCode, type EditorError } from './errors.js';
 
 export interface ExecuteOptions {
-  /** Host include resolver (AD-010, §16.6); unresolved names surface `include_loader`. */
+  /** Host include resolver (AD-010, §16.6); unresolved names surface `include_loader`. Used by an
+   *  in-process host (e.g. the Pyodide reference host) that can call back mid-transform. */
   includeLoader?(name: string): Json | undefined;
+  /** Pre-resolved `name → fragment` includes (§16.6). Used by a stateless host (the Node bridge)
+   *  that cannot call back mid-transform. */
+  includes?: Record<string, Json>;
 }
 
 /**
@@ -30,6 +34,7 @@ export async function executeTemplate(
   const res = await engine!.transform(template_json, sample_input_json ?? null, {
     marker,
     includeLoader: opts.includeLoader,
+    includes: opts.includes,
   });
   if (res.status === 'ok' && res.success) {
     store.setState({
@@ -41,7 +46,7 @@ export async function executeTemplate(
     return;
   }
   const error: EditorError = {
-    code: engineErrorCode(res.error_type, 'transform'),
+    code: engineErrorCode(res.error_type, res.error_message, 'transform'),
     message: res.error_message ?? 'execution failed',
     template_path: res.template_path,
     block_id: res.block_id,

@@ -7,5 +7,11 @@
 
 export const REFERENCE_HOST_PACKAGE = '@transon/reference-host';
 
-/** The engine version this reference host pins, matching docs/metadata-snapshot.md (AD-025). */
-export const PINNED_ENGINE_VERSION = '0.1.3';
+export {
+  createPyodideHost,
+  PINNED_ENGINE_VERSION,
+  PYODIDE_VERSION,
+  PYODIDE_CDN,
+} from './provider.js';
+export type { PyodideLike, PyodideHostOptions } from './provider.js';
+export { GLUE_PY } from './glue.js';

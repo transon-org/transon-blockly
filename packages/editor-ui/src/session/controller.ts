@@ -10,7 +10,7 @@ import { DEFAULT_MARKER, type EditorMode } from './types.js';
 import { applyEngineStatus } from './engine-status.js';
 import { runForward, applyForward, debounce } from './forward.js';
 import { validateTemplate } from './validate.js';
-import { executeTemplate, type ExecuteOptions } from './execute.js';
+import { executeTemplate } from './execute.js';
 import { mountBlockly, type TransonMount } from '../blockly/mount.js';
 import type { TransonEditorHost } from './host.js';
 
@@ -25,8 +25,6 @@ export interface EditorControllerOptions {
   onExecute?(): void;
   /** Forward-projection debounce (ms). Default 150. */
   debounceMs?: number;
-  /** Host include resolver passed to execute (AD-010, §16.6). */
-  includeLoader?: ExecuteOptions['includeLoader'];
 }
 
 export interface EditorController {
@@ -37,7 +35,8 @@ export interface EditorController {
   setTemplate(doc: Json): Promise<void>;
   /** Clear the canvas (New). */
   newWorkspace(): void;
-  setInput(input: Json | null): void;
+  /** Set the sample input from raw panel text; surfaces `json_input` on invalid JSON (§16.4). */
+  setInputText(text: string): void;
   setMode(mode: EditorMode): void;
   /** Validate the current template through the host engine (§6.4). */
   validate(): Promise<void>;
@@ -80,6 +79,7 @@ export function createEditorController(
   // appears, and reflect the status into the gating each tick (NFR-028/AC-023/§10.4).
   let statusTimer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
+  let inputInvalid = false; // last setInputText could not parse (§16.4 json_input)
   const refreshStatus = (): void => {
     if (disposed) return;
     const before = store.getState().engine_runtime_status;
@@ -133,8 +133,28 @@ export function createEditorController(
       });
       opts.onChange?.(null);
     },
-    setInput(input) {
-      store.setState({ sample_input_json: input });
+    setInputText(text) {
+      if (text.trim() === '') {
+        inputInvalid = false;
+        store.setState({
+          sample_input_json: null,
+          errors: store.getState().errors.filter((e) => e.code !== 'json_input'),
+        });
+        return;
+      }
+      try {
+        const parsed = JSON.parse(text) as Json;
+        inputInvalid = false;
+        store.setState({
+          sample_input_json: parsed,
+          errors: store.getState().errors.filter((e) => e.code !== 'json_input'),
+        });
+      } catch (e) {
+        inputInvalid = true;
+        store.setState({
+          errors: [{ code: 'json_input', message: `Invalid input JSON: ${(e as Error).message}` }],
+        });
+      }
     },
     setMode(mode) {
       store.setState({ editor_mode: mode });
@@ -144,7 +164,18 @@ export function createEditorController(
       opts.onValidate?.();
     },
     async run() {
-      await executeTemplate(store, engine, marker, { includeLoader: opts.includeLoader });
+      // §16.4 json_input: a bad sample input blocks execution (don't run on stale/last-valid input).
+      if (inputInvalid) {
+        store.setState({
+          execution_status: 'error',
+          errors: [{ code: 'json_input', message: 'Sample input is not valid JSON' }],
+        });
+        return;
+      }
+      await executeTemplate(store, engine, marker, {
+        includeLoader: host.includeLoader,
+        includes: host.includes,
+      });
       opts.onExecute?.();
     },
     dispose() {

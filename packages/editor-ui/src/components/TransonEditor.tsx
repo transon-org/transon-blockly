@@ -24,15 +24,6 @@ import {
 
 export type TransonEditorProps = EditorControllerOptions;
 
-function handleInput(controller: EditorController | null, text: string): void {
-  // Best-effort input capture for D2; json_input validation + run-blocking is wired in D3.
-  try {
-    controller?.setInput(text.trim() === '' ? null : (JSON.parse(text) as unknown as never));
-  } catch {
-    /* invalid JSON: D3 surfaces json_input */
-  }
-}
-
 export function TransonEditor(props: TransonEditorProps): JSX.Element {
   const canvasRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<EditorController | null>(null);
@@ -95,7 +86,7 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
         <div className="transon-canvas-col">{canvas}</div>
         <div className="transon-side-col">
           <JsonPanel state={state} />
-          <InputPanel state={state} onInput={(t) => handleInput(controller, t)} />
+          <InputPanel state={state} onInput={(t) => controller?.setInputText(t)} />
           <OutputPanel state={state} />
           <FilesPanel state={state} />
         </div>
