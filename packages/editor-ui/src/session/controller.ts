@@ -12,6 +12,7 @@ import { runForward, applyForward, debounce } from './forward.js';
 import { validateTemplate } from './validate.js';
 import { executeTemplate } from './execute.js';
 import { mountBlockly, type TransonMount } from '../blockly/mount.js';
+import { highlightErrors, clearHighlights } from '../blockly/highlight.js';
 import type { TransonEditorHost } from './host.js';
 
 export interface EditorControllerOptions {
@@ -65,6 +66,7 @@ export function createEditorController(
     const workspace = mount.serialize();
     store.setState({ workspace, json_sync_status: 'in_sync' });
     applyForward(store, await runForward(engine, workspace, marker));
+    clearHighlights(mount.workspace); // a new generation supersedes prior error highlights
     opts.onChange?.(store.getState().template_json);
   };
   const debouncedProject = debounce(() => void project(), opts.debounceMs ?? 150);
@@ -161,6 +163,7 @@ export function createEditorController(
     },
     async validate() {
       await validateTemplate(store, engine, marker);
+      highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
       opts.onValidate?.();
     },
     async run() {
@@ -176,6 +179,7 @@ export function createEditorController(
         includeLoader: host.includeLoader,
         includes: host.includes,
       });
+      highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
       opts.onExecute?.();
     },
     dispose() {

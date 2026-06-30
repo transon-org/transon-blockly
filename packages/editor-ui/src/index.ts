@@ -42,6 +42,9 @@ export type { EditorController, EditorControllerOptions } from './session/contro
 export { mountBlockly, ensureBlocklyReady, TRANSON_ROOT_CLASS } from './blockly/mount.js';
 export type { TransonMount, TransonMountOptions } from './blockly/mount.js';
 
+// ---- error → block highlighting (D4) ----
+export { buildPathIndex, highlightErrors, clearHighlights } from './blockly/highlight.js';
+
 // ---- React shell (D2) ----
 export { TransonEditor } from './components/TransonEditor.js';
 export type { TransonEditorProps } from './components/TransonEditor.js';
