@@ -48,7 +48,7 @@
                   "@": "object",
                   "fields": {
                     "$": "object",
-                    "key": "$",
+                    "key": "transon::document-marker",
                     "value": {
                       "@": "chain",
                       "funcs": [

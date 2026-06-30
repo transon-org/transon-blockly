@@ -14,6 +14,15 @@ import type { Json } from '../engine/ports.js';
  * types below cover literals, arrays, marker-free objects, and the out-of-surface
  * placeholder (§13.11).
  */
+/**
+ * Placeholder the generated codec carries wherever it inspects the DOCUMENT's marker key (FR-063),
+ * distinct from the codec template's own `$` marker. The runtime substitutes the configured marker
+ * (default `$`) for this placeholder before executing, so one committed codec serves any marker
+ * without regeneration. It only ever appears as a template *value* (an `attr`/`object` name), never
+ * as a literal key, and never in user data.
+ */
+export const DOC_MARKER_PLACEHOLDER = 'transon::document-marker';
+
 export const STRUCTURAL_BLOCK_TYPES = [
   'transon_literal',
   'transon_array',

@@ -76,7 +76,7 @@
                   {
                     "$": "attr",
                     "default": "__transon_no_marker__",
-                    "name": "$"
+                    "name": "transon::document-marker"
                   },
                   "__transon_no_marker__"
                 ]
@@ -138,7 +138,7 @@
                     "values": [
                       {
                         "$": "attr",
-                        "name": "$"
+                        "name": "transon::document-marker"
                       },
                       "object"
                     ]
@@ -204,7 +204,7 @@
                                   {
                                     "$": "this"
                                   },
-                                  "$"
+                                  "transon::document-marker"
                                 ]
                               }
                             },
@@ -256,7 +256,7 @@
             },
             "key": {
               "$": "attr",
-              "name": "$"
+              "name": "transon::document-marker"
             }
           }
         }
@@ -534,7 +534,7 @@
                                   {
                                     "$": "this"
                                   },
-                                  "$"
+                                  "transon::document-marker"
                                 ]
                               }
                             },
@@ -818,7 +818,7 @@
                                   {
                                     "$": "this"
                                   },
-                                  "$"
+                                  "transon::document-marker"
                                 ]
                               }
                             },

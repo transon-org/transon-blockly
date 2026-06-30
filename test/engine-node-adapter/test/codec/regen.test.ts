@@ -32,9 +32,10 @@ beforeAll(async () => {
     for (const [file, template] of Object.entries(GENERATOR_SOURCES)) {
       writeFileSync(join(GENERATORS, file), stableStringify(template));
     }
-    const { encoder, decoder } = await generateCodec(engine);
+    const { encoder, decoder, blockmap } = await generateCodec(engine);
     writeFileSync(join(ARTIFACTS, 'encoder.json'), serializeArtifact(encoder));
     writeFileSync(join(ARTIFACTS, 'decoder.json'), serializeArtifact(decoder));
+    writeFileSync(join(ARTIFACTS, 'blockmap.json'), serializeArtifact(blockmap));
   }
 });
 afterAll(() => engine?.dispose());
@@ -56,5 +57,10 @@ describe('codec regeneration is byte-equal to committed artifacts (FR-119, AD-03
   it('decoder.json matches a fresh G_* run', async () => {
     const { decoder } = await generateCodec(engine);
     expect(serializeArtifact(decoder)).toBe(readFileSync(join(ARTIFACTS, 'decoder.json'), 'utf8'));
+  });
+
+  it('blockmap.json matches a fresh build', async () => {
+    const { blockmap } = await generateCodec(engine);
+    expect(serializeArtifact(blockmap)).toBe(readFileSync(join(ARTIFACTS, 'blockmap.json'), 'utf8'));
   });
 });

@@ -106,7 +106,7 @@
                         "items": [
                           {
                             "$": "object",
-                            "key": "$",
+                            "key": "transon::document-marker",
                             "value": "object"
                           },
                           {
@@ -144,7 +144,7 @@
                                       {
                                         "$": "this"
                                       },
-                                      "$"
+                                      "transon::document-marker"
                                     ]
                                   }
                                 }
@@ -168,7 +168,7 @@
               "items": [
                 {
                   "$": "object",
-                  "key": "$",
+                  "key": "transon::document-marker",
                   "value": "attr"
                 },
                 {
@@ -345,7 +345,7 @@
               "items": [
                 {
                   "$": "object",
-                  "key": "$",
+                  "key": "transon::document-marker",
                   "value": "attr"
                 },
                 {

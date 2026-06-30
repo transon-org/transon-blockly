@@ -15,6 +15,7 @@
 
 import type { EngineProvider, Json } from '../engine/ports.js';
 import { editorMetadata, type CatalogEntry } from '../metadata/snapshot.js';
+import { DOC_MARKER_PLACEHOLDER } from './vocabulary.js';
 // The committed @-staged generators (the projection-as-data). generateCodec runs THESE; the
 // typed builders below are the editable authoring source, held byte-equal by the regen gate.
 import gEncode from './generators/G_encode.json' with { type: 'json' };
@@ -50,10 +51,10 @@ const joinNames = (list: Json): Json => ({ $: 'join', items: list, sep: ',', def
 const keyPresent = (paramHole: Json): Json =>
   nev(joinNames({ $: 'chain', funcs: [NODE_KEYS, { $: 'filter', cond: eqv(THIS_T, paramHole) }] }), KEY_NIL);
 
-// The active DOCUMENT marker the codec inspects (distinct from the codec template's own `$`
-// marker). Centralized so a configured marker (FR-063) is a single value to thread; the
-// committed codec targets the default `$`.
-const DOC_MARKER = '$';
+// The codec inspects the DOCUMENT marker via this placeholder (distinct from the codec template's
+// own `$` marker); the runtime substitutes the configured marker (default `$`) before executing,
+// so one committed codec serves any marker (FR-063).
+const DOC_MARKER = DOC_MARKER_PLACEHOLDER;
 
 // keys of `this` (used by the skeleton, which walks `this` directly rather than via `set node`).
 const THIS_KEYS: Json = { $: 'map', item: { $: 'key' } };
@@ -215,6 +216,51 @@ const decSkeleton = (allCases: Json): Json => ({ $: 'chain', funcs: [
   { $: 'switch', key: { $: 'attr', name: 'type' }, cases: allCases, default: { $: 'this' } },
 ] });
 
+// ---- block-map encoder (FR-091/094/122, §9.12) ----
+// A fixed, metadata-free template that walks the document threading a {n,p,par,pn} context and
+// emits a NESTED {entry, children}; the runtime flattens it into the JsonPathBlockMap. It is
+// emitted ALONGSIDE the workspace and is separate from the main codec (which stays untouched).
+// `block_id` is the node's JSON path (stable + unique); a node without its own block maps to the
+// nearest enclosing block via `nearest_parent_block_id` (FR-094).
+const MSELF: Json = { $: 'get', name: 'self' };
+const mField = (name: string): Json => ({ $: 'chain', funcs: [MSELF, { $: 'attr', name }] });
+const M_N = mField('n');
+const M_P = mField('p');
+const M_PAR = mField('par');
+const mCtx = (n: Json, p: Json, pname?: Json): Json => ({
+  $: 'object', fields: pname === undefined ? { n, p, par: M_P } : { n, p, par: M_P, pn: pname },
+});
+const mCpath = (seg: Json): Json => ({ $: 'join', items: [M_P, { $: 'call', name: 'str', value: seg }], sep: '/' });
+const mEntry = (extra: Record<string, Json>): Json => ({
+  $: 'object',
+  // parameter_name is omitted (NO_CONTENT) unless this node is a rule param; rule_name added by the rule arm.
+  fields: { template_path: M_P, block_id: M_P, nearest_parent_block_id: M_PAR, parameter_name: mField('pn'), ...extra },
+});
+const mRecurse = (ctxObj: Json): Json => ({ $: 'chain', funcs: [ctxObj, { $: 'include', name: 'mapenc' }] });
+const M_KEY: Json = { $: 'key' };
+const M_INDEX: Json = { $: 'index' };
+// recurse into a node's entries; for a rule, drop the marker entry and tag each child with its param name.
+const mChildren = (seg: Json, pname: Json | undefined, dropMarker: boolean): Json => ({
+  $: 'chain', funcs: [
+    M_N,
+    ...(dropMarker ? [{ $: 'filter', cond: nev(M_KEY, DOC_MARKER) }] : []),
+    { $: 'map', item: mRecurse(mCtx(THIS_T, mCpath(seg), pname)) },
+  ],
+});
+const BLOCKMAP_ENCODER: Json = { $: 'chain', funcs: [
+  { $: 'set', name: 'self' },
+  { $: 'switch', key: { $: 'call', name: 'type', value: M_N },
+    cases: {
+      object: { $: 'cond',
+        cases: [{ when: nev({ $: 'chain', funcs: [M_N, { $: 'attr', name: DOC_MARKER, default: '__transon_no_marker__' }] }, '__transon_no_marker__'),
+                  then: { $: 'object', fields: {
+                    entry: mEntry({ rule_name: { $: 'chain', funcs: [M_N, { $: 'attr', name: DOC_MARKER }] } }),
+                    children: mChildren(M_KEY, M_KEY, true) } } }],
+        default: { $: 'object', fields: { entry: mEntry({}), children: mChildren(M_KEY, undefined, false) } } },
+      array: { $: 'object', fields: { entry: mEntry({}), children: mChildren(M_INDEX, undefined, false) } },
+    },
+    default: { $: 'object', fields: { entry: mEntry({}), children: [] } } } ] };
+
 /** The prototype rule(s) projected in M1 (the de-risk slice). M2 extends this list. */
 export const M1_RULES = ['attr'];
 
@@ -251,7 +297,7 @@ async function runGen(engine: EngineProvider, generator: Json, ruleEntry: Json):
 export async function generateCodec(
   engine: EngineProvider,
   rules: string[] = M1_RULES,
-): Promise<{ encoder: CodecArtifact; decoder: CodecArtifact }> {
+): Promise<{ encoder: CodecArtifact; decoder: CodecArtifact; blockmap: CodecArtifact }> {
   const catalogRules = editorMetadata.catalog.rules;
   const encFragments: Record<string, Json> = {};
   const decCases: Record<string, Json> = { ...FIXED_DEC_CASES };
@@ -268,7 +314,9 @@ export async function generateCodec(
 
   const encoder: CodecArtifact = { entry: 'enc', fragments: { enc: encSkeleton(dispatch), ...encFragments } };
   const decoder: CodecArtifact = { entry: 'dec', fragments: { dec: decSkeleton(decCases) } };
-  return { encoder, decoder };
+  // The block-map encoder is rule-agnostic (no per-rule projection), so it is a fixed artifact.
+  const blockmap: CodecArtifact = { entry: 'mapenc', fragments: { mapenc: BLOCKMAP_ENCODER } };
+  return { encoder, decoder, blockmap };
 }
 
 /**

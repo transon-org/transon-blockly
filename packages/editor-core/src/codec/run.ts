@@ -7,8 +7,11 @@
 // and returns the result verbatim (FR-126, AD-032).
 
 import type { EngineProvider, Json } from '../engine/ports.js';
+import type { JsonPathBlockMap, JsonPathBlockMapEntry } from './vocabulary.js';
+import { DOC_MARKER_PLACEHOLDER } from './vocabulary.js';
 import encoderArtifact from './artifacts/encoder.json' with { type: 'json' };
 import decoderArtifact from './artifacts/decoder.json' with { type: 'json' };
+import blockmapArtifact from './artifacts/blockmap.json' with { type: 'json' };
 
 /** The marker the generated `$`-codec executes under. The M1 prototype targets the default
  *  Transon marker `$`; a configurable document marker (FR-063/123) lands with the marker-escape
@@ -31,19 +34,55 @@ interface Artifact {
 
 const ENCODER = encoderArtifact as unknown as Artifact;
 const DECODER = decoderArtifact as unknown as Artifact;
+const BLOCKMAP = blockmapArtifact as unknown as Artifact;
+
+/** The block-map encoder emits a nested {entry, children}; the runtime flattens it depth-first
+ *  into the flat JsonPathBlockMap (§9.12). This reads the map encoder's own output, not workspace
+ *  blocks, so it is not a codec↔workspace mapping (FR-126). */
+interface MapNode {
+  entry: JsonPathBlockMapEntry;
+  children: MapNode[];
+}
+function flattenBlockMap(node: MapNode): JsonPathBlockMapEntry[] {
+  return [node.entry, ...node.children.flatMap(flattenBlockMap)];
+}
+
+/** Substitute the configured DOCUMENT marker for the placeholder the codec carries (FR-063). The
+ *  placeholder only ever appears as a template *value*, so an exact string-value swap suffices; it
+ *  never touches the codec's own `$` marker or user data. Cached per (artifact, marker). */
+function withMarker(value: Json, marker: string): Json {
+  if (value === DOC_MARKER_PLACEHOLDER) return marker;
+  if (Array.isArray(value)) return value.map((v) => withMarker(v, marker));
+  if (value && typeof value === 'object') {
+    const out: Record<string, Json> = {};
+    for (const [k, v] of Object.entries(value)) out[k] = withMarker(v, marker);
+    return out;
+  }
+  return value;
+}
+const markerCache = new WeakMap<Artifact, Map<string, Record<string, Json>>>();
+function fragmentsForMarker(artifact: Artifact, marker: string): Record<string, Json> {
+  let perMarker = markerCache.get(artifact);
+  if (!perMarker) markerCache.set(artifact, (perMarker = new Map()));
+  let frags = perMarker.get(marker);
+  if (!frags) perMarker.set(marker, (frags = withMarker(artifact.fragments, marker) as Record<string, Json>));
+  return frags;
+}
 
 async function runArtifact(
   engine: EngineProvider,
   artifact: Artifact,
   input: Json,
+  marker: string,
 ): Promise<Json> {
-  const template = artifact.fragments[artifact.entry];
+  const fragments = fragmentsForMarker(artifact, marker);
+  const template = fragments[artifact.entry];
   if (template === undefined) {
     throw new CodecError(`codec artifact missing entry fragment '${artifact.entry}'`);
   }
   const res = await engine.transform(template, input, {
     marker: CODEC_MARKER,
-    includes: artifact.fragments,
+    includes: fragments,
     maxIncludeDepth: CODEC_MAX_INCLUDE_DEPTH,
   });
   if (res.status !== 'ok' || !res.success) {
@@ -52,14 +91,26 @@ async function runArtifact(
   return res.output as Json;
 }
 
-/** Encode a Transon document into Blockly workspace-serialization JSON (FR-114/124). */
-export function encode(engine: EngineProvider, document: Json): Promise<Json> {
-  return runArtifact(engine, ENCODER, document);
+/** Encode a Transon document into Blockly workspace-serialization JSON (FR-114/124). `marker` is
+ *  the document's configured marker key (FR-063), default `$`. */
+export function encode(engine: EngineProvider, document: Json, marker: string = CODEC_MARKER): Promise<Json> {
+  return runArtifact(engine, ENCODER, document, marker);
 }
 
 /** Decode Blockly workspace JSON back into a Transon document (FR-114/126); inverse of `encode`. */
-export function decode(engine: EngineProvider, workspace: Json): Promise<Json> {
-  return runArtifact(engine, DECODER, workspace);
+export function decode(engine: EngineProvider, workspace: Json, marker: string = CODEC_MARKER): Promise<Json> {
+  return runArtifact(engine, DECODER, workspace, marker);
+}
+
+/**
+ * The `JsonPathBlockMap` for a document — emitted alongside the workspace as the codec walks
+ * (FR-091/094/122, §9.12). Each entry maps a JSON `template_path` to its `block_id` (the path),
+ * with `rule_name`/`parameter_name` where applicable and the `nearest_parent_block_id` for the
+ * enclosing block. Consumed for error→block highlighting in M4 (FR-092/093/095).
+ */
+export async function blockMap(engine: EngineProvider, document: Json, marker: string = CODEC_MARKER): Promise<JsonPathBlockMap> {
+  const root = (await runArtifact(engine, BLOCKMAP, { n: document, p: '$', par: null }, marker)) as unknown as MapNode;
+  return flattenBlockMap(root);
 }
 
 /** A failure surfaced by the host engine while running a codec artifact (§16.4 taxonomy). */

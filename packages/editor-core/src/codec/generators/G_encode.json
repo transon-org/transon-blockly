@@ -275,7 +275,7 @@
                                               {
                                                 "$": "this"
                                               },
-                                              "$"
+                                              "transon::document-marker"
                                             ]
                                           }
                                         },
