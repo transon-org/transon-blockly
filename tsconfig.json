@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "packages/editor-core" },
+    { "path": "packages/editor-blockly" },
     { "path": "test/engine-node-adapter" }
   ]
 }

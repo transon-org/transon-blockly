@@ -17,3 +17,7 @@ python3 harness/scripts/check_maturity.py --check
 python3 harness/scripts/update_memory.py --check
 # check_engine_parity self-skips until the engine is importable; CI is authoritative.
 python3 harness/scripts/check_engine_parity.py
+# No hand-written codec↔workspace mapping layer (FR-126, AD-032).
+python3 harness/scripts/check_no_codec_mapping.py
+# Editor-owned presentation is data (not TS literals) + complete (FR-127, NFR-048).
+python3 harness/scripts/check_presentation.py

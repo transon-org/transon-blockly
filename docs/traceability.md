@@ -65,7 +65,7 @@ defense against spec/engine drift:
 | No codec↔workspace mapping (repo-scan) | no module under `packages/*/src` maps codec artifacts to/from a `{type, inputs, fields}` block structure | `SPEC.md` FR-126, AD-032 | [x] `harness/scripts/check_no_codec_mapping.py` (+ `--selftest`) |
 | Encoder output loads in Blockly | encoder output deserializes via Blockly's workspace loader without error (headless) | `SPEC.md` FR-126 | [ ] |
 | Palette definitions load | every complete-metadata rule yields a loadable/instantiable Zelos block definition (headless) | `SPEC.md` FR-125 | [ ] |
-| Presentation source-scan | no §12.4 category names / order / category→colour map / per-rule title/category/advanced as TypeScript literals under `packages/*/src`; every metadata rule has a presentation-data entry | `SPEC.md` FR-127, NFR-048; [`metadata-contract.md`](metadata-contract.md) §2.9 | [ ] |
+| Presentation source-scan | no §12.4 category names / order / category→colour map / per-rule title/category/advanced as TypeScript literals under `packages/*/src`; every metadata rule has a presentation-data entry | `SPEC.md` FR-127, NFR-048; [`metadata-contract.md`](metadata-contract.md) §2.9 | [x] `harness/scripts/check_presentation.py` (+ `--selftest`; source-scan + completeness) + `packages/editor-core/test/presentation.test.ts`; data: `packages/editor-core/src/codec/presentation.json` (§2.9) |
 
 A failing parity check means either the engine changed (update the editor + spec together) or the
 editor drifted (fix the editor). Never silence the check by editing the expectation without a

@@ -26,3 +26,9 @@ export {
   M1_RULES,
 } from './codegen.js';
 export type { CodecArtifact } from './codegen.js';
+
+// Editor-owned presentation projection-data (metadata-contract §2.9, FR-127/NFR-048) — the
+// single committed source for title/category/advanced + category order + category→colour,
+// consumed by the G_palette/G_toolbox projections.
+export { PRESENTATION } from './presentation.js';
+export type { Presentation, RulePresentation } from './presentation.js';

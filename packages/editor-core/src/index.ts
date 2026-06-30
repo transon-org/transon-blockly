@@ -40,6 +40,7 @@ export {
   GENERATOR_FILES,
   CATALOG_RULES,
   M1_RULES,
+  PRESENTATION,
 } from './codec/index.js';
 export type {
   StructuralBlockType,
@@ -47,4 +48,6 @@ export type {
   JsonPathBlockMap,
   JsonPathBlockMapEntry,
   CodecArtifact,
+  Presentation,
+  RulePresentation,
 } from './codec/index.js';

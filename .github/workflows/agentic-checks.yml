@@ -47,3 +47,11 @@ jobs:
       # 5. Agentic-maturity ratchet: fail if the harness regresses below the committed baseline.
       - name: Agentic maturity (ratchet)
         run: python harness/scripts/check_maturity.py --check
+
+      # 6. No hand-written codec↔workspace mapping layer (FR-126, AD-032).
+      - name: No codec↔workspace mapping
+        run: python harness/scripts/check_no_codec_mapping.py
+
+      # 7. Editor-owned presentation is data, not TS literals, and complete (FR-127, NFR-048).
+      - name: Presentation projection-data (FR-127)
+        run: python harness/scripts/check_presentation.py
