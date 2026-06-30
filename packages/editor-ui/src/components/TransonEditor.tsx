@@ -22,7 +22,11 @@ import {
   type ViewMode,
 } from './panels.js';
 
-export type TransonEditorProps = EditorControllerOptions;
+export type TransonEditorProps = EditorControllerOptions & {
+  /** Called once with the EditorController after it mounts — the seam the vanilla
+   *  `createTransonEditor()` / `<transon-editor>` surface uses to build its handle (D6). */
+  onReady?(controller: EditorController): void;
+};
 
 export function TransonEditor(props: TransonEditorProps): JSX.Element {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -40,6 +44,7 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
     const c = createEditorController(canvasRef.current!, props);
     controllerRef.current = c;
     setState(c.store.getState());
+    props.onReady?.(c);
     const unsub = c.store.subscribe(setState);
     return () => {
       unsub();
