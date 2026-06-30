@@ -19,6 +19,7 @@ export type {
 export {
   generateCodec,
   generateToolbox,
+  generatePalette,
   serializeArtifact,
   stableStringify,
   GENERATOR_SOURCES,

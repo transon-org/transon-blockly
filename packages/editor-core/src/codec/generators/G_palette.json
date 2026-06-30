@@ -1,0 +1,250 @@
+{
+  "@": "chain",
+  "funcs": [
+    {
+      "@": "set",
+      "name": "pentry"
+    },
+    {
+      "@": "chain",
+      "funcs": [
+        {
+          "@": "get",
+          "name": "pentry"
+        },
+        {
+          "@": "attr",
+          "name": "variants"
+        },
+        {
+          "@": "map",
+          "item": {
+            "args0": {
+              "@": "chain",
+              "funcs": [
+                {
+                  "@": "attr",
+                  "name": "params"
+                },
+                {
+                  "@": "map",
+                  "item": {
+                    "@": "cond",
+                    "cases": [
+                      {
+                        "then": {
+                          "name": {
+                            "@": "attr",
+                            "name": "name"
+                          },
+                          "options": {
+                            "@": "chain",
+                            "funcs": [
+                              {
+                                "@": "attr",
+                                "name": "options"
+                              },
+                              {
+                                "@": "map",
+                                "item": [
+                                  {
+                                    "@": "this"
+                                  },
+                                  {
+                                    "@": "this"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "type": "field_dropdown"
+                        },
+                        "when": {
+                          "@": "expr",
+                          "op": "and",
+                          "values": [
+                            {
+                              "@": "expr",
+                              "op": "==",
+                              "values": [
+                                {
+                                  "@": "attr",
+                                  "name": "kind"
+                                },
+                                "constant"
+                              ]
+                            },
+                            {
+                              "@": "expr",
+                              "op": "!=",
+                              "values": [
+                                {
+                                  "@": "join",
+                                  "default": "@noopt",
+                                  "items": {
+                                    "@": "attr",
+                                    "default": [],
+                                    "name": "options"
+                                  },
+                                  "sep": ","
+                                },
+                                "@noopt"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "then": {
+                          "name": {
+                            "@": "attr",
+                            "name": "name"
+                          },
+                          "type": "field_input"
+                        },
+                        "when": {
+                          "@": "expr",
+                          "op": "==",
+                          "values": [
+                            {
+                              "@": "attr",
+                              "name": "kind"
+                            },
+                            "constant"
+                          ]
+                        }
+                      }
+                    ],
+                    "default": {
+                      "name": {
+                        "@": "attr",
+                        "name": "name"
+                      },
+                      "type": "input_value"
+                    }
+                  }
+                }
+              ]
+            },
+            "colour": {
+              "@": "chain",
+              "funcs": [
+                {
+                  "@": "get",
+                  "name": "pentry"
+                },
+                {
+                  "@": "attr",
+                  "name": "colour"
+                }
+              ]
+            },
+            "inputsInline": false,
+            "message0": {
+              "@": "join",
+              "items": [
+                {
+                  "@": "chain",
+                  "funcs": [
+                    {
+                      "@": "get",
+                      "name": "pentry"
+                    },
+                    {
+                      "@": "attr",
+                      "name": "title"
+                    }
+                  ]
+                },
+                " (",
+                {
+                  "@": "chain",
+                  "funcs": [
+                    {
+                      "@": "get",
+                      "name": "pentry"
+                    },
+                    {
+                      "@": "attr",
+                      "name": "name"
+                    }
+                  ]
+                },
+                ")",
+                {
+                  "@": "join",
+                  "items": {
+                    "@": "chain",
+                    "funcs": [
+                      {
+                        "@": "attr",
+                        "name": "params"
+                      },
+                      {
+                        "@": "map",
+                        "item": {
+                          "@": "join",
+                          "items": [
+                            " ",
+                            {
+                              "@": "attr",
+                              "name": "name"
+                            },
+                            " ",
+                            {
+                              "@": "format",
+                              "pattern": "%{}",
+                              "value": {
+                                "@": "expr",
+                                "op": "add",
+                                "values": [
+                                  {
+                                    "@": "index"
+                                  },
+                                  1
+                                ]
+                              }
+                            }
+                          ],
+                          "sep": ""
+                        }
+                      }
+                    ]
+                  },
+                  "sep": ""
+                }
+              ],
+              "sep": ""
+            },
+            "output": null,
+            "type": {
+              "@": "join",
+              "items": [
+                "transon_rule_",
+                {
+                  "@": "chain",
+                  "funcs": [
+                    {
+                      "@": "get",
+                      "name": "pentry"
+                    },
+                    {
+                      "@": "attr",
+                      "name": "name"
+                    }
+                  ]
+                },
+                "__",
+                {
+                  "@": "attr",
+                  "name": "id"
+                }
+              ],
+              "sep": ""
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

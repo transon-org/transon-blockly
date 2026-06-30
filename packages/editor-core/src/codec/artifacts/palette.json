@@ -1,0 +1,870 @@
+{
+  "blocks": [
+    {
+      "args0": [],
+      "colour": 210,
+      "inputsInline": false,
+      "message0": "This (this)",
+      "output": null,
+      "type": "transon_rule_this__base"
+    },
+    {
+      "args0": [],
+      "colour": 210,
+      "inputsInline": false,
+      "message0": "Parent scope (parent)",
+      "output": null,
+      "type": "transon_rule_parent__base"
+    },
+    {
+      "args0": [],
+      "colour": 210,
+      "inputsInline": false,
+      "message0": "Current item (item)",
+      "output": null,
+      "type": "transon_rule_item__base"
+    },
+    {
+      "args0": [],
+      "colour": 210,
+      "inputsInline": false,
+      "message0": "Current key (key)",
+      "output": null,
+      "type": "transon_rule_key__base"
+    },
+    {
+      "args0": [],
+      "colour": 210,
+      "inputsInline": false,
+      "message0": "Current index (index)",
+      "output": null,
+      "type": "transon_rule_index__base"
+    },
+    {
+      "args0": [],
+      "colour": 210,
+      "inputsInline": false,
+      "message0": "Current value (value)",
+      "output": null,
+      "type": "transon_rule_value__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "name",
+          "type": "input_value"
+        }
+      ],
+      "colour": 330,
+      "inputsInline": false,
+      "message0": "Set variable (set) name %1",
+      "output": null,
+      "type": "transon_rule_set__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "name",
+          "type": "input_value"
+        },
+        {
+          "name": "default",
+          "type": "input_value"
+        }
+      ],
+      "colour": 330,
+      "inputsInline": false,
+      "message0": "Get variable (get) name %1 default %2",
+      "output": null,
+      "type": "transon_rule_get__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "name",
+          "type": "input_value"
+        },
+        {
+          "name": "default",
+          "type": "input_value"
+        }
+      ],
+      "colour": 285,
+      "inputsInline": false,
+      "message0": "Get attribute (attr) name %1 default %2",
+      "output": null,
+      "type": "transon_rule_attr__name"
+    },
+    {
+      "args0": [
+        {
+          "name": "names",
+          "type": "input_value"
+        },
+        {
+          "name": "default",
+          "type": "input_value"
+        }
+      ],
+      "colour": 285,
+      "inputsInline": false,
+      "message0": "Get attribute (attr) names %1 default %2",
+      "output": null,
+      "type": "transon_rule_attr__names"
+    },
+    {
+      "args0": [
+        {
+          "name": "key",
+          "type": "input_value"
+        },
+        {
+          "name": "value",
+          "type": "input_value"
+        }
+      ],
+      "colour": 255,
+      "inputsInline": false,
+      "message0": "Build object (object) key %1 value %2",
+      "output": null,
+      "type": "transon_rule_object__key+value"
+    },
+    {
+      "args0": [
+        {
+          "name": "fields",
+          "type": "input_value"
+        }
+      ],
+      "colour": 255,
+      "inputsInline": false,
+      "message0": "Build object (object) fields %1",
+      "output": null,
+      "type": "transon_rule_object__fields"
+    },
+    {
+      "args0": [
+        {
+          "name": "item",
+          "type": "input_value"
+        }
+      ],
+      "colour": 120,
+      "inputsInline": false,
+      "message0": "Map (map) item %1",
+      "output": null,
+      "type": "transon_rule_map__item"
+    },
+    {
+      "args0": [
+        {
+          "name": "items",
+          "type": "input_value"
+        }
+      ],
+      "colour": 120,
+      "inputsInline": false,
+      "message0": "Map (map) items %1",
+      "output": null,
+      "type": "transon_rule_map__items"
+    },
+    {
+      "args0": [
+        {
+          "name": "key",
+          "type": "input_value"
+        },
+        {
+          "name": "value",
+          "type": "input_value"
+        }
+      ],
+      "colour": 120,
+      "inputsInline": false,
+      "message0": "Map (map) key %1 value %2",
+      "output": null,
+      "type": "transon_rule_map__key+value"
+    },
+    {
+      "args0": [
+        {
+          "name": "cond",
+          "type": "input_value"
+        }
+      ],
+      "colour": 120,
+      "inputsInline": false,
+      "message0": "Filter (filter) cond %1",
+      "output": null,
+      "type": "transon_rule_filter__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "items",
+          "type": "input_value"
+        }
+      ],
+      "colour": 165,
+      "inputsInline": false,
+      "message0": "Zip (zip) items %1",
+      "output": null,
+      "type": "transon_rule_zip__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "name",
+          "type": "input_value"
+        },
+        {
+          "name": "content",
+          "type": "input_value"
+        }
+      ],
+      "colour": 0,
+      "inputsInline": false,
+      "message0": "Write file (file) name %1 content %2",
+      "output": null,
+      "type": "transon_rule_file__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "items",
+          "type": "input_value"
+        },
+        {
+          "name": "sep",
+          "type": "input_value"
+        },
+        {
+          "name": "default",
+          "type": "input_value"
+        }
+      ],
+      "colour": 165,
+      "inputsInline": false,
+      "message0": "Join (join) items %1 sep %2 default %3",
+      "output": null,
+      "type": "transon_rule_join__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "funcs",
+          "type": "input_value"
+        }
+      ],
+      "colour": 165,
+      "inputsInline": false,
+      "message0": "Chain (chain) funcs %1",
+      "output": null,
+      "type": "transon_rule_chain__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "op",
+          "options": [
+            [
+              "<",
+              "<"
+            ],
+            [
+              "lt",
+              "lt"
+            ],
+            [
+              "<=",
+              "<="
+            ],
+            [
+              "le",
+              "le"
+            ],
+            [
+              "==",
+              "=="
+            ],
+            [
+              "eq",
+              "eq"
+            ],
+            [
+              "!=",
+              "!="
+            ],
+            [
+              "ne",
+              "ne"
+            ],
+            [
+              ">=",
+              ">="
+            ],
+            [
+              "ge",
+              "ge"
+            ],
+            [
+              ">",
+              ">"
+            ],
+            [
+              "gt",
+              "gt"
+            ],
+            [
+              "+",
+              "+"
+            ],
+            [
+              "add",
+              "add"
+            ],
+            [
+              "-",
+              "-"
+            ],
+            [
+              "sub",
+              "sub"
+            ],
+            [
+              "*",
+              "*"
+            ],
+            [
+              "mul",
+              "mul"
+            ],
+            [
+              "/",
+              "/"
+            ],
+            [
+              "div",
+              "div"
+            ],
+            [
+              "%",
+              "%"
+            ],
+            [
+              "mod",
+              "mod"
+            ],
+            [
+              "&&",
+              "&&"
+            ],
+            [
+              "and",
+              "and"
+            ],
+            [
+              "||",
+              "||"
+            ],
+            [
+              "or",
+              "or"
+            ],
+            [
+              "!",
+              "!"
+            ],
+            [
+              "not",
+              "not"
+            ]
+          ],
+          "type": "field_dropdown"
+        }
+      ],
+      "colour": 30,
+      "inputsInline": false,
+      "message0": "Expression (expr) op %1",
+      "output": null,
+      "type": "transon_rule_expr__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "op",
+          "options": [
+            [
+              "<",
+              "<"
+            ],
+            [
+              "lt",
+              "lt"
+            ],
+            [
+              "<=",
+              "<="
+            ],
+            [
+              "le",
+              "le"
+            ],
+            [
+              "==",
+              "=="
+            ],
+            [
+              "eq",
+              "eq"
+            ],
+            [
+              "!=",
+              "!="
+            ],
+            [
+              "ne",
+              "ne"
+            ],
+            [
+              ">=",
+              ">="
+            ],
+            [
+              "ge",
+              "ge"
+            ],
+            [
+              ">",
+              ">"
+            ],
+            [
+              "gt",
+              "gt"
+            ],
+            [
+              "+",
+              "+"
+            ],
+            [
+              "add",
+              "add"
+            ],
+            [
+              "-",
+              "-"
+            ],
+            [
+              "sub",
+              "sub"
+            ],
+            [
+              "*",
+              "*"
+            ],
+            [
+              "mul",
+              "mul"
+            ],
+            [
+              "/",
+              "/"
+            ],
+            [
+              "div",
+              "div"
+            ],
+            [
+              "%",
+              "%"
+            ],
+            [
+              "mod",
+              "mod"
+            ],
+            [
+              "&&",
+              "&&"
+            ],
+            [
+              "and",
+              "and"
+            ],
+            [
+              "||",
+              "||"
+            ],
+            [
+              "or",
+              "or"
+            ],
+            [
+              "!",
+              "!"
+            ],
+            [
+              "not",
+              "not"
+            ]
+          ],
+          "type": "field_dropdown"
+        },
+        {
+          "name": "value",
+          "type": "input_value"
+        }
+      ],
+      "colour": 30,
+      "inputsInline": false,
+      "message0": "Expression (expr) op %1 value %2",
+      "output": null,
+      "type": "transon_rule_expr__value"
+    },
+    {
+      "args0": [
+        {
+          "name": "op",
+          "options": [
+            [
+              "<",
+              "<"
+            ],
+            [
+              "lt",
+              "lt"
+            ],
+            [
+              "<=",
+              "<="
+            ],
+            [
+              "le",
+              "le"
+            ],
+            [
+              "==",
+              "=="
+            ],
+            [
+              "eq",
+              "eq"
+            ],
+            [
+              "!=",
+              "!="
+            ],
+            [
+              "ne",
+              "ne"
+            ],
+            [
+              ">=",
+              ">="
+            ],
+            [
+              "ge",
+              "ge"
+            ],
+            [
+              ">",
+              ">"
+            ],
+            [
+              "gt",
+              "gt"
+            ],
+            [
+              "+",
+              "+"
+            ],
+            [
+              "add",
+              "add"
+            ],
+            [
+              "-",
+              "-"
+            ],
+            [
+              "sub",
+              "sub"
+            ],
+            [
+              "*",
+              "*"
+            ],
+            [
+              "mul",
+              "mul"
+            ],
+            [
+              "/",
+              "/"
+            ],
+            [
+              "div",
+              "div"
+            ],
+            [
+              "%",
+              "%"
+            ],
+            [
+              "mod",
+              "mod"
+            ],
+            [
+              "&&",
+              "&&"
+            ],
+            [
+              "and",
+              "and"
+            ],
+            [
+              "||",
+              "||"
+            ],
+            [
+              "or",
+              "or"
+            ],
+            [
+              "!",
+              "!"
+            ],
+            [
+              "not",
+              "not"
+            ]
+          ],
+          "type": "field_dropdown"
+        },
+        {
+          "name": "values",
+          "type": "input_value"
+        }
+      ],
+      "colour": 30,
+      "inputsInline": false,
+      "message0": "Expression (expr) op %1 values %2",
+      "output": null,
+      "type": "transon_rule_expr__values"
+    },
+    {
+      "args0": [
+        {
+          "name": "name",
+          "options": [
+            [
+              "str",
+              "str"
+            ],
+            [
+              "int",
+              "int"
+            ],
+            [
+              "float",
+              "float"
+            ],
+            [
+              "type",
+              "type"
+            ]
+          ],
+          "type": "field_dropdown"
+        }
+      ],
+      "colour": 30,
+      "inputsInline": false,
+      "message0": "Call function (call) name %1",
+      "output": null,
+      "type": "transon_rule_call__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "name",
+          "options": [
+            [
+              "str",
+              "str"
+            ],
+            [
+              "int",
+              "int"
+            ],
+            [
+              "float",
+              "float"
+            ],
+            [
+              "type",
+              "type"
+            ]
+          ],
+          "type": "field_dropdown"
+        },
+        {
+          "name": "value",
+          "type": "input_value"
+        }
+      ],
+      "colour": 30,
+      "inputsInline": false,
+      "message0": "Call function (call) name %1 value %2",
+      "output": null,
+      "type": "transon_rule_call__value"
+    },
+    {
+      "args0": [
+        {
+          "name": "name",
+          "options": [
+            [
+              "str",
+              "str"
+            ],
+            [
+              "int",
+              "int"
+            ],
+            [
+              "float",
+              "float"
+            ],
+            [
+              "type",
+              "type"
+            ]
+          ],
+          "type": "field_dropdown"
+        },
+        {
+          "name": "values",
+          "type": "input_value"
+        }
+      ],
+      "colour": 30,
+      "inputsInline": false,
+      "message0": "Call function (call) name %1 values %2",
+      "output": null,
+      "type": "transon_rule_call__values"
+    },
+    {
+      "args0": [
+        {
+          "name": "pattern",
+          "type": "input_value"
+        },
+        {
+          "name": "value",
+          "type": "input_value"
+        },
+        {
+          "name": "default",
+          "type": "input_value"
+        }
+      ],
+      "colour": 90,
+      "inputsInline": false,
+      "message0": "Format string (format) pattern %1 value %2 default %3",
+      "output": null,
+      "type": "transon_rule_format__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "name",
+          "type": "input_value"
+        },
+        {
+          "name": "default",
+          "type": "input_value"
+        }
+      ],
+      "colour": 195,
+      "inputsInline": false,
+      "message0": "Include template (include) name %1 default %2",
+      "output": null,
+      "type": "transon_rule_include__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "key",
+          "type": "input_value"
+        },
+        {
+          "name": "cases",
+          "type": "input_value"
+        },
+        {
+          "name": "default",
+          "type": "input_value"
+        }
+      ],
+      "colour": 60,
+      "inputsInline": false,
+      "message0": "Switch (switch) key %1 cases %2 default %3",
+      "output": null,
+      "type": "transon_rule_switch__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "cases",
+          "type": "input_value"
+        },
+        {
+          "name": "default",
+          "type": "input_value"
+        }
+      ],
+      "colour": 60,
+      "inputsInline": false,
+      "message0": "Condition (cond) cases %1 default %2",
+      "output": null,
+      "type": "transon_rule_cond__base"
+    },
+    {
+      "args0": [
+        {
+          "name": "VALUE",
+          "type": "field_transon_scalar"
+        }
+      ],
+      "colour": 150,
+      "inputsInline": true,
+      "message0": "%1",
+      "output": null,
+      "tooltip": "Literal",
+      "type": "transon_literal"
+    },
+    {
+      "colour": 255,
+      "message0": "Array",
+      "mutator": "transon_array_mutator",
+      "output": null,
+      "tooltip": "Array",
+      "type": "transon_array"
+    },
+    {
+      "colour": 255,
+      "message0": "Object",
+      "mutator": "transon_object_mutator",
+      "output": null,
+      "tooltip": "Object",
+      "type": "transon_object_literal"
+    },
+    {
+      "colour": "#9aa0a6",
+      "message0": "Unsupported",
+      "mutator": "transon_unsupported_mutator",
+      "output": null,
+      "tooltip": "Unsupported",
+      "type": "transon_unsupported"
+    }
+  ]
+}

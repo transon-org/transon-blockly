@@ -30,6 +30,10 @@ export interface Presentation {
    * absent: it is an import-only placeholder (§13.11), never a palette entry.
    */
   structuralBlocks: Record<string, string[]>;
+  /** Friendly titles for the structural block types (editor-owned, not rules). */
+  structuralTitles: Record<string, string>;
+  /** Colour for the import-only `transon_unsupported` placeholder (§13.11) — not a category. */
+  unsupportedColour: number | string;
   /** Per-rule title/category/advanced, keyed by rule name. Completeness-gated (FR-127). */
   rules: Record<string, RulePresentation>;
 }
@@ -41,5 +45,7 @@ export const PRESENTATION: Presentation = {
   categoryOrder: raw.categoryOrder,
   categoryColour: raw.categoryColour,
   structuralBlocks: raw.structuralBlocks,
+  structuralTitles: raw.structuralTitles,
+  unsupportedColour: raw.unsupportedColour,
   rules: raw.rules,
 };

@@ -16,6 +16,7 @@ import type { EngineProvider } from '@transon/editor-core';
 import {
   generateCodec,
   generateToolbox,
+  generatePalette,
   serializeArtifact,
   stableStringify,
   GENERATOR_SOURCES,
@@ -41,8 +42,9 @@ beforeAll(async () => {
     writeFileSync(join(ARTIFACTS, 'encoder.json'), serializeArtifact(encoder));
     writeFileSync(join(ARTIFACTS, 'decoder.json'), serializeArtifact(decoder));
     writeFileSync(join(ARTIFACTS, 'blockmap.json'), serializeArtifact(blockmap));
-    // Toolbox is static JSON (loaded, not executed) — serialized with the same stable stringify.
+    // Toolbox + palette are static JSON (loaded, not executed) — same stable stringify.
     writeFileSync(join(ARTIFACTS, 'toolbox.json'), stableStringify(await generateToolbox(engine)));
+    writeFileSync(join(ARTIFACTS, 'palette.json'), stableStringify(await generatePalette(engine)));
   }
 });
 afterAll(() => engine?.dispose());
@@ -74,5 +76,10 @@ describe('codec regeneration is byte-equal to committed artifacts (FR-119, AD-03
   it('toolbox.json matches a fresh G_toolbox run (FR-044, FR-119)', async () => {
     const toolbox = await generateToolbox(engine);
     expect(stableStringify(toolbox)).toBe(readFileSync(join(ARTIFACTS, 'toolbox.json'), 'utf8'));
+  });
+
+  it('palette.json matches a fresh G_palette run (FR-084/089, FR-119)', async () => {
+    const palette = await generatePalette(engine);
+    expect(stableStringify(palette)).toBe(readFileSync(join(ARTIFACTS, 'palette.json'), 'utf8'));
   });
 });

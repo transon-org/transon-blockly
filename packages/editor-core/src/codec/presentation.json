@@ -34,6 +34,13 @@
     "Literals": ["transon_literal"],
     "Objects / Arrays": ["transon_array", "transon_object_literal"]
   },
+  "structuralTitles": {
+    "transon_literal": "Literal",
+    "transon_array": "Array",
+    "transon_object_literal": "Object",
+    "transon_unsupported": "Unsupported"
+  },
+  "unsupportedColour": "#9aa0a6",
   "rules": {
     "this": { "title": "This", "category": "Input / Context", "advanced": false },
     "parent": { "title": "Parent scope", "category": "Input / Context", "advanced": true },

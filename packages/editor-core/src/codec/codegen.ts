@@ -22,6 +22,7 @@ import { PRESENTATION, type Presentation } from './presentation.js';
 import gEncode from './generators/G_encode.json' with { type: 'json' };
 import gDecode from './generators/G_decode.json' with { type: 'json' };
 import gToolbox from './generators/G_toolbox.json' with { type: 'json' };
+import gPalette from './generators/G_palette.json' with { type: 'json' };
 
 /** The marker the `@`-staged generators run under (AD-027). */
 const META_MARKER = '@';
@@ -477,6 +478,62 @@ const G_TOOLBOX: Json = {
   contents: { '@': 'chain', funcs: [tbAt('categories'), { '@': 'map', item: TB_CATEGORY }] },
 };
 
+// ---- G_palette: project the Zelos block definitions per rule variant (FR-084/089/114, AD-026) ----
+//
+// Like G_toolbox, the palette is a STATIC artifact (block definitions the editor registers into
+// Blockly, not executed over user data), so G_palette runs single-stage under the meta marker `@`.
+// generatePalette enriches each rule entry with the variant params' `kind`/`options` (FR-118) and
+// the rule's presentation title + category colour (from presentation.json — no TS literals,
+// FR-127), then this projection emits, per variant, a Blockly (Zelos) block definition. The
+// FR-118 widget decision is made here in the projection via `@:cond` (never baked into metadata):
+//   - dynamic param    → `input_value` (a value input)               (§13.5)
+//   - constant+options → `field_dropdown` from the resolved enum      (§13.6, FR-058)
+//   - constant         → `field_input` (verbatim scalar field)        (§13.6)
+// Label = "<title> (<rule>)" (OQ-008, §12.5); colour = the rule's category colour (NFR-048).
+//
+// `this` of the projection is the enriched entry { name, title, colour, variants:[{id, params}] }.
+const pGet = (name: string): Json => ({ '@': 'chain', funcs: [{ '@': 'get', name: 'pentry' }, { '@': 'attr', name }] });
+const P_NAME = pGet('name');
+const P_TITLE = pGet('title');
+const P_COLOUR = pGet('colour');
+const pAt = (name: string): Json => ({ '@': 'attr', name });
+// "%<index+1>" — the Blockly message placeholder for the param at this position.
+const P_PCT_INDEX: Json = { '@': 'format', pattern: '%{}', value: { '@': 'expr', op: 'add', values: [{ '@': 'index' }, 1] } };
+// per-param message segment: " <paramName> %<n>"
+const P_PARAM_SEG: Json = { '@': 'join', sep: '', items: [' ', pAt('name'), ' ', P_PCT_INDEX] };
+// message0 = "<title> (<rule>)" + one " <param> %n" per param, in order.
+const P_MESSAGE0: Json = { '@': 'join', sep: '', items: [
+  P_TITLE, ' (', P_NAME, ')',
+  { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG }] } },
+] };
+// @-time predicates on a param: constant? has a resolved enum domain (`options`)?
+const P_IS_CONSTANT: Json = { '@': 'expr', op: '==', values: [pAt('kind'), 'constant'] };
+const P_HAS_OPTIONS: Json = { '@': 'expr', op: '!=', values: [
+  { '@': 'join', sep: ',', default: '@noopt', items: { '@': 'attr', name: 'options', default: [] } }, '@noopt',
+] };
+// dropdown options: [[opt, opt], ...] from the resolved enum (FR-058).
+const P_DROPDOWN_OPTIONS: Json = { '@': 'chain', funcs: [pAt('options'), { '@': 'map', item: [{ '@': 'this' }, { '@': 'this' }] }] };
+// one args0 entry per param — the FR-118 widget decision (lazy @:cond, only one branch taken).
+const P_ARG: Json = { '@': 'cond', cases: [
+  { when: { '@': 'expr', op: 'and', values: [P_IS_CONSTANT, P_HAS_OPTIONS] },
+    then: { type: 'field_dropdown', name: pAt('name'), options: P_DROPDOWN_OPTIONS } },
+  { when: P_IS_CONSTANT,
+    then: { type: 'field_input', name: pAt('name') } },
+], default: { type: 'input_value', name: pAt('name') } };
+// one Zelos block definition per variant.
+const P_VARIANT_DEF: Json = {
+  type: { '@': 'join', sep: '', items: ['transon_rule_', P_NAME, '__', pAt('id')] },
+  message0: P_MESSAGE0,
+  args0: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_ARG }] },
+  output: null,
+  colour: P_COLOUR,
+  inputsInline: false,
+};
+const G_PALETTE: Json = { '@': 'chain', funcs: [
+  { '@': 'set', name: 'pentry' },
+  { '@': 'chain', funcs: [{ '@': 'get', name: 'pentry' }, pAt('variants'), { '@': 'map', item: P_VARIANT_DEF }] },
+] };
+
 /**
  * Full catalog of rules derived from engine metadata (FR-040, AC-006, AC-034).
  * Derived from `editorMetadata.catalog.rules` at module load time so a future engine
@@ -502,11 +559,13 @@ export const GENERATOR_FILES = {
   encode: 'G_encode.json',
   decode: 'G_decode.json',
   toolbox: 'G_toolbox.json',
+  palette: 'G_palette.json',
 } as const;
 export const GENERATOR_SOURCES: Record<string, Json> = {
   [GENERATOR_FILES.encode]: G_RULE_ENCODE,
   [GENERATOR_FILES.decode]: G_RULE_DECODE_CASES,
   [GENERATOR_FILES.toolbox]: G_TOOLBOX,
+  [GENERATOR_FILES.palette]: G_PALETTE,
 };
 
 /** The committed codec bundle shape: a self-`include`-able fragment map plus an entry name. */
@@ -623,6 +682,81 @@ export async function generateToolbox(
     structuralBlockTypes: presentation.structuralBlocks[name] ?? [],
   }));
   return runGen(engine, gToolbox as unknown as Json, { categories } as unknown as Json);
+}
+
+// ---- enrich a rule entry for the palette projection (FR-118, FR-058) ----
+// Join the variant params' `kind` + resolved enum `options` from the rule-level params (the
+// metadata carries `kind`/`options` only at rule level, like `enrichEntry` for the codec), and
+// attach the rule's presentation title + category colour (from presentation.json — not TS). A
+// new rule with complete metadata + a presentation entry folds in with no code change (AC-037).
+function enrichForPalette(entry: unknown, presentation: Presentation): Json {
+  const e = entry as CatalogRuleEntry;
+  const kindMap = new Map(e.params.map((p) => [p.name, p.kind ?? 'dynamic']));
+  const optMap = new Map(e.params.map((p) => [p.name, p.options]));
+  const pres = presentation.rules[e.name];
+  if (!pres) throw new Error(`palette: rule '${e.name}' has no presentation entry (FR-127)`);
+  return {
+    name: e.name,
+    title: pres.title,
+    colour: presentation.categoryColour[pres.category] ?? 0,
+    variants: e.variants.map((v) => ({
+      id: v.id,
+      params: v.params.map((p) => {
+        const options = optMap.get(p.name);
+        return { name: p.name, required: p.required, kind: kindMap.get(p.name) ?? 'dynamic', ...(options ? { options } : {}) };
+      }),
+    })),
+  } as unknown as Json;
+}
+
+// The fixed, rule-agnostic structural block definitions (transon_literal/array/object_literal/
+// unsupported) — the non-rule vocabulary the encoder emits (FR-124). Their *shape* is fixed
+// (rule-agnostic, like FIXED_DEC_CASES), but their colour + label come from presentation data
+// (FR-127). The dynamic-arity blocks reference behavior-runtime mutators by name; the scalar
+// literal references the custom JSON-scalar field; both are registered in @transon/editor-blockly
+// (AD-031). transon_unsupported is edit-blocked and preserves its raw payload (§13.11, AD-004).
+function structuralColour(presentation: Presentation, blockType: string): number | string {
+  const cat = Object.entries(presentation.structuralBlocks).find(([, types]) => types.includes(blockType))?.[0];
+  return cat ? (presentation.categoryColour[cat] ?? 0) : presentation.unsupportedColour;
+}
+function structuralDefs(presentation: Presentation): Json[] {
+  const t = presentation.structuralTitles;
+  return [
+    { type: 'transon_literal', message0: '%1', args0: [{ type: 'field_transon_scalar', name: 'VALUE' }],
+      output: null, colour: structuralColour(presentation, 'transon_literal'), inputsInline: true, tooltip: t.transon_literal },
+    { type: 'transon_array', message0: t.transon_array, output: null,
+      colour: structuralColour(presentation, 'transon_array'), mutator: 'transon_array_mutator', tooltip: t.transon_array },
+    { type: 'transon_object_literal', message0: t.transon_object_literal, output: null,
+      colour: structuralColour(presentation, 'transon_object_literal'), mutator: 'transon_object_mutator', tooltip: t.transon_object_literal },
+    { type: 'transon_unsupported', message0: t.transon_unsupported, output: null,
+      colour: presentation.unsupportedColour, mutator: 'transon_unsupported_mutator', tooltip: t.transon_unsupported },
+  ] as unknown as Json[];
+}
+
+/**
+ * Generate the Blockly palette artifact: the loadable Zelos block definitions for every rule
+ * variant (projected by `G_palette`) plus the fixed structural definitions (FR-084, FR-089,
+ * FR-114, FR-125, AD-026, AD-030). The output is `{ blocks: BlockDefinition[] }` the editor
+ * registers into Blockly. Pure: returns the definitions, writes nothing.
+ *
+ * The `catalog`/`presentation` overrides drive the AC-037 synthetic-rule proof (a new rule
+ * becomes a projected block with no editor code change).
+ */
+export async function generatePalette(
+  engine: EngineProvider,
+  rules: string[] = CATALOG_RULES,
+  catalog: CatalogEntry[] = editorMetadata.catalog.rules,
+  presentation: Presentation = PRESENTATION,
+): Promise<Json> {
+  const blocks: Json[] = [];
+  for (const name of rules) {
+    const entry = catalog.find((r) => r.name === name);
+    if (!entry) throw new Error(`palette: rule '${name}' not in metadata catalog`);
+    const defs = (await runGen(engine, gPalette as unknown as Json, enrichForPalette(entry, presentation))) as Json[];
+    blocks.push(...defs);
+  }
+  blocks.push(...structuralDefs(presentation));
+  return { blocks } as unknown as Json;
 }
 
 /**

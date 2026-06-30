@@ -35,6 +35,7 @@ export {
   isRuleBlockType,
   generateCodec,
   generateToolbox,
+  generatePalette,
   serializeArtifact,
   stableStringify,
   GENERATOR_SOURCES,
