@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `d4c550e` — editor: M1 codec — G_encode/G_decode for attr, round-trip by construction |
+| Repo HEAD | `4efc0e2` — editor: M1 T5 — literal-marker escape (FR-059/060/061/062/123, §11.4) |
 | Branch | `m1-codec-skeleton` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -51,9 +51,19 @@ must be a literal mapping (merge fixed+generated cases at codegen time, not via 
 merges dicts; `object key+value` builds a single dynamic-key dict; `object/fields` omits NO_CONTENT
 values (drives optional-param omission); **presence/membership must be KEY-based** (a value-sentinel
 collides — review #1) and the engine `!`/`not` operator does NOT negate (use `!=` / restructure).
-Reviewer signed off (maker≠checker). **Next:** finish the remaining M1 scope — T5 literal-marker escape
-(FR-123), T6 full surface check (§15.7), T7 `JsonPathBlockMap` (FR-091/094/122) — then M2 (fold the full
-catalog by extending `generateCodec`'s rule list + the `G_*` arms; no skeleton change, AC-034).
+Reviewer signed off (maker≠checker). **Since `d4c550e`:** (a) **`a913514`** — committed the
+`G_encode`/`G_decode` generators as inspectable projection DATA (`src/codec/generators/*.json`);
+`generateCodec` now runs the committed JSON (load-bearing), TS builders are the gate-verified authoring
+source, regen holds them byte-equal. (b) **`4efc0e2`** — **T5 literal-marker escape** (FR-059/060/061/062/123):
+the skeleton owns the `{<marker>:object,fields:X}` escape (exact shape, precedence over rule dispatch →
+`transon_object_literal`; decode re-wraps when content carries the marker); centralized the inspected
+DOCUMENT marker as `DOC_MARKER`. **121 tests; all gates green.** **Next (remaining M1):** **T7
+`JsonPathBlockMap`** (FR-091/094/122 — the big piece: thread `{node,path}` through the recursion to emit
+`block_id`/`template_path` during the walk; consumed in M4) and **FR-063 custom marker** (isolated:
+parameterize `DOC_MARKER` through the generators+skeleton; committed codec stays `$`). T6 full surface
+check is effectively covered by the exact-variant-match fix (diagnostic reporting is M4). **Before
+merge:** run the review-gate / round-trip-reviewer on the T5 marker-escape surface (maker≠checker).
+Then M2 (fold the catalog by extending `generateCodec`'s rule list + the `G_*` arms; no skeleton change, AC-034).
 (Prior: RFC-002 absorption + coherence fixes committed `b3e6669`/`cb5b738`; M0 editor build `8751707`.)_
 
 ### Prior last action (M0)
