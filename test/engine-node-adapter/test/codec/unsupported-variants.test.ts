@@ -83,6 +83,14 @@ const UNSUPPORTED_CASES: { name: string; template: Json; reason: string }[] = [
     template: { $: 'set', name: 'n', bogus: 1 },
     reason: 'set: bogus is not a declared param; single-variant rule with foreign key (§15.6)',
   },
+  // §15.7 / FR-123: the object/fields payload MUST be a mapping (the engine rejects a non-dict
+  // `fields`). A non-dict `fields` is neither the escape nor a valid rule node → out of surface,
+  // routed to transon_unsupported with exact preservation rather than a raw codec error.
+  { name: 'object-fields-int', template: { $: 'object', fields: 5 }, reason: 'object/fields payload is a scalar, not a mapping (§15.7)' },
+  { name: 'object-fields-list', template: { $: 'object', fields: [1, 2] }, reason: 'object/fields payload is a list, not a mapping (§15.7)' },
+  { name: 'object-fields-string', template: { $: 'object', fields: 'str' }, reason: 'object/fields payload is a string, not a mapping (§15.7)' },
+  { name: 'object-fields-null', template: { $: 'object', fields: null }, reason: 'object/fields payload is null, not a mapping (§15.7)' },
+  { name: 'object-fields-bool', template: { $: 'object', fields: true }, reason: 'object/fields payload is a bool, not a mapping (§15.7)' },
 ];
 
 describe(

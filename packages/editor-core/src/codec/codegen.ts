@@ -92,6 +92,30 @@ const isEscape: Json = {
     fieldsHasMarkerKey,
   ],
 };
+
+// The skeleton-level out-of-surface placeholder ($-form): preserves the raw node verbatim (AD-004,
+// §13.11). Shared by the object-branch malformed guard and the rule-dispatch default below.
+const SKELETON_UNSUPPORTED: Json = {
+  $: 'object', fields: { type: 'transon_unsupported', extraState: { $: 'object', fields: { raw: { $: 'this' } } } },
+};
+
+// A `{<marker>:object, fields:X}` whose `fields` payload X is NOT a dict is malformed — the engine
+// requires `fields` to be a mapping. It is neither the escape nor a valid `object`/`fields` rule
+// node, so it is out of surface → transon_unsupported with exact preservation (§15.7, FR-123).
+// `call type` returns `'object'` for a dict (the same predicate the skeleton switches on). Checked
+// BEFORE the escape so the non-dict never reaches the dict-walking escape/rule paths (which would
+// otherwise raise a codec error instead of emitting the placeholder).
+// NOTE: `expr and` evaluates every operand (no short-circuit), and `call type` raises on a
+// NoContent value — so the `fields` lookup carries a `{}` default. For a node WITHOUT a `fields`
+// key the type is then `object` (≠-test false) and the `thisHasKey('fields')` operand already
+// makes the whole `and` false; a present non-dict `fields` keeps its real (non-dict) type.
+const isMalformedObjectFields: Json = {
+  $: 'expr', op: 'and', values: [
+    eqv({ $: 'attr', name: DOC_MARKER }, 'object'),
+    thisHasKey('fields'),
+    nev({ $: 'call', name: 'type', value: { $: 'attr', name: 'fields', default: {} } }, 'object'),
+  ],
+};
 // Emit `transon_object_literal` for the literal object that is the current `this` (its key/value
 // pairs recurse). Reused for a marker-free object and for the escape's `fields` payload.
 const encObjectLiteral: Json = { $: 'object', fields: {
@@ -337,13 +361,16 @@ const encSkeleton = (dispatchCases: Json): Json => ({
         // marker absent → a normal literal object
         { when: eqv({ $: 'attr', name: DOC_MARKER, default: '__transon_no_marker__' }, '__transon_no_marker__'),
           then: encObjectLiteral },
-        // literal-marker escape (FR-123): `{<marker>:object, fields:X}` → the literal object X,
-        // taking precedence over rule dispatch
+        // malformed object/fields (non-dict `fields` payload) → out of surface (§15.7, FR-123).
+        // Must precede the escape so the non-dict payload never reaches a dict-walking path.
+        { when: isMalformedObjectFields, then: SKELETON_UNSUPPORTED },
+        // literal-marker escape (FR-123): `{<marker>:object, fields:X}` (X carries the marker key)
+        // → the literal object X, taking precedence over rule dispatch
         { when: isEscape, then: { $: 'chain', funcs: [{ $: 'attr', name: 'fields' }, encObjectLiteral] } },
       ],
       // otherwise dispatch on the rule name; unknown rule → out of surface
       default: { $: 'switch', key: { $: 'attr', name: DOC_MARKER }, cases: dispatchCases,
-                 default: { $: 'object', fields: { type: 'transon_unsupported', extraState: { $: 'object', fields: { raw: { $: 'this' } } } } } } } },
+                 default: SKELETON_UNSUPPORTED } } },
   default: { $: 'object', fields: { type: 'transon_literal', fields: { $: 'object', fields: { VALUE: { $: 'this' } } } } },
 });
 

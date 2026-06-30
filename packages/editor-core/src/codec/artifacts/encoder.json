@@ -84,6 +84,91 @@
             },
             {
               "then": {
+                "$": "object",
+                "fields": {
+                  "extraState": {
+                    "$": "object",
+                    "fields": {
+                      "raw": {
+                        "$": "this"
+                      }
+                    }
+                  },
+                  "type": "transon_unsupported"
+                }
+              },
+              "when": {
+                "$": "expr",
+                "op": "and",
+                "values": [
+                  {
+                    "$": "expr",
+                    "op": "==",
+                    "values": [
+                      {
+                        "$": "attr",
+                        "name": "transon::document-marker"
+                      },
+                      "object"
+                    ]
+                  },
+                  {
+                    "$": "expr",
+                    "op": "!=",
+                    "values": [
+                      {
+                        "$": "join",
+                        "default": "transon::absent-key",
+                        "items": {
+                          "$": "chain",
+                          "funcs": [
+                            {
+                              "$": "map",
+                              "item": {
+                                "$": "key"
+                              }
+                            },
+                            {
+                              "$": "filter",
+                              "cond": {
+                                "$": "expr",
+                                "op": "==",
+                                "values": [
+                                  {
+                                    "$": "this"
+                                  },
+                                  "fields"
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        "sep": ","
+                      },
+                      "transon::absent-key"
+                    ]
+                  },
+                  {
+                    "$": "expr",
+                    "op": "!=",
+                    "values": [
+                      {
+                        "$": "call",
+                        "name": "type",
+                        "value": {
+                          "$": "attr",
+                          "default": {},
+                          "name": "fields"
+                        }
+                      },
+                      "object"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "then": {
                 "$": "chain",
                 "funcs": [
                   {

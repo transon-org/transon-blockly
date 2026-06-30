@@ -1,8 +1,9 @@
 // JsonPathBlockMap — produced alongside the workspace as the codec walks (FR-091/094/122, §9.12).
-// Consuming it for highlighting is M4 (FR-092/093/095); M1 only proves it is produced correctly.
+// Consuming it for highlighting is M4 (FR-092/093/095); here we prove it is produced correctly,
+// including over the full §15.8 engine-example corpus (147 templates).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { EngineProvider, JsonPathBlockMapEntry } from '@transon/editor-core';
-import { blockMap } from '@transon/editor-core';
+import type { EngineProvider, Json, JsonPathBlockMapEntry, CatalogEntry } from '@transon/editor-core';
+import { blockMap, editorMetadata } from '@transon/editor-core';
 import { createNodeEngineProvider } from '../../src/index.js';
 
 let engine: EngineProvider;
@@ -13,6 +14,25 @@ beforeAll(async () => {
 afterAll(() => engine?.dispose());
 
 const byPath = (m: JsonPathBlockMapEntry[]) => new Map(m.map((e) => [e.template_path, e]));
+
+/** Count marker-bearing dicts in a template — the nodes the block-map tags with `rule_name`. */
+function countRuleNodes(t: Json): number {
+  if (Array.isArray(t)) return t.reduce<number>((s, x) => s + countRuleNodes(x), 0);
+  if (t && typeof t === 'object') {
+    const self = Object.prototype.hasOwnProperty.call(t, '$') ? 1 : 0;
+    return self + Object.values(t).reduce<number>((s, x) => s + countRuleNodes(x as Json), 0);
+  }
+  return 0;
+}
+
+/** All 147 engine docs examples (NFR-047 split: the `docs` payload). */
+const DOCS_EXAMPLES: { source: string; name: string; template: Json }[] = [
+  ...editorMetadata.docs.rules, ...editorMetadata.docs.operators, ...editorMetadata.docs.functions,
+].flatMap((entry) =>
+  ((entry as CatalogEntry & { examples?: { name: string; template: Json }[] }).examples ?? []).map(
+    (ex) => ({ source: entry.name, name: ex.name, template: ex.template }),
+  ),
+);
 
 describe('JsonPathBlockMap production (FR-091/122, §9.12)', () => {
   it('maps a rule node and each of its parameters with paths + names', async () => {
@@ -59,4 +79,33 @@ describe('JsonPathBlockMap production (FR-091/122, §9.12)', () => {
     expect(m.has('$/a/b')).toBe(true); // the nested a → b
     expect(m.get('$/a~1b')).not.toEqual(m.get('$/a/b'));
   });
+});
+
+// FR-091/094/122, §9.12 — the block-map holds its invariants over the full §15.8 engine corpus,
+// not just hand-picked nodes (the prior reviewer's coverage SHOULD-FIX). These are structural
+// invariants that scale to all 147 real templates.
+describe('JsonPathBlockMap invariants over the 147 engine examples (§15.8, FR-091/094/122)', () => {
+  it('has exactly 147 example templates to walk (NFR-047)', () => {
+    expect(DOCS_EXAMPLES).toHaveLength(147);
+  });
+
+  for (const { source, name, template } of DOCS_EXAMPLES) {
+    it(`${source}__${name}`, async () => {
+      const map = await blockMap(engine, template);
+      // (1) a root entry exists and is the document root.
+      const m = byPath(map);
+      expect(m.get('$')).toMatchObject({ template_path: '$', block_id: '$' });
+      // (2) block_id === template_path, and all block_ids are unique (FR-094, RFC-6901 paths).
+      const ids = map.map((e) => e.block_id);
+      expect(new Set(ids).size).toBe(ids.length);
+      for (const e of map) expect(e.block_id).toBe(e.template_path);
+      // (3) every nearest_parent_block_id refers to a real entry (parent integrity, FR-094).
+      for (const e of map) {
+        if (e.nearest_parent_block_id !== undefined) expect(m.has(e.nearest_parent_block_id)).toBe(true);
+      }
+      // (4) the codec walk tags exactly the marker-bearing nodes with rule_name.
+      const ruleEntries = map.filter((e) => e.rule_name !== undefined).length;
+      expect(ruleEntries).toBe(countRuleNodes(template));
+    });
+  }
 });
