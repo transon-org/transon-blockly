@@ -384,7 +384,12 @@ const encSkeleton = (dispatchCases: Json): Json => ({
 
 const FIXED_DEC_CASES: Record<string, Json> = {
   transon_literal: { $: 'chain', funcs: [{ $: 'attr', name: 'fields' }, { $: 'attr', name: 'VALUE' }] },
-  transon_array: { $: 'chain', funcs: [{ $: 'attr', name: 'inputs' },
+  // `default: {}` makes decode tolerant of a missing `inputs` key: Blockly's workspace save()
+  // DROPS an empty `inputs:{}`, so a Blockly-resaved empty array has no `inputs` — without the
+  // default, `map` over the engine's NoContent throws. Behavior-preserving: when `inputs` is
+  // present (always, for direct encoder output) the default is ignored; map over `{}` → [] (the
+  // empty array). This hardens the reverse Blockly-save→decode path (FR-126 decoder-consume).
+  transon_array: { $: 'chain', funcs: [{ $: 'attr', name: 'inputs', default: {} },
     { $: 'map', item: { $: 'chain', funcs: [{ $: 'attr', name: 'block' }, { $: 'include', name: 'dec' }] } }] },
   transon_object_literal: { $: 'chain', funcs: [
     { $: 'attr', name: 'extraState' }, { $: 'attr', name: 'keys' },

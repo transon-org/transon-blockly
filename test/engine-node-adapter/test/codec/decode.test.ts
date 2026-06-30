@@ -39,4 +39,12 @@ describe('decode is the structural inverse of encode (FR-114/126, AC-009/010)', 
     const raw = { $: 'no_such_rule', x: 1 };
     expect(await decode(engine, { type: 'transon_unsupported', extraState: { raw } })).toEqual(raw);
   });
+
+  it('decodes a Blockly-resaved empty array (no `inputs` key) → [] (FR-126 reverse path)', async () => {
+    // Blockly's workspaces.save() drops an empty `inputs:{}`, so a resaved empty array has only
+    // extraState. The decoder must tolerate the missing key, not throw (codegen default:{}).
+    expect(await decode(engine, { type: 'transon_array', extraState: { items: [] } })).toEqual([]);
+    // …and is unchanged when `inputs` is the explicit empty map the direct encoder emits.
+    expect(await decode(engine, { type: 'transon_array', extraState: { items: [] }, inputs: {} })).toEqual([]);
+  });
 });

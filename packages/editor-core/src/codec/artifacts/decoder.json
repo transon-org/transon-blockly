@@ -16,6 +16,7 @@
               "funcs": [
                 {
                   "$": "attr",
+                  "default": {},
                   "name": "inputs"
                 },
                 {
