@@ -1251,7 +1251,11 @@ Built-in `expr` operators shall be supported:
 
 ### 14.15 Functions
 
-Built-in `call` functions shall be supported: `str`, `int`, `float`.
+Built-in `call` functions shall be supported: `str`, `int`, `float`, `type`. The `type` function
+returns the JSON type of a value — one of object, array, string, int, float, boolean, or null — and
+is **total** (never raises on well-formed JSON), making it the one operation a switch/cond key can
+safely apply to an unknown node; it is the node-type-dispatch primitive the generated codec relies on
+([metadata-contract.md](metadata-contract.md) §6.4, FR-118).
 
 ### 14.16 Conditional Dispatch
 

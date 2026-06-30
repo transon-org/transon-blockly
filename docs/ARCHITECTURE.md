@@ -559,9 +559,10 @@ and object keys (`SPEC.md` §13.12, §15.3), the surface check (`SPEC.md` §15.7
 out-of-surface placeholder (`SPEC.md` §13.11). The `JsonPathBlockMap` (`SPEC.md` §9.12) is produced
 as the codec walks; it is skeleton output, not a separate TS pass.
 
-Each per-rule arm emits the Blockly workspace block shape directly (`transon_rule_<rule>__<variant>`
-with fields/inputs); the field-vs-input disposition (FR-118) is computed inside the arm during
-projection. There is no intermediate representation between the codec and the workspace (AD-032).
+Each per-rule arm emits the Blockly workspace block shape directly — the fixed block vocabulary is
+defined normatively in `SPEC.md` FR-124 — with each declared param placed as a field or value input
+per the FR-118 disposition, computed inside the arm during projection. There is no intermediate
+representation between the codec and the workspace (AD-032).
 
 ### 5.5 The generators `G_*` (projections)
 
@@ -605,11 +606,12 @@ The projected portion of a codec is the **per-rule arm**: a `switch` case keyed 
 or block type (decode) whose body emits that rule's block/JSON shape and wires params↔inputs and
 variant selection. Adding a rule adds an arm via metadata; it does **not** add code.
 
-Each per-rule arm emits the Blockly workspace block shape directly (`transon_rule_<rule>__<variant>`
-with fields/inputs); the field-vs-input disposition (FR-118) is computed inside the arm during
-projection. There is no intermediate representation between the codec and the workspace (AD-032).
-The decoder reads the rule/variant structurally from the block type and reconstructs params from
-fields ∪ inputs without re-deriving the disposition.
+Each per-rule arm emits the Blockly workspace block shape directly — the fixed block vocabulary is
+defined normatively in `SPEC.md` FR-124 — with each declared param placed as a field or value input
+per the FR-118 disposition, computed inside the arm during projection. There is no intermediate
+representation between the codec and the workspace (AD-032). The decoder reads the rule/variant
+structurally from the block type and reconstructs params from fields ∪ inputs without re-deriving the
+disposition.
 
 Blockly **behavior** that JSON cannot express (field validators, custom field widgets, mutator UI,
 connection rules, change events) lives in the finite, **rule-agnostic** behavior runtime (AD-031).

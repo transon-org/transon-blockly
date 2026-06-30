@@ -208,7 +208,7 @@ not by growing one template; every rule and variant round-trips by construction.
   (new rule across all surfaces from metadata), **FR-124** (workspace-shape invariant over the full
   corpus), **§15.6**, **§15.8** (corpus); **AC-006 … AC-008**, **AC-028**, **AC-029**, **AC-030**,
   **AC-034**, **AC-035**; **AD-026**, **AD-028**, **AD-029**, **AD-032**.
-- Deliverables: per-rule encode/decode fragments for all 20 built-in rules (+ operators/functions via
+- Deliverables: per-rule encode/decode fragments for all 22 built-in rules (+ operators/functions via
   resolved enums), variant matching from the pre-derived signatures, the full execution-based
   round-trip corpus (`SPEC.md` §15.8) including custom marker and import-failure cases.
 - DoD additions: round-trip corpus covers every built-in rule and variant; the **FR-124

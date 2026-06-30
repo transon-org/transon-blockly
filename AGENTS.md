@@ -8,7 +8,8 @@ Transon JSON, delegating all validation/execution to a host-provided engine.
 
 - `docs/SPEC.md` — the *what*: FR/NFR/AC/UC, rule coverage, supported surface, error taxonomy,
   governance (§21).
-- `docs/ARCHITECTURE.md` — the *how*: decisions `AD-001..AD-025`, packages, host boundary, IR, flows.
+- `docs/ARCHITECTURE.md` — the *how*: decisions `AD-001..AD-032`, packages, host boundary, the
+  projection codec (no editor-defined IR, AD-032), flows.
 - `docs/metadata-contract.md` — the engine↔editor metadata *shape*.
 - `docs/traceability.md` — requirement→test coverage, engine-parity checks, round-trip corpus.
 - `docs/ROADMAP.md` — milestone sequencing (M0–M5), locked decisions, open questions.
@@ -73,7 +74,8 @@ regenerate it with `update_memory.py --snapshot` whenever the engine contract mo
 
 ## Data flow (one-way, plus gated reverse)
 
-Blockly canvas → change event → debounced `JSON⇄IR` codec → `{json, validation, execution}` in the
+Blockly canvas → change event → debounced `workspace⇄JSON` codec (no editor-defined intermediate
+representation, AD-032) → `{json, validation, execution}` in the
 `EditorSession` store. Reverse (React→Blockly) only for New / Import / Load-Example and **accepted
 in-surface JSON edits** (AD-024, §7.15: valid + in-surface syncs back; otherwise error, workspace
 unchanged).

@@ -61,6 +61,7 @@ defense against spec/engine drift:
 | Codec-regeneration | committed codec artifacts (encoder/decoder + palette/toolbox) == re-running `G_*` on the current metadata (compare-only; writes only under `UPDATE_ARTIFACTS=1`) | `G_*` projections + build-time codegen (`SPEC.md` FR-119, AD-030) | [ ] |
 | Behavior-runtime size | the rule-agnostic behavior runtime gains no per-rule branch as the catalog grows | `SPEC.md` NFR-046, AD-031 | [ ] |
 | Workspace-shape validity | encoder output is valid Blockly workspace-serialization JSON over the fixed block vocabulary (`transon_rule_<rule>__<variant>`, `transon_literal`/`transon_array`/`transon_object_literal`/`transon_unsupported`) across the §15.8 corpus | `SPEC.md` FR-124, AD-032 | [ ] |
+| `JsonPathBlockMap` produced as the codec walks | the encoder emits the path→block map during the codec walk (not a separate post-pass); every JSON path maps to its block or nearest enclosing block over the §15.8 corpus | `SPEC.md` FR-122, §9.12 | [ ] |
 | No codec↔workspace mapping (repo-scan) | no module under `packages/*/src` maps codec artifacts to/from a `{type, inputs, fields}` block structure | `SPEC.md` FR-126, AD-032 | [ ] |
 | Encoder output loads in Blockly | encoder output deserializes via Blockly's workspace loader without error (headless) | `SPEC.md` FR-126 | [ ] |
 | Palette definitions load | every complete-metadata rule yields a loadable/instantiable Zelos block definition (headless) | `SPEC.md` FR-125 | [ ] |
