@@ -447,10 +447,10 @@ itself (FR-121, AC-036).
   rule block `transon_rule_object__fields`, not the literal-object block — so it round-trips as the
   rule rather than collapsing to a bare literal (§15.1). The structural literal-object block type
   shall be **named to avoid collision** with the `object` rule block (e.g. `transon_object_literal`,
-  §13.7). A `{<marker>: object, fields: X}` whose payload `X` is **not a mapping** (a scalar, list,
-  or `null`) is malformed — the engine requires `fields` to be a mapping — and is **out of surface**:
-  it is emitted as `transon_unsupported` with exact preservation (§15.7, §13.11), never a raw codec
-  error.
+  §13.7). A `{<marker>: object, fields: X}` whose payload `X` is **not a mapping** (a scalar incl.
+  boolean, a list, or `null`) is malformed — the engine requires `fields` to be a mapping — and is
+  **out of surface**: it is emitted as `transon_unsupported` with exact preservation (§15.7, §13.11),
+  never a raw codec error.
 
 ### 7.9 Validation
 

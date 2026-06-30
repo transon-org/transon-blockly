@@ -103,7 +103,10 @@ describe('JsonPathBlockMap invariants over the 147 engine examples (§15.8, FR-0
       for (const e of map) {
         if (e.nearest_parent_block_id !== undefined) expect(m.has(e.nearest_parent_block_id)).toBe(true);
       }
-      // (4) the codec walk tags exactly the marker-bearing nodes with rule_name.
+      // (4) STRUCTURAL-WALK check: the map descends to every depth and tags every marker-bearing
+      // dict with rule_name (not a disposition check — the escape's literal `{$:'v'}` payload is
+      // also a marker-bearing dict and is tagged here; escape-vs-rule disposition is verified in
+      // escape.test.ts / unsupported-variants.test.ts). Catches a walk that stops descending.
       const ruleEntries = map.filter((e) => e.rule_name !== undefined).length;
       expect(ruleEntries).toBe(countRuleNodes(template));
     });
