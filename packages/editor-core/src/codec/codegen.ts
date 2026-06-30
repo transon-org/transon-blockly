@@ -85,7 +85,41 @@ const encObjectLiteral: Json = { $: 'object', fields: {
 } };
 
 // ---- G_rule_encode: project a rule's encode arm from its metadata ----
-// per-param value input ($); emitted only when the param key is present on the node (FR-025).
+
+// FR-118 / FR-047: disposition helpers — resolve at @-time from enriched variant params.
+// After driver enrichment (see generateCodec), each variant param carries a `kind` field
+// (copied from the rule-level param by name). These @-time filters partition the params:
+const AT_CONSTANT_PARAMS: Json = { '@': 'chain', funcs: [
+  at('params'),
+  { '@': 'filter', cond: { '@': 'expr', op: '==', values: [at('kind'), 'constant'] } },
+] };
+const AT_DYNAMIC_PARAMS: Json = { '@': 'chain', funcs: [
+  at('params'),
+  { '@': 'filter', cond: { '@': 'expr', op: '!=', values: [at('kind'), 'constant'] } },
+] };
+// @-time sentinel for "no constant params" (separate from $-runtime KEY_NIL):
+const AT_KEY_NIL = 'transon::absent-key@gen';
+// True at @-time when there is at least one constant param in the variant:
+const atHasConstantParams: Json = { '@': 'expr', op: '!=', values: [
+  { '@': 'join', sep: ',', default: AT_KEY_NIL, items: { '@': 'chain', funcs: [
+    AT_CONSTANT_PARAMS, { '@': 'map', item: at('name') },
+  ] } },
+  AT_KEY_NIL,
+] };
+
+// per-param constant field ($): reads the raw scalar verbatim from the node (FR-024).
+// Emitted only when the param key is present on the node (FR-025, key-based not value-based).
+// The value is NOT recursed through `include enc` — it is a literal scalar choice.
+const encField = (paramHole: Json): Json =>
+  lit({
+    $: 'cond',
+    cases: [{
+      when: keyPresent(paramHole),
+      then: { $: 'attr', name: paramHole },   // verbatim scalar, no sub-encoding
+    }],
+  });
+
+// per-param dynamic value input ($); emitted only when the param key is present (FR-025).
 const encRecurse = (paramHole: Json): Json =>
   lit({
     $: 'cond',
@@ -161,12 +195,43 @@ const noForeignKey: Json = eqv(
   KEY_NIL,
 );
 const ENC_WHEN: Json = lit({ $: 'expr', op: 'and', values: [allRequiredPresent, noForeignKey] });
-const ENC_THEN: Json = lit({
+
+// FR-118 / FR-124 / FR-047: emit the block as a $:join of 2 or 3 $-objects so the
+// `fields` (constant params) key is conditionally included.
+//
+//   item 0 — always: { type: "transon_rule_<rule>__<variant>" }
+//   item 1 — @-time: if the variant has ANY constant params:
+//              { fields: { <paramName>: <cond-verbatim-scalar>, ... } }
+//   item 2 — always: { inputs: { <paramName>: <cond-encRecurse>, ... } }
+//              (may be {} for zero-dynamic-param variants; harmless)
+//
+// The @-time conditional uses @:cond to produce either [fields_item] or [] (empty),
+// then @:join concatenates the three arrays before they become the $:join items list.
+//
+// Convention (FR-118): constant param name → used verbatim as the block field key.
+//   e.g. `expr.op` → fields.op, `call.name` → fields.name.
+const TYPE_ITEM: Json = lit({ $: 'object', fields: { type: blockType(at('id')) } });
+const FIELDS_ITEM: Json = lit({
   $: 'object', fields: {
-    type: blockType(at('id')),
-    inputs: lit({ $: 'object', fields: { '@': 'chain', funcs: [
-      at('params'), { '@': 'map', key: at('name'), value: encRecurse(at('name')) },
+    fields: lit({ $: 'object', fields: { '@': 'chain', funcs: [
+      AT_CONSTANT_PARAMS, { '@': 'map', key: at('name'), value: encField(at('name')) },
     ] } }),
+  },
+});
+const INPUTS_ITEM: Json = lit({
+  $: 'object', fields: {
+    inputs: lit({ $: 'object', fields: { '@': 'chain', funcs: [
+      AT_DYNAMIC_PARAMS, { '@': 'map', key: at('name'), value: encRecurse(at('name')) },
+    ] } }),
+  },
+});
+const ENC_THEN: Json = lit({
+  $: 'join', sep: '', items: {
+    '@': 'join', sep: '', items: [
+      [TYPE_ITEM],
+      { '@': 'cond', cases: [{ when: atHasConstantParams, then: [FIELDS_ITEM] }], default: [] },
+      [INPUTS_ITEM],
+    ],
   },
 });
 const ENC_UNSUPPORTED: Json = lit({ $: 'object', fields: { type: 'transon_unsupported', extraState: { $: 'object', fields: { raw: { $: 'this' } } } } });
@@ -185,6 +250,27 @@ const G_RULE_ENCODE: Json = { '@': 'chain', funcs: [
 ] };
 
 // ---- G_rule_decode_cases: project { <blockType>: <reconstruction> } per variant ----
+
+// FR-118 / FR-126: constant params read from blk.fields[<name>] (verbatim scalar);
+// dynamic params read from blk.inputs[<name>].block (recursed via include dec).
+// Presence is key-based (never value-based — review #1).
+
+const decField = (paramHole: Json): Json => {
+  // present === the block's `fields` object has a key === paramHole
+  const fieldKeys: Json = { $: 'chain', funcs: [{ $: 'get', name: 'blk' }, { $: 'attr', name: 'fields' }, { $: 'map', item: { $: 'key' } }] };
+  const fieldPresent: Json = nev(joinNames({ $: 'chain', funcs: [fieldKeys, { $: 'filter', cond: eqv(THIS_T, paramHole) }] }), KEY_NIL);
+  return lit({
+    $: 'cond',
+    cases: [{
+      when: fieldPresent,
+      then: { $: 'chain', funcs: [
+        { $: 'get', name: 'blk' }, { $: 'attr', name: 'fields' },
+        { $: 'attr', name: paramHole },   // verbatim scalar, no sub-decoding
+      ] },
+    }],
+  });
+};
+
 const decInput = (paramHole: Json): Json => {
   // present === the block's `inputs` object has a key === paramHole (key-based, not value-based:
   // the codec never confuses a value with a key, mirroring the encoder — review #1).
@@ -201,11 +287,19 @@ const decInput = (paramHole: Json): Json => {
     }],
   });
 };
+
+// DEC_RECON: reconstruct the Transon node from block type + fields (constant) + inputs (dynamic).
+// Uses $:join of 3 $-objects; an empty constant or dynamic map contributes {} which is identity.
 const DEC_RECON: Json = lit({
   $: 'join', items: [
     lit({ $: 'object', key: DOC_MARKER, value: RULE_NAME }),
+    // constant params ← blk.fields
     lit({ $: 'object', fields: { '@': 'chain', funcs: [
-      at('params'), { '@': 'map', key: at('name'), value: decInput(at('name')) },
+      AT_CONSTANT_PARAMS, { '@': 'map', key: at('name'), value: decField(at('name')) },
+    ] } }),
+    // dynamic params ← blk.inputs
+    lit({ $: 'object', fields: { '@': 'chain', funcs: [
+      AT_DYNAMIC_PARAMS, { '@': 'map', key: at('name'), value: decInput(at('name')) },
     ] } }),
   ],
 });
@@ -306,9 +400,10 @@ const BLOCKMAP_ENCODER: Json = { $: 'chain', funcs: [
  * Derived from `editorMetadata.catalog.rules` at module load time so a future engine
  * update with a new rule folds in automatically (no code change needed — AC-034).
  *
- * DO NOT add field-kind disposition (FR-118) here — that is D2. The two `kind:"constant"`
- * params (`expr.op`, `call.name`) stay as value inputs in this slice; they round-trip
- * correctly (a scalar op like `"+"` encodes as a `transon_literal` input block).
+ * Field-vs-input disposition (FR-118, FR-124, FR-047): constant params (`expr.op`,
+ * `call.name`) encode as block `fields`; dynamic params encode as `inputs`.
+ * Implemented in D2 via entry enrichment in `generateCodec` and @-time param filtering
+ * in `ENC_THEN` / `DEC_RECON`.
  */
 export const CATALOG_RULES: string[] = editorMetadata.catalog.rules.map((r: CatalogEntry) => r.name);
 
@@ -341,6 +436,35 @@ async function runGen(engine: EngineProvider, generator: Json, ruleEntry: Json):
   return res.output as Json;
 }
 
+// ---- entry enrichment: copy `kind` from rule-level params onto variant-level params (FR-118) ----
+//
+// The metadata `entry.variants[*].params` carry only `{name, required}`, while
+// `entry.params` (rule-level) carry `{kind, name, ...}`. The generators need `kind` on
+// the variant params so they can branch at @-time (constant→field, dynamic→input).
+//
+// This is a generic metadata-normalization join (name-based), applied uniformly to every rule.
+// No rule is special-cased, so a future rule with a constant param (AC-034) folds in
+// automatically with no code change.
+
+type RuleParam = { name: string; kind?: string; options?: string[]; [k: string]: unknown };
+type VariantParam = { name: string; required: boolean; [k: string]: unknown };
+type VariantEntry = { id: string; params: VariantParam[]; [k: string]: unknown };
+type CatalogRuleEntry = { name: string; params: RuleParam[]; variants: VariantEntry[]; [k: string]: unknown };
+
+function enrichEntry(entry: unknown): unknown {
+  const e = entry as CatalogRuleEntry;
+  const kindMap = new Map<string, string>(
+    e.params.map((p) => [p.name, p.kind ?? 'dynamic']),
+  );
+  return {
+    ...e,
+    variants: e.variants.map((v) => ({
+      ...v,
+      params: v.params.map((p) => ({ ...p, kind: kindMap.get(p.name) ?? 'dynamic' })),
+    })),
+  };
+}
+
 /**
  * Generate the encoder + decoder artifacts by running the `@`-staged generators over the
  * pinned metadata (AD-030). Pure: returns the artifacts, writes nothing.
@@ -357,8 +481,11 @@ export async function generateCodec(
   for (const name of rules) {
     const entry = catalogRules.find((r: CatalogEntry) => r.name === name);
     if (!entry) throw new Error(`codegen: rule '${name}' not in metadata catalog`);
-    encFragments[`enc__${name}`] = await runGen(engine, gEncode as unknown as Json, entry as unknown as Json);
-    const cases = (await runGen(engine, gDecode as unknown as Json, entry as unknown as Json)) as Record<string, Json>;
+    // Enrich: copy `kind` from rule-level params onto variant-level params (FR-118, AD-029).
+    // The generators branch at @-time on `kind` to decide field vs input disposition.
+    const enriched = enrichEntry(entry) as Json;
+    encFragments[`enc__${name}`] = await runGen(engine, gEncode as unknown as Json, enriched);
+    const cases = (await runGen(engine, gDecode as unknown as Json, enriched)) as Record<string, Json>;
     Object.assign(decCases, cases);
     dispatch[name] = { $: 'include', name: `enc__${name}` };
   }

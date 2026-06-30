@@ -104,8 +104,8 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-004 | Literal object | [ ] | |
 | AC-005 | Literal marker-key object | [ ] | |
 | AC-006 | All built-in rules available | [x] | all 22 rules folded into the generated codec: `test/engine-node-adapter/test/codec/catalog-coverage.test.ts` (enc__<name> fragment per rule + decode case per variant); `roundtrip.test.ts` (structural + execution identity) |
-| AC-007 | Operators available | [ ] | |
-| AC-008 | Functions available | [ ] | |
+| AC-007 | Operators available | [x] | all 28 operator tokens (14 canonical + 14 aliases) round-trip with `fields.op` verbatim: `test/engine-node-adapter/test/codec/operators.test.ts` (FR-041) |
+| AC-008 | Functions available | [x] | all 4 function names round-trip with `fields.name` verbatim: `test/engine-node-adapter/test/codec/operators.test.ts` (FR-042) |
 | AC-009 | Import supported template | [~] | `attr` + structural via the generated decoder: `test/engine-node-adapter/test/codec/decode.test.ts` (full UI import M4) |
 | AC-010 | Export generated template | [~] | generated encoder: `test/engine-node-adapter/test/codec/encode.test.ts` (full UI export M4) |
 | AC-011 | Strict semantic round-trip | [x] | full 22-rule catalog: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity for all corpus entries) |
@@ -148,8 +148,8 @@ implementing module and the test that cites the ID.
 | §7.3 Transon JSON generation | FR-019..FR-026 | [~] | encoder over `attr` + literals/array/object: `test/engine-node-adapter/test/codec/encode.test.ts` (marker key, params, omit-empty) |
 | §7.4 Import from Transon JSON | FR-027..FR-034 | [~] | decoder + unsupported placeholder: `test/engine-node-adapter/test/codec/decode.test.ts`, `encode.test.ts` (out-of-surface → `transon_unsupported`, §13.11); full surface check (§15.7) continues past M1 |
 | §7.5 Round-trip | FR-035..FR-039 | [~] | FR-035/036 full 22-rule catalog: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity for all corpus entries); FR-037..039 surface check completeness deferred |
-| §7.6 Rule coverage | FR-040..FR-044 | [~] | FR-040 all 22 rules folded in + CATALOG_RULES metadata-derived: `catalog-coverage.test.ts`; FR-041..044 (operators/functions/palette/export) partially via engine-parity `harness/scripts/check_engine_parity.py`; FR-042..044 pending UI |
-| §7.7 Rule parameters and variants | FR-045..FR-058 | [~] | FR-045 required params, FR-046 optional omission, FR-052/053/054 variant model + per-variant matching: `roundtrip.test.ts` (all corpus entries), `catalog-coverage.test.ts` (dec case per variant); FR-055 no silent rewrite: unsupported entries in corpus + `encode.test.ts`; FR-118 constant-param field-vs-input disposition (D2, pending); FR-058 constant-choice UI (M5, pending) |
+| §7.6 Rule coverage | FR-040..FR-044 | [~] | FR-040 all 22 rules folded in + CATALOG_RULES metadata-derived: `catalog-coverage.test.ts`; FR-041 all 28 operator tokens (14+14 aliases): `operators.test.ts`; FR-042 all 4 functions: `operators.test.ts`; FR-043..044 palette/export pending UI |
+| §7.7 Rule parameters and variants | FR-045..FR-058 | [~] | FR-045 required params, FR-046 optional omission, FR-052/053/054 variant model + per-variant matching: `roundtrip.test.ts` (all corpus entries), `catalog-coverage.test.ts` (dec case per variant); FR-055 no silent rewrite: unsupported entries in corpus + `encode.test.ts`; FR-047 constant-vs-dynamic distinction + FR-118 field-vs-input disposition: `operators.test.ts` (constant `op`/`name` → `fields`, dynamic params → `inputs`; encoder+decoder, all variants); FR-058 constant-choice UI (M5, pending) |
 | §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [x] | skeleton-owned `{<marker>:object,fields:X}` escape + precedence + `transon_object_literal` (FR-059/060/061/062/123): `escape.test.ts`; custom marker (FR-063) via runtime marker substitution: `marker.test.ts` |
 | §7.9 Validation | FR-064..FR-070 | [ ] | engine `Transformer.validate()` via host `EngineProvider` |
 | §7.10 Execution preview | FR-071..FR-076 | [ ] | engine `transform()` via host `EngineProvider` |
@@ -158,7 +158,7 @@ implementing module and the test that cites the ID.
 | §7.13 Import / export UX | FR-096..FR-101 | [ ] | |
 | §7.14 Component embedding | FR-102..FR-110 | [ ] | component API |
 | §7.15 Bidirectional JSON editing | FR-111..FR-113 | [ ] | strict in-surface sync (AD-024); now via the generated decoder/encoder |
-| §7.16 Template-driven projection surface | FR-114..FR-121, FR-124..FR-126 | [~] | M1 de-risk: `G_encode`/`G_decode` for `attr`, generated codec + skeleton, build-time codegen + runtime exec, regen + workspace-shape + no-mapping gates (`packages/editor-core/src/codec/`, `test/engine-node-adapter/test/codec/`). FR-121 self-hosting M5; FR-125 palette M3 |
+| §7.16 Template-driven projection surface | FR-114..FR-121, FR-124..FR-126 | [~] | Full 22-rule catalog + `G_encode`/`G_decode` projections; FR-118/FR-124 field-vs-input disposition from `kind` (D2): constant params → `fields`, dynamic params → `inputs` via entry enrichment + @-time filtering (`packages/editor-core/src/codec/codegen.ts`); `operators.test.ts`; FR-121 self-hosting M5; FR-125 palette M3 |
 
 ## Non-functional & architecture decisions
 
@@ -178,7 +178,7 @@ dedicated tests:
 | AD-026 / FR-114/115/120 / AC-034 | Editor surface = projections of metadata; new rule, no editor/projection change | projection-coverage test + codec-regeneration check | [~] `attr` arm projected from metadata; codec-regeneration byte-equal (`test/engine-node-adapter/test/codec/regen.test.ts`); AC-034 multi-rule M2 |
 | AD-027 / FR-116 | Distinct-marker staging (`@`/`$`); `include` default-marker inheritance; no `eval` | generator staging tests (`test/engine-node-adapter/test/adapter.markers.test.ts`); engine `include` marker test (engine repo) | [~] codec `@`→`$` projection + self-`include` recursion: `…/adapter.markers.test.ts`, `…/adapter.includes.test.ts`, `…/codec/regen.test.ts` |
 | AD-028 / FR-117 | Codec = skeleton + projected arms; skeleton owns invariants | codec-skeleton unit tests (recursion/ordering/marker-escape/surface) | [~] skeleton (dispatch/recursion/ordering/unsupported): `test/engine-node-adapter/test/codec/encode.test.ts`, `roundtrip.test.ts`, `ceiling.test.ts` (marker-escape M1-follow-on) |
-| AD-029 / FR-118 | `switch`/`cond` lazy dispatch in the generated codec | dispatch + lazy-branch tests (engine repo for the rules) | [ ] |
+| AD-029 / FR-118 | `switch`/`cond` lazy dispatch + field-vs-input disposition from `kind` in the generated codec | dispatch + lazy-branch tests; disposition: `operators.test.ts` (all 28 ops + 4 fns with constant param → `fields`, dynamic → `inputs`; decode reverses) | [~] disposition D2 done: `operators.test.ts`; full switch/cond lazy-branch tests (engine repo) pending |
 | AD-030 / FR-119 | Build-time codegen of committed artifacts; runtime exec via host | codec-regeneration check + host execution tests (two-pass generate-then-run proven in `test/engine-node-adapter/test/adapter.markers.test.ts`) | [~] committed artifacts + byte-equal regen + host-executed round-trip: `test/engine-node-adapter/test/codec/{regen,roundtrip}.test.ts` |
 | AD-031 / NFR-046 | Finite rule-agnostic behavior runtime; no per-rule growth | behavior-runtime size check | [ ] |
 | AD-032 / FR-124/126 | No hand-written codec↔Blockly mapping; codec emits/consumes workspace JSON directly | workspace-shape validator + encoder-loads-in-Blockly + repo-scan gates | [~] workspace-shape validator + FR-126 repo-scan: `test/engine-node-adapter/test/codec/workspace-shape.test.ts`, `harness/scripts/check_no_codec_mapping.py` (Blockly-load gate M3) |

@@ -173,6 +173,10 @@
                 },
                 {
                   "$": "object",
+                  "fields": {}
+                },
+                {
+                  "$": "object",
                   "fields": {
                     "default": {
                       "$": "cond",
@@ -347,6 +351,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "attr"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -541,19 +549,11 @@
                               },
                               {
                                 "$": "attr",
-                                "name": "inputs"
+                                "name": "fields"
                               },
                               {
                                 "$": "attr",
                                 "name": "name"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "block"
-                              },
-                              {
-                                "$": "include",
-                                "name": "dec"
                               }
                             ]
                           },
@@ -576,7 +576,7 @@
                                         },
                                         {
                                           "$": "attr",
-                                          "name": "inputs"
+                                          "name": "fields"
                                         },
                                         {
                                           "$": "map",
@@ -610,6 +610,10 @@
                       ]
                     }
                   }
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 }
               ]
             },
@@ -637,19 +641,11 @@
                               },
                               {
                                 "$": "attr",
-                                "name": "inputs"
+                                "name": "fields"
                               },
                               {
                                 "$": "attr",
                                 "name": "name"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "block"
-                              },
-                              {
-                                "$": "include",
-                                "name": "dec"
                               }
                             ]
                           },
@@ -672,7 +668,7 @@
                                         },
                                         {
                                           "$": "attr",
-                                          "name": "inputs"
+                                          "name": "fields"
                                         },
                                         {
                                           "$": "map",
@@ -704,7 +700,12 @@
                           }
                         }
                       ]
-                    },
+                    }
+                  }
+                },
+                {
+                  "$": "object",
+                  "fields": {
                     "value": {
                       "$": "cond",
                       "cases": [
@@ -814,19 +815,11 @@
                               },
                               {
                                 "$": "attr",
-                                "name": "inputs"
+                                "name": "fields"
                               },
                               {
                                 "$": "attr",
                                 "name": "name"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "block"
-                              },
-                              {
-                                "$": "include",
-                                "name": "dec"
                               }
                             ]
                           },
@@ -849,7 +842,7 @@
                                         },
                                         {
                                           "$": "attr",
-                                          "name": "inputs"
+                                          "name": "fields"
                                         },
                                         {
                                           "$": "map",
@@ -881,7 +874,12 @@
                           }
                         }
                       ]
-                    },
+                    }
+                  }
+                },
+                {
+                  "$": "object",
+                  "fields": {
                     "values": {
                       "$": "cond",
                       "cases": [
@@ -974,6 +972,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "chain"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -1070,6 +1072,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "cond"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -1264,19 +1270,11 @@
                               },
                               {
                                 "$": "attr",
-                                "name": "inputs"
+                                "name": "fields"
                               },
                               {
                                 "$": "attr",
                                 "name": "op"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "block"
-                              },
-                              {
-                                "$": "include",
-                                "name": "dec"
                               }
                             ]
                           },
@@ -1299,7 +1297,7 @@
                                         },
                                         {
                                           "$": "attr",
-                                          "name": "inputs"
+                                          "name": "fields"
                                         },
                                         {
                                           "$": "map",
@@ -1333,6 +1331,10 @@
                       ]
                     }
                   }
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 }
               ]
             },
@@ -1360,19 +1362,11 @@
                               },
                               {
                                 "$": "attr",
-                                "name": "inputs"
+                                "name": "fields"
                               },
                               {
                                 "$": "attr",
                                 "name": "op"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "block"
-                              },
-                              {
-                                "$": "include",
-                                "name": "dec"
                               }
                             ]
                           },
@@ -1395,7 +1389,7 @@
                                         },
                                         {
                                           "$": "attr",
-                                          "name": "inputs"
+                                          "name": "fields"
                                         },
                                         {
                                           "$": "map",
@@ -1427,7 +1421,12 @@
                           }
                         }
                       ]
-                    },
+                    }
+                  }
+                },
+                {
+                  "$": "object",
+                  "fields": {
                     "value": {
                       "$": "cond",
                       "cases": [
@@ -1537,19 +1536,11 @@
                               },
                               {
                                 "$": "attr",
-                                "name": "inputs"
+                                "name": "fields"
                               },
                               {
                                 "$": "attr",
                                 "name": "op"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "block"
-                              },
-                              {
-                                "$": "include",
-                                "name": "dec"
                               }
                             ]
                           },
@@ -1572,7 +1563,7 @@
                                         },
                                         {
                                           "$": "attr",
-                                          "name": "inputs"
+                                          "name": "fields"
                                         },
                                         {
                                           "$": "map",
@@ -1604,7 +1595,12 @@
                           }
                         }
                       ]
-                    },
+                    }
+                  }
+                },
+                {
+                  "$": "object",
+                  "fields": {
                     "values": {
                       "$": "cond",
                       "cases": [
@@ -1697,6 +1693,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "file"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -1877,6 +1877,10 @@
                 },
                 {
                   "$": "object",
+                  "fields": {}
+                },
+                {
+                  "$": "object",
                   "fields": {
                     "cond": {
                       "$": "cond",
@@ -1970,6 +1974,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "format"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -2231,6 +2239,10 @@
                 },
                 {
                   "$": "object",
+                  "fields": {}
+                },
+                {
+                  "$": "object",
                   "fields": {
                     "default": {
                       "$": "cond",
@@ -2405,6 +2417,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "include"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -2586,6 +2602,10 @@
                 {
                   "$": "object",
                   "fields": {}
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 }
               ]
             },
@@ -2600,6 +2620,10 @@
                 {
                   "$": "object",
                   "fields": {}
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 }
               ]
             },
@@ -2610,6 +2634,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "join"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -2872,6 +2900,10 @@
                 {
                   "$": "object",
                   "fields": {}
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 }
               ]
             },
@@ -2882,6 +2914,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "map"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -2981,6 +3017,10 @@
                 },
                 {
                   "$": "object",
+                  "fields": {}
+                },
+                {
+                  "$": "object",
                   "fields": {
                     "items": {
                       "$": "cond",
@@ -3074,6 +3114,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "map"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -3254,6 +3298,10 @@
                 },
                 {
                   "$": "object",
+                  "fields": {}
+                },
+                {
+                  "$": "object",
                   "fields": {
                     "fields": {
                       "$": "cond",
@@ -3347,6 +3395,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "object"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -3528,6 +3580,10 @@
                 {
                   "$": "object",
                   "fields": {}
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 }
               ]
             },
@@ -3538,6 +3594,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "set"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -3634,6 +3694,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "switch"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
@@ -3896,6 +3960,10 @@
                 {
                   "$": "object",
                   "fields": {}
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 }
               ]
             },
@@ -3910,6 +3978,10 @@
                 {
                   "$": "object",
                   "fields": {}
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 }
               ]
             },
@@ -3920,6 +3992,10 @@
                   "$": "object",
                   "key": "transon::document-marker",
                   "value": "zip"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
                 },
                 {
                   "$": "object",
