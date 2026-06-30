@@ -98,7 +98,7 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 
 | AC | Summary | Status | Test reference |
 |----|---------|:------:|----------------|
-| AC-001 | Visual editor loads (sandbox panels) | [ ] | |
+| AC-001 | Visual editor loads (sandbox panels) | [x] | sandbox renders canvas + generated-JSON + input + output + toolbar + status: `packages/editor-ui/test/sandbox.test.tsx` |
 | AC-002 | Simple `attr` rule template | [ ] | |
 | AC-003 | Nested template | [ ] | |
 | AC-004 | Literal object | [ ] | |
@@ -128,13 +128,14 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-028 | Metadata-driven generic block (gated on metadata-contract §3) | [x] | a synthetic rule's blocks (constant field + dynamic input, 2 variants) are projected from metadata alone via the committed generators: `test/engine-node-adapter/test/codec/projection-coverage.test.ts` |
 | AC-029 | Block variants for mutually exclusive parameters | [x] | per-variant blocks for every multi-variant rule (`attr`/`object`/`map`/`expr`/`call`): `catalog-coverage.test.ts`, `roundtrip.test.ts`; mutually-exclusive groups present together → `transon_unsupported`: `unsupported-variants.test.ts` |
 | AC-030 | Variant import matching | [x] | exact per-variant match; ambiguous/partial/foreign → `transon_unsupported` with exact preservation (§15.6): `test/engine-node-adapter/test/codec/unsupported-variants.test.ts` |
-| AC-031 | Sandbox mode | [ ] | |
-| AC-032 | Compact editor mode | [ ] | |
+| AC-031 | Sandbox mode | [x] | §12.1 panel set present: `packages/editor-ui/test/sandbox.test.tsx` |
+| AC-032 | Compact editor mode | [x] | canvas + palette + Visual\|JSON\|Split switch, no required input/output panels: `packages/editor-ui/test/compact.test.tsx` |
 | AC-033 | Bidirectional JSON editing (strict in-surface) | [ ] | |
 | AC-034 | Projection coverage: new rule across all surfaces, no editor/projection change | [x] | `generateCodec` projects a synthetic rule via the committed generators + skeleton with a catalog override only (zero projection-file edit); it encodes/decodes/round-trips + field-vs-input disposition: `test/engine-node-adapter/test/codec/projection-coverage.test.ts` (the default codec excludes it — committed artifacts unaffected) |
 | AC-035 | Round-trip by construction (generated encoder/decoder, per rule) | [x] | full 22-rule catalog (encoder+decoder from one metadata source; structural + execution identity): `test/engine-node-adapter/test/codec/roundtrip.test.ts`; `catalog-coverage.test.ts` asserts enc + dec arms for all rules/variants |
 | AC-036 | Self-hosting projection template loads + round-trips | [~] | M3: `G_palette`/`G_toolbox` in-surface round-trip (`ac036-selfhosting.test.ts`); full editor self-hosting demo M5 |
 | AC-037 | Presentation (title/category/advanced/colour) from data, not TypeScript; synthetic-rule projection test | [x] | synthetic `greet` rule → palette block + toolbox category from presentation data, runtime untouched (NFR-046): `test/engine-node-adapter/test/codec/ac037-presentation.test.ts` |
+| AC-038 | On-canvas structural mutators (array items / object key-value fields) | [x] | mutator mechanics + editable scalar field (FR-015): `packages/editor-blockly/test/mutator.test.ts`; round-trips identically to JSON-authored (real engine): `test/engine-node-adapter/test/ui/mutator-roundtrip.test.ts`; rule-agnostic (NFR-046, 4 fixed primitives): `check_behavior_runtime_size.py` |
 
 ## Functional requirement coverage (§7)
 
@@ -143,8 +144,8 @@ implementing module and the test that cites the ID.
 
 | Subsection | Requirement IDs | Status | Notes |
 |------------|-----------------|:------:|-------|
-| §7.1 Editor shell and modes | FR-001..FR-011 | [~] | M4 D1: the framework-agnostic `EditorSession` store (§9.3 shape + forward projection + engine-gating) landed — `packages/editor-ui/test/{store,forward,no-engine,engine-status}.test.ts`; sandbox/compact modes, panels, embedding callbacks (the actual shell) are D2/D6 |
-| §7.2 Blockly workspace | FR-012..FR-018 | [~] | FR-012/013/014/015 templates/nesting/literals as projected Zelos blocks that load + connect headlessly: `packages/editor-blockly/test/palette-load.test.ts`, `test/engine-node-adapter/test/codec/blockly-load.test.ts`; FR-016 rule-vs-literal block distinction: `palette.test.ts`; FR-017 comments + FR-018 no-raw-edit are interactive-UI (M4) |
+| §7.1 Editor shell and modes | FR-001..FR-011 | [~] | M4 D1 store + D2 shell: sandbox (§12.1) + compact (§12.2) React modes over the EditorController (mount + forward + status), Visual\|JSON\|Split view switch, New/Validate/Run/Toggle toolbar — `packages/editor-ui/test/{sandbox,compact,toolbar,mount}.test.tsx`, `{store,forward,no-engine,engine-status}.test.ts`; FR-011 onChange/onValidate/onExecute wired in the controller; full embedding API (FR-102..110) is M5 |
+| §7.2 Blockly workspace | FR-012..FR-018 | [~] | FR-012/013/014 templates/nesting/literals as projected Zelos blocks that load + connect headlessly: `packages/editor-blockly/test/palette-load.test.ts`, `test/engine-node-adapter/test/codec/blockly-load.test.ts`; **FR-015 editable scalar literal** (typed JSON, fidelity-preserving) + on-canvas array/object add-remove (AC-038, §13.13): `packages/editor-blockly/test/mutator.test.ts`; interactive Zelos mount (AD-017/018): `packages/editor-ui/test/mount.test.tsx`; FR-016 rule-vs-literal distinction: `palette.test.ts`; FR-017 comments + FR-018 no-raw-edit M5 |
 | §7.3 Transon JSON generation | FR-019..FR-026 | [~] | encoder over `attr` + literals/array/object: `test/engine-node-adapter/test/codec/encode.test.ts` (marker key, params, omit-empty); M4 D1 forward flow (workspace→JSON via `decode`, gated on engine-ready §10.4): `test/engine-node-adapter/test/ui/forward.test.ts` (real engine: generation == document, block map populated), `packages/editor-ui/test/forward.test.ts` (gating/wiring) |
 | §7.4 Import from Transon JSON | FR-027..FR-034 | [~] | decoder + unsupported placeholder: `test/engine-node-adapter/test/codec/decode.test.ts`, `encode.test.ts` (out-of-surface → `transon_unsupported`, §13.11); full surface check (§15.7) continues past M1 |
 | §7.5 Round-trip | FR-035..FR-039 | [~] | FR-035/036 full 22-rule catalog: `roundtrip.test.ts` (structural + execution identity); **FR-039** automated round-trip tests across all built-in rules: `roundtrip.test.ts` + `examples-corpus.test.ts` (147 engine examples) + `catalog-coverage.test.ts`; **FR-037** (§11.5 UI-only attributes) + **FR-038** (clear report when strict round-trip not guaranteed) are UI-surfacing → M4 |

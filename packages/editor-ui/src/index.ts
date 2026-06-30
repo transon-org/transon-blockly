@@ -29,3 +29,19 @@ export type { ErrorCode, EditorError } from './session/errors.js';
 export { engineRuntimeStatus, isEngineReady, applyEngineStatus } from './session/engine-status.js';
 export { runForward, applyForward, isEmptyWorkspace, topBlock, debounce } from './session/forward.js';
 export type { ForwardResult } from './session/forward.js';
+export { validateTemplate } from './session/validate.js';
+export { executeTemplate } from './session/execute.js';
+export type { ExecuteOptions } from './session/execute.js';
+
+// ---- host boundary + controller (D2) ----
+export type { TransonEditorHost, ExampleCase } from './session/host.js';
+export { createEditorController } from './session/controller.js';
+export type { EditorController, EditorControllerOptions } from './session/controller.js';
+
+// ---- interactive Blockly mount (D2) ----
+export { mountBlockly, ensureBlocklyReady, TRANSON_ROOT_CLASS } from './blockly/mount.js';
+export type { TransonMount, TransonMountOptions } from './blockly/mount.js';
+
+// ---- React shell (D2) ----
+export { TransonEditor } from './components/TransonEditor.js';
+export type { TransonEditorProps } from './components/TransonEditor.js';

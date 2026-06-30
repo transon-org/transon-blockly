@@ -28,6 +28,30 @@ polyfill(elemProto, 'getBoundingClientRect', () => ({
   x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, toJSON: () => ({}),
 }));
 
+// jsdom defines getContext only to warn "Not implemented" and return null; Blockly uses canvas 2d
+// for text-width measurement. Force-override (not the guarded polyfill) with a minimal context so it
+// neither warns nor falls back to a zero width that distorts layout.
+if (typeof HTMLCanvasElement !== 'undefined') {
+  Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+    configurable: true,
+    writable: true,
+    value: () => ({
+      measureText: (text: string) => ({ width: String(text).length * 8 }),
+      fillText: () => {},
+      font: '',
+      save: () => {},
+      restore: () => {},
+      scale: () => {},
+      clearRect: () => {},
+      fillRect: () => {},
+      beginPath: () => {},
+      moveTo: () => {},
+      lineTo: () => {},
+      stroke: () => {},
+    }),
+  });
+}
+
 if (typeof globalThis.matchMedia !== 'function') {
   Object.defineProperty(globalThis, 'matchMedia', {
     configurable: true,
