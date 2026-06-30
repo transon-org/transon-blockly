@@ -12,13 +12,24 @@ export type ReverseOutcome =
   | { status: 'accepted'; block: Json; document: Json }
   | { status: 'rejected'; error: EditorError };
 
-/** The out-of-surface placeholder block type (§13.11), sourced from the vocabulary (single source).
- *  It appears only as a `"type"` value, so a string check detects it without walking `.inputs`/
- *  `.fields` (FR-126/AD-032, no-codec-mapping). */
+/** The out-of-surface placeholder block type (§13.11), sourced from the vocabulary (single source). */
 const UNSUPPORTED = STRUCTURAL_BLOCK_TYPES.find((t) => t.includes('unsupported')) ?? 'transon_unsupported';
 
-function containsUnsupported(block: Json): boolean {
-  return JSON.stringify(block).includes(`"${UNSUPPORTED}"`);
+/**
+ * Does the encoded workspace contain a `transon_unsupported` placeholder (out-of-surface, §15.7)?
+ * We must check the placeholder in BLOCK-TYPE position only — a naive substring scan false-positives
+ * when the document *data* happens to contain the string `transon_unsupported` (as a literal value,
+ * object key, or param), wrongly rejecting a valid in-surface edit (FR-111). So walk structurally
+ * and test each node's `type`. This reads only `.type` (not `.inputs`/`.fields`/`.extraState`) and
+ * recurses via `Object.values`, so it is not a codec↔workspace mapping (FR-126/AD-032).
+ */
+function containsUnsupported(node: Json): boolean {
+  if (Array.isArray(node)) return node.some(containsUnsupported);
+  if (node !== null && typeof node === 'object') {
+    if ((node as { type?: unknown }).type === UNSUPPORTED) return true;
+    return Object.values(node).some(containsUnsupported);
+  }
+  return false;
 }
 
 /**

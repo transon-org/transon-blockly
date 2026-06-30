@@ -45,4 +45,21 @@ describe('tryReverse (§7.15, AD-024)', () => {
     expect(out.status).toBe('rejected');
     if (out.status === 'rejected') expect(out.error.code).toBe('import_unsupported');
   });
+
+  // Regression (round-trip-reviewer): the surface check must test `transon_unsupported` in
+  // BLOCK-TYPE position only — an in-surface document whose DATA contains that string (literal
+  // value, object key, or param) must still be accepted (FR-111), not false-rejected.
+  it('accepts in-surface documents that contain the string "transon_unsupported" as data', async () => {
+    const docs = [
+      'transon_unsupported', // scalar literal
+      { transon_unsupported: 1 }, // object key
+      { $: 'attr', name: 'transon_unsupported' }, // rule param value
+      [{ a: 'transon_unsupported' }, 'transon_unsupported'], // nested
+    ];
+    for (const doc of docs) {
+      const out = await tryReverse(engine, JSON.stringify(doc), '$');
+      expect(out.status, JSON.stringify(doc)).toBe('accepted');
+      if (out.status === 'accepted') expect(out.document).toEqual(doc);
+    }
+  });
 });

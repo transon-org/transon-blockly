@@ -50,7 +50,10 @@ function walk(block: Blockly.Block, path: string, index: Map<string, Blockly.Blo
       if (child) walk(child, `${path}/${i}`, index);
     }
   } else if (type.startsWith('transon_rule_')) {
-    // rule params are inputs named by the param (FR-124); recurse each connected one
+    // rule params are inputs named by the param (FR-124); recurse each connected one. (NB: for the
+    // §11.4 escape `{<marker>:object, fields:X}` the block_map labels the path rule_name "object"
+    // while the workspace block is transon_object_literal — a benign type-label divergence;
+    // reachability is by PATH, not type, so highlighting still resolves correctly.)
     for (const input of block.inputList) {
       if (!input.name) continue;
       const child = block.getInputTargetBlock(input.name);
