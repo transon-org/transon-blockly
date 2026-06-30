@@ -15,6 +15,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { EngineProvider } from '@transon/editor-core';
 import {
   generateCodec,
+  generateToolbox,
   serializeArtifact,
   stableStringify,
   GENERATOR_SOURCES,
@@ -40,6 +41,8 @@ beforeAll(async () => {
     writeFileSync(join(ARTIFACTS, 'encoder.json'), serializeArtifact(encoder));
     writeFileSync(join(ARTIFACTS, 'decoder.json'), serializeArtifact(decoder));
     writeFileSync(join(ARTIFACTS, 'blockmap.json'), serializeArtifact(blockmap));
+    // Toolbox is static JSON (loaded, not executed) — serialized with the same stable stringify.
+    writeFileSync(join(ARTIFACTS, 'toolbox.json'), stableStringify(await generateToolbox(engine)));
   }
 });
 afterAll(() => engine?.dispose());
@@ -66,5 +69,10 @@ describe('codec regeneration is byte-equal to committed artifacts (FR-119, AD-03
   it('blockmap.json matches a fresh build', async () => {
     const { blockmap } = await generateCodec(engine);
     expect(serializeArtifact(blockmap)).toBe(readFileSync(join(ARTIFACTS, 'blockmap.json'), 'utf8'));
+  });
+
+  it('toolbox.json matches a fresh G_toolbox run (FR-044, FR-119)', async () => {
+    const toolbox = await generateToolbox(engine);
+    expect(stableStringify(toolbox)).toBe(readFileSync(join(ARTIFACTS, 'toolbox.json'), 'utf8'));
   });
 });

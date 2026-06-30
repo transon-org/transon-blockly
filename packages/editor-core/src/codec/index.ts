@@ -18,6 +18,7 @@ export type {
 // committed artifacts + generator sources via a host engine; not used by the runtime path.
 export {
   generateCodec,
+  generateToolbox,
   serializeArtifact,
   stableStringify,
   GENERATOR_SOURCES,

@@ -23,6 +23,13 @@ export interface Presentation {
   categoryOrder: string[];
   /** Category → Zelos colour (hue 0–360 or hex). Single source for palette + toolbox (NFR-048). */
   categoryColour: Record<string, number | string>;
+  /**
+   * Structural (non-rule) block types per toolbox category (§12.4): the scalar literal block in
+   * "Literals", the array/object-literal blocks in "Objects / Arrays". Editor-owned placement —
+   * keeps the category names out of TypeScript (FR-127). `transon_unsupported` is intentionally
+   * absent: it is an import-only placeholder (§13.11), never a palette entry.
+   */
+  structuralBlocks: Record<string, string[]>;
   /** Per-rule title/category/advanced, keyed by rule name. Completeness-gated (FR-127). */
   rules: Record<string, RulePresentation>;
 }
@@ -33,5 +40,6 @@ const raw = presentation as unknown as Presentation & { $doc?: string };
 export const PRESENTATION: Presentation = {
   categoryOrder: raw.categoryOrder,
   categoryColour: raw.categoryColour,
+  structuralBlocks: raw.structuralBlocks,
   rules: raw.rules,
 };

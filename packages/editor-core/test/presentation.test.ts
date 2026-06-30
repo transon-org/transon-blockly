@@ -61,6 +61,13 @@ describe('presentation projection-data (FR-127, NFR-048, §2.9)', () => {
     }
   });
 
+  it('structuralBlocks categories are declared, and never list transon_unsupported (§13.11)', () => {
+    for (const [cat, types] of Object.entries(PRESENTATION.structuralBlocks)) {
+      expect(PRESENTATION.categoryOrder, `structuralBlocks category '${cat}'`).toContain(cat);
+      expect(types, `structuralBlocks['${cat}']`).not.toContain('transon_unsupported');
+    }
+  });
+
   it('the §12.6 advanced set is flagged advanced', () => {
     // SPEC §12.6: set, get, parent, zip, file, include are advanced (progressive disclosure).
     for (const name of ['set', 'get', 'parent', 'zip', 'file', 'include']) {

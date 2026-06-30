@@ -16,10 +16,12 @@
 import type { EngineProvider, Json } from '../engine/ports.js';
 import { editorMetadata, type CatalogEntry } from '../metadata/snapshot.js';
 import { DOC_MARKER_PLACEHOLDER } from './vocabulary.js';
+import { PRESENTATION, type Presentation } from './presentation.js';
 // The committed @-staged generators (the projection-as-data). generateCodec runs THESE; the
 // typed builders below are the editable authoring source, held byte-equal by the regen gate.
 import gEncode from './generators/G_encode.json' with { type: 'json' };
 import gDecode from './generators/G_decode.json' with { type: 'json' };
+import gToolbox from './generators/G_toolbox.json' with { type: 'json' };
 
 /** The marker the `@`-staged generators run under (AD-027). */
 const META_MARKER = '@';
@@ -439,6 +441,42 @@ const BLOCKMAP_ENCODER: Json = { $: 'chain', funcs: [
     },
     default: mNode(null, []) } ] };
 
+// ---- G_toolbox: project the Blockly toolbox/category structure (FR-044, FR-114, §12.4, AD-026) ----
+//
+// Unlike the codec generators (which emit a `$`-runtime codec), `G_toolbox` produces a STATIC
+// artifact (the toolbox JSON the editor loads — it does not execute over user data). So it runs
+// single-stage under the meta marker `@`: every `@`-dict evaluates and the output is literal
+// Blockly `categoryToolbox` JSON.
+//
+// Input (`this`), assembled by `generateToolbox` from the committed presentation data + catalog
+// (no category-name literals in TS — categories/order/colour come from presentation.json):
+//   { categories: [ { name, colour, blocks: [{rule, variant}], structuralBlockTypes: [string] } ] }
+// The template derives the `transon_rule_<rule>__<variant>` block-type name in-projection (the
+// same naming the encoder emits, FR-124), so the block-type vocabulary has one authored source.
+const tbAt = (name: string): Json => ({ '@': 'attr', name });
+// one palette block entry for a rule variant; `this` = { rule, variant }.
+const TB_RULE_BLOCK: Json = {
+  kind: 'block',
+  type: { '@': 'join', sep: '', items: ['transon_rule_', tbAt('rule'), '__', tbAt('variant')] },
+};
+// one palette block entry for a structural block; `this` = the block-type string.
+const TB_STRUCTURAL_BLOCK: Json = { kind: 'block', type: { '@': 'this' } };
+// a category node; `this` = a category. `contents` concatenates the rule-variant blocks and the
+// structural blocks (both flat lists) via `@:join sep:''`.
+const TB_CATEGORY: Json = {
+  kind: 'category',
+  name: tbAt('name'),
+  colour: tbAt('colour'),
+  contents: { '@': 'join', sep: '', items: [
+    { '@': 'chain', funcs: [tbAt('blocks'), { '@': 'map', item: TB_RULE_BLOCK }] },
+    { '@': 'chain', funcs: [tbAt('structuralBlockTypes'), { '@': 'map', item: TB_STRUCTURAL_BLOCK }] },
+  ] },
+};
+const G_TOOLBOX: Json = {
+  kind: 'categoryToolbox',
+  contents: { '@': 'chain', funcs: [tbAt('categories'), { '@': 'map', item: TB_CATEGORY }] },
+};
+
 /**
  * Full catalog of rules derived from engine metadata (FR-040, AC-006, AC-034).
  * Derived from `editorMetadata.catalog.rules` at module load time so a future engine
@@ -460,10 +498,15 @@ export const M1_RULES = CATALOG_RULES;
 // authoring source; `generateCodec` runs the committed JSON copies, and the regen gate keeps
 // the two byte-equal (AD-030). The rule-agnostic skeleton stays in this driver — it has the
 // driver-injected dispatch/case holes and does not vary per rule (AD-028).
-export const GENERATOR_FILES = { encode: 'G_encode.json', decode: 'G_decode.json' } as const;
+export const GENERATOR_FILES = {
+  encode: 'G_encode.json',
+  decode: 'G_decode.json',
+  toolbox: 'G_toolbox.json',
+} as const;
 export const GENERATOR_SOURCES: Record<string, Json> = {
   [GENERATOR_FILES.encode]: G_RULE_ENCODE,
   [GENERATOR_FILES.decode]: G_RULE_DECODE_CASES,
+  [GENERATOR_FILES.toolbox]: G_TOOLBOX,
 };
 
 /** The committed codec bundle shape: a self-`include`-able fragment map plus an entry name. */
@@ -544,6 +587,42 @@ export async function generateCodec(
   // The block-map encoder is rule-agnostic (no per-rule projection), so it is a fixed artifact.
   const blockmap: CodecArtifact = { entry: 'mapenc', fragments: { mapenc: BLOCKMAP_ENCODER } };
   return { encoder, decoder, blockmap };
+}
+
+/**
+ * Generate the Blockly toolbox artifact by running the committed `G_toolbox` projection over the
+ * pinned metadata + presentation data (FR-044, FR-114, AD-026, AD-030). The output is a static
+ * `categoryToolbox` JSON the editor loads (it does not execute at runtime). Pure: returns the
+ * toolbox JSON, writes nothing.
+ *
+ * The `catalog`/`presentation` overrides exist so the AC-037 synthetic-rule proof can project a
+ * new rule into the toolbox with zero projection-template change (presentation from data, not
+ * code). The committed artifact is always generated from the defaults.
+ */
+export async function generateToolbox(
+  engine: EngineProvider,
+  rules: string[] = CATALOG_RULES,
+  catalog: CatalogEntry[] = editorMetadata.catalog.rules,
+  presentation: Presentation = PRESENTATION,
+): Promise<Json> {
+  // Group each rule's variants under its presentation category. The category comes from the
+  // committed presentation data (never a TS literal — FR-127), so a new rule with a presentation
+  // entry folds into its category with no code change (AC-037).
+  const blocksByCategory: Record<string, Array<{ rule: string; variant: string }>> = {};
+  for (const name of rules) {
+    const entry = catalog.find((r) => r.name === name) as CatalogRuleEntry | undefined;
+    if (!entry) throw new Error(`toolbox: rule '${name}' not in metadata catalog`);
+    const cat = presentation.rules[name]?.category;
+    if (!cat) throw new Error(`toolbox: rule '${name}' has no presentation category`);
+    (blocksByCategory[cat] ??= []).push(...entry.variants.map((v) => ({ rule: name, variant: v.id })));
+  }
+  const categories = presentation.categoryOrder.map((name) => ({
+    name,
+    colour: presentation.categoryColour[name] ?? 0,
+    blocks: blocksByCategory[name] ?? [],
+    structuralBlockTypes: presentation.structuralBlocks[name] ?? [],
+  }));
+  return runGen(engine, gToolbox as unknown as Json, { categories } as unknown as Json);
 }
 
 /**

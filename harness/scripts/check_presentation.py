@@ -53,13 +53,24 @@ def _quoted_category_re(categories: List[str]) -> "re.Pattern[str]":
     return re.compile(rf"""(?P<q>['"])(?:{alt})(?P=q)""")
 
 
+_BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
+
+
+def _strip_comments(text: str) -> str:
+    """Remove TS comments, preserving line numbers. A category name in a comment is prose, not a
+    hardcoded enumeration — the FR-127 ban is on category literals in *code*."""
+    text = _BLOCK_COMMENT.sub(lambda m: "\n" * m.group(0).count("\n"), text)  # keep line count
+    return "\n".join(re.sub(r"//.*", "", line) for line in text.splitlines())
+
+
 def scan(root: Path, categories: List[str]) -> List[str]:
-    """Flag every `.ts`/`.tsx` file under `<root>/packages/*/src` that quotes a category name."""
+    """Flag every `.ts`/`.tsx` file under `<root>/packages/*/src` that quotes a category name in
+    code (comments are stripped first)."""
     pattern = _quoted_category_re(categories)
     problems: List[str] = []
     for pkg_src in sorted(root.glob("packages/*/src")):
         for path in sorted(pkg_src.rglob("*.ts")) + sorted(pkg_src.rglob("*.tsx")):
-            text = path.read_text(encoding="utf-8")
+            text = _strip_comments(path.read_text(encoding="utf-8"))
             for lineno, line in enumerate(text.splitlines(), 1):
                 if pattern.search(line):
                     rel = path.relative_to(root)
@@ -93,6 +104,10 @@ def completeness(presentation: dict, rule_names: List[str]) -> List[str]:
         problems.append(f"category '{cat}' in categoryOrder has no colour (NFR-048)")
     for cat in colour_set - order_set:
         problems.append(f"category '{cat}' has a colour but is not in categoryOrder (NFR-048)")
+
+    structural: Dict[str, object] = presentation.get("structuralBlocks", {})
+    for cat in set(structural) - order_set:
+        problems.append(f"structuralBlocks category '{cat}' is not in categoryOrder (FR-127)")
     return problems
 
 
@@ -113,9 +128,15 @@ def _selftest() -> int:
         src.mkdir(parents=True)
         (src / "clean.ts").write_text("export const x = 'Get attribute';\n", encoding="utf-8")
         (src / "bad.ts").write_text('const cats = ["Iteration", "Custom"];\n', encoding="utf-8")
+        # A category name in a comment is prose, not a hardcoded enumeration — must NOT flag.
+        (src / "comment.ts").write_text(
+            '// the "Iteration" category groups map/filter\n/* "Custom" rules live here */\nexport const y = 1;\n',
+            encoding="utf-8",
+        )
         problems = scan(root, cats)
         assert any("bad.ts" in p for p in problems), f"scan missed the violation: {problems}"
         assert not any("clean.ts" in p for p in problems), f"scan false-positived clean.ts: {problems}"
+        assert not any("comment.ts" in p for p in problems), f"scan false-positived a comment: {problems}"
     # (2) completeness catches a missing rule + an uncoloured ordered category
     pres = {
         "categoryOrder": ["Iteration", "Custom"],
