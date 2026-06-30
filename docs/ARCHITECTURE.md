@@ -694,12 +694,14 @@ CI uses the Node→Python adapter (`test/engine-node-adapter`, AD-011) rather th
 ## 6. Cross-cutting concerns
 
 - **State / Blockly↔React** (AD-003): primarily one-way. Blockly owns the canvas; React subscribes
-  to change events → debounced **encoder run** (host engine, §5.2) → derives `{json, validation,
-  execution}` into the `EditorSession` store (`SPEC.md` §9.3). React→Blockly is reserved for explicit
-  commands (New / Import / Load Example) **and** for accepted bidirectional JSON edits (AD-024): a
-  debounced **decoder run** whose output passes the surface check projects back into Blockly; a
-  failed parse/out-of-surface result leaves the workspace untouched and marks the JSON out of sync
-  (`SPEC.md` §7.15, FR-111…FR-113).
+  to change events → debounced **decoder run** (workspace → Transon JSON, host engine, §5.2; the
+  decoder is the workspace→document direction per §5.4) → derives `{json, validation, execution}`
+  into the `EditorSession` store (`SPEC.md` §9.3). React→Blockly is reserved for explicit commands
+  (New / Import / Load Example) **and** for accepted bidirectional JSON edits (AD-024): a debounced
+  **encoder run** (document → workspace) whose output passes the surface check projects back into
+  Blockly; a failed parse/out-of-surface result leaves the workspace untouched and marks the JSON out
+  of sync (`SPEC.md` §7.15, FR-111…FR-113). *(Naming: `encode` = document→workspace, `decode` =
+  workspace→document, matching §5.2/§5.4 and `editor-core`'s `run.ts`.)*
 - **Error mapping** (`SPEC.md` FR-091..095, §16.4): the `JsonPathBlockMap` is produced by the codec
   skeleton as it walks (§5.4); the UI highlights the mapped or nearest-parent block.
 - **Theming / encapsulation** (AD-017, AD-018): Zelos default, light DOM + scoped CSS.
@@ -715,7 +717,7 @@ All engine calls go through the host-provided `EngineProvider` (§5.2); the edit
 
 ```mermaid
 flowchart TD
-    A[user edits Blockly workspace] --> B[run generated encoder on workspace -> Transon JSON]
+    A[user edits Blockly workspace] --> B[run generated decoder on workspace -> Transon JSON]
     B --> C{generation complete?}
     C -->|no| C1["show incomplete state, skip validate (SPEC 17.5)"]
     C -->|yes| D["host engine validate()"]

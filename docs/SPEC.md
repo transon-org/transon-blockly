@@ -886,8 +886,17 @@ single boundary. The interface (`TransonEditorHost`, `EngineProvider`) is define
 - the editor passes the generated template, sample input, marker, and an include resolver to the
   host engine, and consumes `ValidationResult` / `ExecutionResult` (the latter including
   captured `file` writes);
-- without a host engine, validation/execution are disabled while authoring, generation, and
-  import/export remain fully available;
+- the **visual ⇄ JSON projection runs the generated codec through the host engine** (AD-026,
+  AD-030): generating Transon JSON from the workspace (the decoder, §5.4), syncing edited/imported
+  JSON back into blocks (the encoder, §7.15), and producing the `JsonPathBlockMap` (§9.12) are all
+  engine-backed. Therefore, without a host engine — or before it reaches `ready` — these are
+  unavailable along with validation and execution; what remains is block **authoring** (placing and
+  connecting blocks on the canvas) and **raw JSON text** handling (copying or downloading already
+  generated text, and typing into the JSON panel without sync). The editor surfaces the engine
+  runtime status (idle/loading/ready/failed, NFR-028, AC-023) so the gated actions are explained
+  rather than silently inert. *(Earlier drafts described the superseded hand-written-codec model
+  (AD-014/AD-016), in which generation/import were engine-free; under the projection model they are
+  not.)*
 - the host engine is the authoritative validator/executor (NFR-004); the editor must not report
   validity the host did not confirm.
 
@@ -1124,12 +1133,26 @@ the codec-skeleton-owned escape (§11.4) rather than the `object` rule's `fields
 
 ### 13.8 Array Blocks
 
-Array blocks support a dynamic number of items; each item is a template.
+Array blocks support a dynamic number of items; each item is a template. Items may be added and
+removed **on the canvas** through the finite, rule-agnostic behavior runtime's mutator UI (§13.13,
+AD-031, NFR-046) — not only by editing the JSON (§7.15).
 
 ### 13.9 Object Blocks
 
 Object blocks support a dynamic number of fields (literal key, template value). If the object
-contains the marker key, the editor must use or recommend the `object` rule escape (§11.4).
+contains the marker key, the editor must use or recommend the `object` rule escape (§11.4). Fields
+may be added and removed on the canvas through the behavior-runtime mutator UI (§13.13).
+
+### 13.13 Structural Mutators (on-canvas add/remove)
+
+The structural blocks that hold a variable number of children — `transon_array` (items) and
+`transon_object_literal` (key/value fields) — expose an on-canvas **add/remove** affordance
+(Blockly mutator) so users can grow and shrink them visually, without dropping to the JSON panel.
+This affordance lives in the finite, **rule-agnostic** behavior runtime (AD-031) and is keyed to the
+structural vocabulary, never to a rule name, so it does **not** grow per rule (NFR-046). The
+mutator only changes how many item/field inputs a block exposes; it adds no semantics and is the
+visual counterpart of the workspace shape the codec already serializes (FR-124, FR-126) — so a block
+edited via the mutator round-trips identically to the same block authored via JSON (AC-038).
 
 ### 13.10 Projected Rule Block
 
@@ -1477,9 +1500,11 @@ possible, and preserve previous successful output but mark it stale.
 ### 17.9 Engine Runtime Failure
 
 If the host-provided engine runtime (§10.4) fails to load or initialize: show the runtime
-initialization error reported by the host; keep visual editing, JSON generation, and
-import/export available; disable validation/execution actions; and suggest retrying
-initialization where the host supports it.
+initialization error reported by the host; keep block **authoring** (canvas editing) and raw JSON
+**text** handling (copy/download, and typing into the JSON panel) available; because the
+visual ⇄ JSON projection runs the codec through the engine (AD-026, AD-030), JSON
+generation/import-sync are unavailable along with validation/execution until the runtime recovers;
+and suggest retrying initialization where the host supports it.
 
 ### 17.10 Include Resolution Failure
 
@@ -1645,6 +1670,10 @@ Version 1 is acceptable when all criteria below are met.
   from metadata or projection-template data (not TypeScript), and the rule appears in palette +
   toolbox with no editor code change (strengthens AC-034), demonstrated by a synthetic-rule
   projection test driving presentation from the data source (§7.11, FR-127, NFR-048).
+- **AC-038 — On-canvas structural mutators.** A user can add and remove items of a `transon_array`
+  block and key/value fields of a `transon_object_literal` block directly on the canvas via the
+  behavior-runtime mutator UI (§13.13); the result round-trips identically to the same structure
+  authored via the JSON panel (AD-031, NFR-046, FR-124/126).
 
 ---
 

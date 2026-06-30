@@ -319,18 +319,25 @@ and the projection codecs across the boundary.
 - Scope: **FR-001 … FR-011** (shell + modes), **FR-064 … FR-076** (validation/execution via the
   host), **FR-091 … FR-095** (error highlighting UI), **FR-005** + **FR-111 … FR-113**
   (bidirectional JSON editing, now via the generated decoder/encoder), **§10.4** (host boundary);
-  **AC-001**, **AC-012 … AC-017**, **AC-023 … AC-025**, **AC-031**, **AC-032**, **AC-033**;
-  **NFR-028**, **AD-019**, **AD-020**, **AD-024**, **AD-025**, **AD-030**.
+  **AC-001**, **AC-012 … AC-017**, **AC-023 … AC-025**, **AC-031**, **AC-032**, **AC-033**, **AC-038**
+  (on-canvas structural mutators, §13.13); **NFR-028**, **NFR-046** (mutator stays rule-agnostic),
+  **AD-019**, **AD-020**, **AD-024**, **AD-025**, **AD-030**, **AD-031**.
 - Deliverables: panels + sandbox/compact modes + `EditorSession` store (`ARCHITECTURE.md` §6);
-  error→block highlighting from the skeleton-produced `JsonPathBlockMap`; strict bidirectional JSON
-  editing (valid in-surface edit syncs back via the decoder; otherwise error + workspace unchanged —
-  AD-024, §7.15); `createTransonEditor()` + `<transon-editor>` (ESM + IIFE, `@transon/editor-element`);
-  the **reference** host engine adapter (in-browser Python `transon` via Pyodide,
-  `examples/reference-host`, AD-025) that runs user templates **and** the codecs; captured `file`
-  writes view (§17.11); include loader wiring (§17.10).
-- DoD additions: with no host engine, authoring/generation/import/export still work and validate/run
-  are disabled (§10.4); engine runtime status (idle/loading/ready/failed) is surfaced (NFR-028,
-  AC-023).
+  interactive Zelos render into a light-DOM scoped container (AD-017/018, jsdom); error→block
+  highlighting from the skeleton-produced `JsonPathBlockMap`; strict bidirectional JSON
+  editing (valid in-surface edit syncs back via the encoder; otherwise error + workspace unchanged —
+  AD-024, §7.15); on-canvas array/object **add/remove mutators** in the rule-agnostic behavior
+  runtime (§13.13, AC-038); `createTransonEditor()` + `<transon-editor>` (ESM + IIFE,
+  `@transon/editor-element`); the **reference** host engine adapter (in-browser Python `transon` via
+  Pyodide, eager-load-on-mount with surfaced status, `examples/reference-host`, AD-025) that runs user
+  templates **and** the codecs; captured `file` writes view (§17.11); include loader wiring (§17.10).
+- DoD additions: the **visual ⇄ JSON projection runs the codec through the host engine** (AD-026/030),
+  so with no host engine (or before `ready`) generation/import-sync are disabled alongside
+  validate/run — only block authoring + raw JSON text handling remain (§10.4); engine runtime status
+  (idle/loading/ready/failed) is surfaced (NFR-028, AC-023); the §7.15 reverse sync is strict (valid
+  in-surface edit syncs via the encoder, otherwise error + workspace unchanged, AC-033); the
+  mutator-driven structure round-trips identically to JSON-authored structure (AC-038); the behavior
+  runtime stays rule-agnostic after the mutator addition (NFR-046 size gate).
 
 ## M5 — React entry, examples, embedding, accessibility & self-hosting
 
@@ -357,7 +364,7 @@ self-hosting demonstration.
 | M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 122/123/124/126, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/032/011 | ☑ |
 | M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☑ |
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☑ |
-| M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-033; NFR-028; AD-019/020/024/025/030 | ☐ |
+| M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-001/012…017/023…025/031…033/038; NFR-028/046; AD-017/018/019/020/024/025/030/031 | ◐ |
 | M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110, 058, 121, NFR-045, AC-036 | ☐ |
 
 ## Readiness assessment
@@ -447,9 +454,9 @@ product a visual editor for Transon templates, not a general workflow automation
     "absent" (`NO_CONTENT`) case; missing-required readiness would stop flagging empty inputs; and a
     default scalar type isn't in metadata today (`kind` is only dynamic/constant) — likely a
     metadata addition consumed by the projection. Touches behavior, so SPEC-first (§21.2).
-  - *Array/Object add/remove slots*: literal array/object blocks have no on-canvas way to grow.
-    Add a Blockly **mutator** (gear/⊕/⊖) in the behavior runtime (AD-031) so items can be added/
-    removed visually (currently only via bidirectional JSON editing).
+  - *Array/Object add/remove slots* — **adopted into M4** (AC-038, §13.13): a rule-agnostic Blockly
+    **mutator** (gear/⊕/⊖) in the behavior runtime (AD-031) lets array items / object fields be
+    added/removed on the canvas, not only via bidirectional JSON editing.
   - *Per-rule inline layout*: thread an `inputsInline` presentation hint through the metadata/
     projection so expression-like rules (e.g. `expr`) can render side-by-side. Layout only — no
     semantic change; lives in the projection template, not code.
