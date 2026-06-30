@@ -58,8 +58,13 @@ defense against spec/engine drift:
 | Variant-signature parity | each rule's pre-derived `variants` are well-formed (ids + `required` flags, params drawn from the rule) | engine editor-metadata export, pre-derived `variants` ([`metadata-contract.md`](metadata-contract.md) §2.5, §3) | [x] `harness/scripts/check_engine_parity.py` |
 | Resolved-enum parity | `expr.op`/`call.name` `options` == engine operator/function catalogs | engine export `options` ([`metadata-contract.md`](metadata-contract.md) §2.6) | [x] `harness/scripts/check_engine_parity.py` |
 | Metadata export parity | export has the contract shape (split `catalog`/`docs`, per-rule `name`/`params`/`variants`, per-param `kind`, `metadata_version`) | engine `get_editor_metadata()` ([`metadata-contract.md`](metadata-contract.md) §3) | [x] `harness/scripts/check_engine_parity.py` |
-| Codec-regeneration | committed codec artifacts (encoder/decoder + palette/toolbox) == re-running `G_*` on the current metadata | `G_*` projections + build-time codegen (`SPEC.md` FR-119, AD-030) | [ ] |
+| Codec-regeneration | committed codec artifacts (encoder/decoder + palette/toolbox) == re-running `G_*` on the current metadata (compare-only; writes only under `UPDATE_ARTIFACTS=1`) | `G_*` projections + build-time codegen (`SPEC.md` FR-119, AD-030) | [ ] |
 | Behavior-runtime size | the rule-agnostic behavior runtime gains no per-rule branch as the catalog grows | `SPEC.md` NFR-046, AD-031 | [ ] |
+| Workspace-shape validity | encoder output is valid Blockly workspace-serialization JSON over the fixed block vocabulary (`transon_rule_<rule>__<variant>`, `transon_literal`/`transon_array`/`transon_object_literal`/`transon_unsupported`) across the §15.8 corpus | `SPEC.md` FR-124, AD-032 | [ ] |
+| No codec↔workspace mapping (repo-scan) | no module under `packages/*/src` maps codec artifacts to/from a `{type, inputs, fields}` block structure | `SPEC.md` FR-126, AD-032 | [ ] |
+| Encoder output loads in Blockly | encoder output deserializes via Blockly's workspace loader without error (headless) | `SPEC.md` FR-126 | [ ] |
+| Palette definitions load | every complete-metadata rule yields a loadable/instantiable Zelos block definition (headless) | `SPEC.md` FR-125 | [ ] |
+| Presentation source-scan | no §12.4 category names / order / category→colour map / per-rule title/category/advanced as TypeScript literals under `packages/*/src`; every metadata rule has a presentation-data entry | `SPEC.md` FR-127, NFR-048; [`metadata-contract.md`](metadata-contract.md) §2.9 | [ ] |
 
 A failing parity check means either the engine changed (update the editor + spec together) or the
 editor drifted (fix the editor). Never silence the check by editing the expectation without a
@@ -84,6 +89,7 @@ docs/example-corpus templates; custom marker configuration; and import-failure c
 | Import-failure cases | §15.8, §17 | [ ] | |
 | Round-trip by construction (per rule, generated codec) | §15.1, FR-115, AC-035 | [ ] | encoder+decoder from one metadata source; semantic identity via engine |
 | Self-hosting projection template | §7.16, FR-121, UC-016, AC-036 | [ ] | a `G_*`/codec template imports + round-trips as a normal in-surface template |
+| Workspace-shape invariant (per corpus entry) | §15.8, FR-124, AD-032 | [ ] | encoder output asserted against the fixed Blockly block vocabulary, not only via round-trip identity |
 
 ## Acceptance criteria coverage (§20)
 
@@ -127,6 +133,7 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-034 | Projection coverage: new rule across all surfaces, no editor/projection change | [ ] | |
 | AC-035 | Round-trip by construction (generated encoder/decoder, per rule) | [ ] | |
 | AC-036 | Self-hosting projection template loads + round-trips | [ ] | |
+| AC-037 | Presentation (title/category/advanced/colour) from data, not TypeScript; synthetic-rule projection test | [ ] | |
 
 ## Functional requirement coverage (§7)
 
@@ -142,15 +149,15 @@ implementing module and the test that cites the ID.
 | §7.5 Round-trip | FR-035..FR-039 | [ ] | semantic equivalence; corpus above |
 | §7.6 Rule coverage | FR-040..FR-044 | [ ] | parity checks above |
 | §7.7 Rule parameters and variants | FR-045..FR-058 | [ ] | required/optional/kind + variant model & import matcher (§15.6) |
-| §7.8 Literal object / marker escaping | FR-059..FR-063 | [ ] | object/fields escape |
+| §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [ ] | object/fields escape; skeleton-owned escape precedence + `transon_object_literal` naming (FR-123) |
 | §7.9 Validation | FR-064..FR-070 | [ ] | engine `Transformer.validate()` via host `EngineProvider` |
 | §7.10 Execution preview | FR-071..FR-076 | [ ] | engine `transform()` via host `EngineProvider` |
-| §7.11 Documentation, metadata & block generation | FR-077..FR-090 | [ ] | see metadata-contract.md; gated on metadata-contract §3 |
-| §7.12 Error mapping | FR-091..FR-095 | [ ] | canonical error taxonomy (§16.4) |
+| §7.11 Documentation, metadata & block generation | FR-077..FR-090, FR-127 | [ ] | see metadata-contract.md; gated on metadata-contract §3; presentation/category/colour from data not TS (FR-127, NFR-048) |
+| §7.12 Error mapping | FR-091..FR-095, FR-122 | [ ] | canonical error taxonomy (§16.4); `JsonPathBlockMap` produced as the codec walks (FR-122) |
 | §7.13 Import / export UX | FR-096..FR-101 | [ ] | |
 | §7.14 Component embedding | FR-102..FR-110 | [ ] | component API |
 | §7.15 Bidirectional JSON editing | FR-111..FR-113 | [ ] | strict in-surface sync (AD-024); now via the generated decoder/encoder |
-| §7.16 Template-driven projection surface | FR-114..FR-121 | [ ] | `G_*` projections, generated codec, build-time codegen + runtime exec (AD-026..AD-031) |
+| §7.16 Template-driven projection surface | FR-114..FR-121, FR-124..FR-126 | [ ] | `G_*` projections, generated codec, build-time codegen + runtime exec (AD-026..AD-031); codec output = Blockly workspace JSON directly, no mapping layer (FR-124/125/126, AD-032) |
 
 ## Non-functional & architecture decisions
 
@@ -173,6 +180,9 @@ dedicated tests:
 | AD-029 / FR-118 | `switch`/`cond` lazy dispatch in the generated codec | dispatch + lazy-branch tests (engine repo for the rules) | [ ] |
 | AD-030 / FR-119 | Build-time codegen of committed artifacts; runtime exec via host | codec-regeneration check + host execution tests (two-pass generate-then-run proven in `test/engine-node-adapter/test/adapter.markers.test.ts`) | [~] |
 | AD-031 / NFR-046 | Finite rule-agnostic behavior runtime; no per-rule growth | behavior-runtime size check | [ ] |
+| AD-032 / FR-124/126 | No hand-written codec↔Blockly mapping; codec emits/consumes workspace JSON directly | workspace-shape validator + encoder-loads-in-Blockly + repo-scan gates | [ ] |
+| FR-125 | Palette block definitions are valid/loadable Zelos | headless palette-load gate | [ ] |
+| FR-127 / NFR-048 | Presentation/category/colour from metadata or projection data, single committed source | presentation source-scan + completeness check; AC-037 synthetic-rule test | [ ] |
 | NFR-047 | Split structural / examples metadata payload | metadata-shape test (structural catalog excludes examples/docs) (`packages/editor-core/test/snapshot.test.ts`) | [~] |
 
 ## Open questions

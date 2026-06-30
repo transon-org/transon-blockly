@@ -222,12 +222,14 @@ workspace (§6, `SPEC.md` §7.15).
 low-code audience; expose renderer/theme via the theming hook (FR-108).
 **Rationale.** Matches the intended look and audience while staying configurable.
 
-### AD-018 — Light DOM + scoped CSS (shadow optional)
-**Decision.** Render in light DOM with scoped/prefixed CSS by default to avoid Blockly's
-`document.head` CSS injection and sizing/focus friction; a Shadow-DOM mode is optional, validated
-by the M3 Blockly-rendering spike.
-**Rationale.** Avoids known Blockly encapsulation pitfalls while leaving stricter isolation
-available.
+### AD-018 — Light DOM + scoped CSS (shadow not viable)
+**Decision.** Render in light DOM with a scoped CSS class prefix (e.g. a `transon-editor` root) to
+avoid Blockly's `document.head` CSS injection and sizing/focus friction.
+**Rationale.** Avoids known Blockly encapsulation pitfalls.
+**Encapsulation finding (M3 spike).** **Shadow DOM is not viable**: Blockly works in light DOM and
+injects its own CSS into `document.head` under its `.blockly*` namespace, which does **not** pierce a
+shadow boundary. Use the scoped light-DOM prefix; do not attempt shadow DOM. This resolves the
+formerly-optional Shadow-DOM mode against adoption.
 
 ### AD-019 — Framework-agnostic public surface; React internal
 **Decision.** The public surface is a vanilla `createTransonEditor()` primitive + a
@@ -366,8 +368,11 @@ committed artifacts deterministically, which the parity + round-trip gates verif
 ([`traceability.md`](traceability.md)).
 **Rationale.** Deterministic, reviewable artifacts; keeps the "new rule, no editor code change"
 guarantee (FR-120, AC-034) objectively testable; preserves engine-free distribution. **Trade-off.**
-A codegen step in CI and a regeneration discipline when metadata changes. **SPEC link.** `SPEC.md`
-§7.16 (FR-119), §10.4; ROADMAP M1.
+A codegen step in CI and a regeneration discipline when metadata changes. **Strict regeneration
+gate.** The committed artifacts are the source the editor ships; the regen check **compares only**
+(fails on drift) and writes solely under an explicit opt-in flag (e.g. `UPDATE_ARTIFACTS=1`). A
+self-writing gate would rubber-stamp a wrong artifact, so it must never write during a normal check.
+**SPEC link.** `SPEC.md` §7.16 (FR-119), §10.4; ROADMAP M1.
 
 ### AD-031 — A finite, rule-agnostic Blockly behavior runtime (replaces per-rule specialized code)
 **Decision.** Templates define block **structure**; a small, fixed, **rule-agnostic** runtime
@@ -379,6 +384,18 @@ specialized TS override registry.
 **Rationale.** Mirrors the engine boundary "JSON can't express behavior": everything expressible as
 data is data; only genuine interaction primitives are code. **SPEC link.** `SPEC.md` §7.16 (FR-120),
 §13 (structure/behavior boundary), NFR-046.
+
+### AD-032 — No hand-written mapping layer between the codec and Blockly
+**Decision.** The editor ships zero TypeScript that translates codec output into Blockly workspace
+JSON or back: the generated encoder/decoder emit/consume Blockly workspace-serialization JSON
+**directly** (FR-126), realizing FR-114/FR-117/§5.4/AD-026. Block *structure* — the definitions and
+the workspace JSON the codec produces — is **projected from metadata**; the only code is the finite,
+rule-agnostic behavior runtime (AD-031). **Rationale.** Encode/decode derive from one metadata source
+and are inverse by construction; the field-vs-input disposition is computed once (in `G_encode`) and
+read structurally on decode, so there is a single derivation in either direction. **Trade-off.** The
+codec output target is pinned to Blockly's workspace serialization, so a Blockly serialization change
+is a regeneration concern; enforced by the FR-124 shape validator, the FR-126 headless-load and
+repo-scan gates. **SPEC link.** `SPEC.md` FR-124, FR-126, FR-127, §5.4, §21.15.
 
 ---
 
@@ -542,6 +559,10 @@ and object keys (`SPEC.md` §13.12, §15.3), the surface check (`SPEC.md` §15.7
 out-of-surface placeholder (`SPEC.md` §13.11). The `JsonPathBlockMap` (`SPEC.md` §9.12) is produced
 as the codec walks; it is skeleton output, not a separate TS pass.
 
+Each per-rule arm emits the Blockly workspace block shape directly (`transon_rule_<rule>__<variant>`
+with fields/inputs); the field-vs-input disposition (FR-118) is computed inside the arm during
+projection. There is no intermediate representation between the codec and the workspace (AD-032).
+
 ### 5.5 The generators `G_*` (projections)
 
 Each generator is a Transon template run with the meta-level marker `@` (AD-027). `@`-keyed dicts
@@ -583,6 +604,12 @@ The **input-widget decision** (`input`/`dropdown`/`field`) is derived *in the pr
 The projected portion of a codec is the **per-rule arm**: a `switch` case keyed by rule name (encode)
 or block type (decode) whose body emits that rule's block/JSON shape and wires params↔inputs and
 variant selection. Adding a rule adds an arm via metadata; it does **not** add code.
+
+Each per-rule arm emits the Blockly workspace block shape directly (`transon_rule_<rule>__<variant>`
+with fields/inputs); the field-vs-input disposition (FR-118) is computed inside the arm during
+projection. There is no intermediate representation between the codec and the workspace (AD-032).
+The decoder reads the rule/variant structurally from the block type and reconstructs params from
+fields ∪ inputs without re-deriving the disposition.
 
 Blockly **behavior** that JSON cannot express (field validators, custom field widgets, mutator UI,
 connection rules, change events) lives in the finite, **rule-agnostic** behavior runtime (AD-031).

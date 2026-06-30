@@ -436,6 +436,12 @@ itself (FR-121, AC-036).
 - **FR-062** The editor shall include tests for literal objects containing `"$"` when the marker
   is `"$"`.
 - **FR-063** The editor shall support custom marker keys when configured.
+- **FR-123** The literal marker-key object escape (a JSON object carrying the active marker key
+  with a `fields` payload, §11.4) shall be owned by the **codec skeleton** and take **precedence**
+  over the `object` rule's `fields` variant. It matches **exactly** marker + `fields`; any
+  additional key falls through to ordinary rule/surface handling (an undeclared parameter is out of
+  surface, §15.7). The structural literal-object block type shall be **named to avoid collision**
+  with the `object` rule block (e.g. `transon_object_literal`, §13.7).
 
 ### 7.9 Validation
 
@@ -492,6 +498,14 @@ itself (FR-121, AC-036).
   JSON import where the shape matches one variant, and engine-backed validation/execution.
 - **FR-090** Generic metadata-generated blocks provide baseline compatibility, not necessarily
   polished low-code UX.
+- **FR-127** Catalog, presentation, category, colour, and domain enumerations consumed by the
+  projections shall originate **only** from the engine metadata export or from committed
+  **projection-template data**; no such enumeration shall be a hardcoded literal in `packages/*/src`
+  TypeScript. **Gate:** a source-scan that fails if the §12.4 category names, the category order, the
+  category→colour map, or per-rule title/category/advanced appear as TypeScript literals under
+  `packages/*/src`; plus a **completeness check** that every metadata rule has a presentation-data
+  entry (loud failure). The committed form of the editor-owned presentation data is
+  [`metadata-contract.md`](metadata-contract.md) §2.9.
 
 ### 7.12 Error Mapping
 
@@ -503,6 +517,11 @@ itself (FR-121, AC-036).
   impossible.
 - **FR-095** Error display shall distinguish the categories in the canonical error taxonomy
   (§16.4).
+- **FR-122** The generated encoder shall emit, alongside the workspace, a `JsonPathBlockMap`
+  correlating each Transon JSON path to the block representing it — and, where a node has no block
+  of its own, the nearest enclosing block — produced **as the codec walks**, not by a separate pass.
+  Producing the map is in scope wherever the encoder is; consuming it for highlighting is
+  FR-092/FR-093/FR-095.
 
 ### 7.13 Import / Export UX
 
@@ -586,6 +605,36 @@ editor-metadata catalog ([`metadata-contract.md`](metadata-contract.md) §2).
 - **FR-121** The projection templates shall themselves be valid Transon templates within the
   supported surface (§15.7), openable and round-trippable in the editor they configure
   (self-hosting; UC-016, AC-036).
+- **FR-124** The generated encoder's output shall be valid **Blockly workspace-serialization JSON**
+  conforming to a fixed block vocabulary, asserted as a **checked invariant over the round-trip
+  corpus (§15.8)** — not only indirectly via round-trip identity (AC-035). The vocabulary:
+  - rule invocations as **`transon_rule_<rule>__<variant>`** blocks (`<rule>` ∈ §14; `<variant>` a
+    declared variant), with declared params placed as block **fields** (constant params) or **value
+    inputs** (dynamic params) per FR-118;
+  - the structural block types **`transon_literal`**, **`transon_array`**,
+    **`transon_object_literal`**, and **`transon_unsupported`** (the exact-preserving out-of-surface
+    placeholder, §13.11).
+
+  The block-type vocabulary and the field-vs-input rule are normative; exact serialization details
+  (extra-state for dynamic item counts / object keys, input index naming) are implementation-level.
+  The editor shall assert this shape over §15.8 so a malformed-but-loadable block cannot pass
+  silently.
+- **FR-125** The block definitions produced by `G_palette` shall be **valid, loadable** Blockly
+  (Zelos) definitions: every rule with complete metadata (FR-085) yields a definition that loads and
+  instantiates without error (consistent message↔args, well-formed input/field/connection types),
+  verified by an **automated headless gate**. Incomplete metadata follows FR-086.
+- **FR-126** The generated **encoder shall emit, and the decoder shall consume, Blockly
+  workspace-serialization JSON directly**: there is **no editor-defined intermediate representation**
+  between the codec and the workspace, and the editor ships **no hand-written code that translates
+  codec output into workspace JSON or back** (realizes FR-114/FR-117, §5.4,
+  [`ARCHITECTURE.md`](ARCHITECTURE.md) AD-026, AD-032). The field-vs-input disposition (FR-118) is
+  computed **once**, in the `G_encode` projection arm. The **decoder is the structural inverse**: it
+  reads the rule and variant from the `transon_rule_<rule>__<variant>` block type and reconstructs
+  params from the block's fields ∪ inputs keyed by param name; it shall **not** re-derive the
+  disposition — so it is derived exactly once, in either direction. **Gates:** (a) the FR-124
+  workspace-shape validator over the §15.8 corpus; (b) a headless gate that the encoder output loads
+  via Blockly's workspace deserialization without error; (c) a **repo-scan** asserting no module
+  under `packages/*/src` maps codec artifacts to or from a `{type, inputs, fields}` block structure.
 
 The Blockly **behavior** that JSON cannot express (field validators, custom field widgets, mutator
 UI, connection rules, change events) is handled by a finite, **rule-agnostic** runtime that does not
@@ -645,6 +694,10 @@ grow per rule (NFR-046, `ARCHITECTURE.md` AD-031); this is the structure/behavio
   **structural catalog** (consumed by the generators) and a separate **examples/docs payload**
   (OQ-015, [`metadata-contract.md`](metadata-contract.md) §2). Generators read only the structural
   catalog so projection input stays small.
+- **NFR-048** The §12.4 category set, its order, and the category→colour mapping shall have
+  **exactly one** committed source consumed by all projections (palette, toolbox, colour). **Gate:**
+  the FR-127 scan plus assertions that the toolbox and colour projections contain no inline category
+  enumeration.
 
 ### 8.5 Performance
 
@@ -1048,7 +1101,11 @@ operators:
 
 ### 13.7 Literal Blocks
 
-The editor includes blocks for string, number, boolean, null, array, and object literals.
+The editor includes blocks for string, number, boolean, null, array, and object literals. In the
+projected workspace vocabulary (FR-124) these are the structural block types `transon_literal`
+(scalars), `transon_array`, and `transon_object_literal`. The literal-object block type is named to
+avoid collision with the `object` rule block (FR-123); a literal object carrying the marker key uses
+the codec-skeleton-owned escape (§11.4) rather than the `object` rule's `fields` variant.
 
 ### 13.8 Array Blocks
 
@@ -1070,7 +1127,8 @@ never from a separately authored "specialized" block.
 
 If an imported template cannot be represented with available blocks, the editor may create an
 unsupported placeholder block only if it preserves the original JSON exactly and blocks edits
-that would corrupt it; otherwise import fails.
+that would corrupt it; otherwise import fails. This is the `transon_unsupported` block type in the
+projected workspace vocabulary (FR-124).
 
 ### 13.12 Statement Ordering and `set`
 
@@ -1564,6 +1622,10 @@ Version 1 is acceptable when all criteria below are met.
 - **AC-036 — Self-hosting projection template.** At least one of the editor's own projection
   templates loads as a valid in-surface Transon template in the editor and round-trips (§7.16,
   FR-121, UC-016).
+- **AC-037 — Presentation from data, not code.** A new rule's title/category/advanced/colour comes
+  from metadata or projection-template data (not TypeScript), and the rule appears in palette +
+  toolbox with no editor code change (strengthens AC-034), demonstrated by a synthetic-rule
+  projection test driving presentation from the data source (§7.11, FR-127, NFR-048).
 
 ---
 

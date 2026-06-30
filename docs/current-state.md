@@ -8,13 +8,28 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `8751707` — editor: M0 scaffolding + Node→Python engine adapter |
-| Branch | `m0-editor-scaffolding` |
+| Repo HEAD | `eb1fe81` — docs: refresh M0 handoff post-commit (8751707) |
+| Branch | `alternative-path` |
 | Engine pin | transon `v0.1.1-1-g5812b63` @ `5812b632dc2c` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-002 absorbed into the contract docs** (branch `alternative-path`, uncommitted). The codec
+output contract + projection guardrails RFC (`docs/proposals/rfc-002-…md`) was fully applied: new
+append-only IDs **FR-122…FR-127, NFR-048, AC-037** (SPEC), **AD-032** (ARCHITECTURE) placed in their
+cited sections; the §D.3 encapsulation finding folded into **AD-018** (shadow DOM not viable) and the
+strict-regen-gate lesson into **AD-030**; engine prerequisites (`type` fn, `include` `IncludeContext`
+loader, v0.1.3+ pin) + codec-metaprogramming lessons recorded as **metadata-contract §6.4/§6.5** and
+**§2.9** (presentation = projection-data); ROADMAP M1/M2/M3 scope+DoD deltas; traceability gate rows
+(workspace-shape validity, repo-scan, headless loads, presentation source-scan) + coverage rows. The
+RFC is now an "APPLIED / non-normative" tombstone with a normative-homes table (matches the
+`template-driven-editor.md` precedent). Gates green: `check_traceability.py` consistent,
+`check_maturity.py` pass, each new ID defined exactly once, no stray non-breaking hyphens. Not yet
+committed. (Prior session: **M0 editor-side build** committed as `8751707` — see "Status by milestone".)_
+
+### Prior last action (M0)
 
 _**M0 editor-side build landed** on branch `m0-editor-scaffolding` (uncommitted, in the working tree).
 Scaffolded the pnpm/Turborepo monorepo with the AD-021 pins (Node ≥20, pnpm 10.27.0, TS 5.9.3, Vite
@@ -55,9 +70,14 @@ living read of it.
 1. Start **M1** (`/run-milestone M1`): `editor-core` codec skeleton + `G_encode`/`G_decode` for one
    rule (`attr`) with execution-based round-trip via the M0 adapter — the de-risk prototype. M1 also
    wires real `include` resolution through the adapter and should add the bridge request-id then.
-2. (Optional) push `m0-editor-scaffolding` + open a PR referencing the M0 IDs (one branch/PR per
+   **RFC-002 prerequisites now apply to M1:** pin the snapshot to an engine build (**v0.1.3+**)
+   providing the `type` fn + `include` `IncludeContext` loader (metadata-contract §6.4/§6.5); the
+   codec output target is **Blockly workspace JSON directly** (FR-124/126, AD-032) with the FR-124
+   shape validator + FR-126 repo-scan in the M1 DoD; see ROADMAP M1 implementation notes.
+2. Commit the RFC-002 docs absorption on `alternative-path` (uncommitted working-tree change).
+3. (Optional) push `m0-editor-scaffolding` + open a PR referencing the M0 IDs (one branch/PR per
    milestone) — not yet done.
-3. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
+4. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
    `update_memory.py --check --require-engine` on, once the engine is pip-installable in CI.
 
 ## Open blockers / waiting-on
@@ -67,5 +87,5 @@ living read of it.
 ## Do-not-relitigate (pointers, not copies)
 
 - Locked decisions → [`ROADMAP.md` §Locked decisions](ROADMAP.md#locked-decisions).
-- Architecture decisions `AD-001…AD-031` → [`ARCHITECTURE.md`](ARCHITECTURE.md).
+- Architecture decisions `AD-001…AD-032` → [`ARCHITECTURE.md`](ARCHITECTURE.md).
 - Golden rules / always-on invariants → [`AGENTS.md`](../AGENTS.md).

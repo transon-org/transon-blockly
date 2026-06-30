@@ -162,11 +162,15 @@ Transon repo (this editor repo consumes the contract; see `metadata-contract.md`
 prove round-trip identity — before folding over the catalog. Pure data + host execution; no Blockly.
 
 - Scope: **FR-114 … FR-119** (projections, generated codec, skeleton, dispatch, build-time codegen),
-  **FR-019 … FR-039** (generation, import, round-trip semantics), **FR-059 … FR-063** (literal /
-  marker-key objects + custom marker — codec-level), **§15.7** (supported surface), **FR-091** +
-  **FR-094** (`JsonPathBlockMap` produced by the skeleton; highlighting FRs **FR-092/093/095** land in
-  M4), **§16.4** (error taxonomy); **AC-009 … AC-011**, **AC-035**; **AD-026**, **AD-028**, **AD-030**,
-  **AD-011**.
+  **FR-124**, **FR-126** (codec output = Blockly workspace JSON directly; no mapping layer),
+  **FR-019 … FR-039** (generation, import, round-trip semantics), **FR-059 … FR-063** + **FR-123**
+  (literal / marker-key objects + custom marker — codec-level; skeleton-owned escape precedence),
+  **§15.7** (supported surface), **FR-091** + **FR-094** + **FR-122** (`JsonPathBlockMap` produced by
+  the skeleton as it walks; highlighting FRs **FR-092/093/095** land in M4), **§16.4** (error
+  taxonomy); **AC-009 … AC-011**, **AC-035**; **AD-026**, **AD-028**, **AD-030**, **AD-032**, **AD-011**.
+- **Engine prerequisite:** pin the metadata snapshot to an engine build (**v0.1.3+**) that provides
+  the `type` function and the `include` `IncludeContext` loader the codec dispatch relies on
+  ([`metadata-contract.md`](metadata-contract.md) §6.4/§6.5) before building the codec.
 - Deliverables: the codec **skeleton** (recursion, literal passthrough, marker escape §11.4, ordering
   §15.3, surface check §15.7, out-of-surface placeholder §13.11); `G_encode`/`G_decode` (marker `@`)
   with the per-rule body factored into an `include`d fragment; build-time codegen producing committed
@@ -175,6 +179,25 @@ prove round-trip identity — before folding over the catalog. Pure data + host 
 - Pass criteria (RFC de-risk): `$`-structure emits verbatim under marker `@`; `@`-holes splice
   correctly; `include` carries everything via `this`; self-`include` recursion terminates within
   `max_include_depth`; **round-trip identity holds** for the prototype rule (AC-035).
+- DoD additions (codec milestone): the **FR-124 workspace-shape validator** passes (encoder output is
+  valid Blockly workspace-serialization JSON over the fixed vocabulary); the **FR-126 repo-scan**
+  passes (no module under `packages/*/src` maps codec artifacts to/from a `{type, inputs, fields}`
+  structure); encode/decode round-trip on the workspace shape (`decode(encode(T)) == T`); committed
+  codec artifacts are **byte-equal** to a fresh `G_*` generation (compare-only regen gate, AD-030).
+  (The FR-126 headless Blockly-load gate lands with Blockly in M3.)
+- Implementation notes (codec/projection metaprogramming, carried from the de-risk prototype):
+  - **Dispatch on node type** via a `switch` keyed by `{ call: type }` (not a structural heuristic):
+    literal arrays recurse; literal marker-looking strings are scalars
+    ([`metadata-contract.md`](metadata-contract.md) §6.4).
+  - **`set`/`get` do NOT cross an `include` boundary** — a fragment receives its context as the `this`
+    value passed into the include; reading a parent-scope variable across the include yields
+    `NoContent` ([`metadata-contract.md`](metadata-contract.md) §6.5).
+  - **Strict regeneration gate** — the regen check compares only (fails on drift) and writes solely
+    under an explicit opt-in flag (e.g. `UPDATE_ARTIFACTS=1`); a self-writing gate rubber-stamps a
+    wrong artifact ([`ARCHITECTURE.md`](ARCHITECTURE.md) AD-030).
+  - **Host recursion ceiling** — codec recursion is host-stack-bound (~25 levels), below the engine's
+    `max_include_depth` (50); deeper nesting should fail cleanly with an `include_loader` error, not a
+    raw stack overflow ([`metadata-contract.md`](metadata-contract.md) §6.5).
 
 ## M2 — Full catalog: fold every rule into the generated codec
 
@@ -182,13 +205,15 @@ prove round-trip identity — before folding over the catalog. Pure data + host 
 not by growing one template; every rule and variant round-trips by construction.
 
 - Scope: **FR-040 … FR-058** (rule coverage + pre-derived variant model & matching), **FR-120**
-  (new rule across all surfaces from metadata), **§15.6**, **§15.8** (corpus); **AC-006 … AC-008**,
-  **AC-028**, **AC-029**, **AC-030**, **AC-034**, **AC-035**; **AD-026**, **AD-028**, **AD-029**.
+  (new rule across all surfaces from metadata), **FR-124** (workspace-shape invariant over the full
+  corpus), **§15.6**, **§15.8** (corpus); **AC-006 … AC-008**, **AC-028**, **AC-029**, **AC-030**,
+  **AC-034**, **AC-035**; **AD-026**, **AD-028**, **AD-029**, **AD-032**.
 - Deliverables: per-rule encode/decode fragments for all 20 built-in rules (+ operators/functions via
   resolved enums), variant matching from the pre-derived signatures, the full execution-based
   round-trip corpus (`SPEC.md` §15.8) including custom marker and import-failure cases.
-- DoD additions: round-trip corpus covers every built-in rule and variant; ambiguous/partial variant
-  matches reported as `import_unsupported`; adding a rule to the metadata snapshot makes it
+- DoD additions: round-trip corpus covers every built-in rule and variant; the **FR-124
+  workspace-shape validator** runs over the full §15.8 corpus; ambiguous/partial variant matches
+  reported as `import_unsupported`; adding a rule to the metadata snapshot makes it
   encode/decode/round-trip with **no projection-template change** (AC-034).
 
 ## M3 — `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime
@@ -198,12 +223,21 @@ rule-agnostic behavior runtime; the generated codec reads/writes the Blockly wor
 
 - Scope: **FR-012 … FR-018** (workspace/literals), **FR-043 … FR-044** (categories), **FR-084**,
   **FR-088 … FR-090** (metadata-projected blocks), **FR-121** (projection templates are valid
-  templates); **NFR-046**; **AC-036**; **AD-017**, **AD-018**, **AD-026**, **AD-031**.
+  templates), **FR-125** (loadable palette block definitions), **FR-126** (headless Blockly-load of
+  encoder output), **FR-127** + **NFR-048** (presentation/category/colour from data, single source);
+  **NFR-046**; **AC-036**, **AC-037**; **AD-017**, **AD-018**, **AD-026**, **AD-031**, **AD-032**.
 - Deliverables: `G_palette` (block definitions) + `G_toolbox` (categories from `SPEC.md` §12.4)
-  projections rendered to Zelos; the finite **behavior runtime** (field validators, widgets, mutator
-  UI, connection rules, change events) that does not grow per rule; workspace⇄blocks wiring so the
-  generated encoder/decoder operate on real workspace JSON; light-DOM encapsulation spike (AD-018).
-- DoD additions: a new rule with complete metadata appears as a projected block with no editor code
+  projections rendered to Zelos; the committed **projection-data file** for editor-owned presentation
+  (title/category/advanced + category order + category→colour, `metadata-contract.md` §2.9); the
+  finite **behavior runtime** (field validators, widgets, mutator UI, connection rules, change events)
+  that does not grow per rule; workspace⇄blocks wiring so the generated encoder/decoder operate on
+  real workspace JSON; light-DOM scoped-prefix encapsulation (AD-018; shadow DOM is not viable).
+- DoD additions (projection/editor milestone): the **FR-125 headless palette-load gate** (every
+  complete-metadata rule yields a loadable Zelos definition); the **FR-126 headless gate** that the
+  encoder output loads via Blockly's workspace deserialization; the **FR-127 + NFR-048 source-scan**
+  (no category/colour/presentation TypeScript literals under `packages/*/src`) and the
+  presentation-completeness check; the **AC-037 synthetic-rule test** driving presentation from the
+  data file; a new rule with complete metadata appears as a projected block with no editor code
   change (AC-034); the behavior-runtime-size check shows no per-rule growth (NFR-046).
 
 ## M4 — `editor-ui` + `editor-element`: shell, host execution, bidirectional sync
@@ -249,9 +283,9 @@ self-hosting demonstration.
 | Milestone | Focus | Key IDs | Status |
 |-----------|-------|---------|:------:|
 | M0 | Engine `switch`/`cond` + projection-ready export + Node adapter | FR-047/081/116/117/118, AD-008/012/027/029/021 | ☑ |
-| M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/011 | ☐ |
-| M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, §15.6/§15.8, AC-028/029/030/034/035 | ☐ |
-| M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, NFR-046, AC-036, AD-017/018/026/031 | ☐ |
+| M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 122/123/124/126, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/032/011 | ☐ |
+| M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☐ |
+| M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☐ |
 | M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-033; NFR-028; AD-019/020/024/025/030 | ☐ |
 | M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110, 058, 121, NFR-045, AC-036 | ☐ |
 
