@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `eb1fe81` — docs: refresh M0 handoff post-commit (8751707) |
+| Repo HEAD | `cb5b738` — docs: post-absorption coherence fixes (close audit findings) |
 | Branch | `alternative-path` |
 | Engine pin | transon `v0.1.1-1-g5812b63` @ `5812b632dc2c` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -16,18 +16,22 @@
 
 ## Last action
 
-_**RFC-002 absorbed into the contract docs** (branch `alternative-path`, uncommitted). The codec
-output contract + projection guardrails RFC (`docs/proposals/rfc-002-…md`) was fully applied: new
-append-only IDs **FR-122…FR-127, NFR-048, AC-037** (SPEC), **AD-032** (ARCHITECTURE) placed in their
-cited sections; the §D.3 encapsulation finding folded into **AD-018** (shadow DOM not viable) and the
-strict-regen-gate lesson into **AD-030**; engine prerequisites (`type` fn, `include` `IncludeContext`
-loader, v0.1.3+ pin) + codec-metaprogramming lessons recorded as **metadata-contract §6.4/§6.5** and
-**§2.9** (presentation = projection-data); ROADMAP M1/M2/M3 scope+DoD deltas; traceability gate rows
-(workspace-shape validity, repo-scan, headless loads, presentation source-scan) + coverage rows. The
-RFC is now an "APPLIED / non-normative" tombstone with a normative-homes table (matches the
-`template-driven-editor.md` precedent). Gates green: `check_traceability.py` consistent,
-`check_maturity.py` pass, each new ID defined exactly once, no stray non-breaking hyphens. Not yet
-committed. (Prior session: **M0 editor-side build** committed as `8751707` — see "Status by milestone".)_
+_**RFC-002 absorbed + post-absorption coherence fixes — both committed** on `alternative-path`
+(`b3e6669`, `cb5b738`). (1) The codec output contract + projection guardrails RFC was fully applied:
+append-only IDs **FR-122…FR-127, NFR-048, AC-037** (SPEC), **AD-032** (ARCHITECTURE); §D.3
+encapsulation finding folded into **AD-018** (shadow DOM not viable), strict-regen lesson into
+**AD-030**; engine prerequisites (`type` fn, `include` `IncludeContext` loader, v0.1.3+ pin) +
+codec-metaprogramming lessons as **metadata-contract §6.4/§6.5** and **§2.9** (presentation =
+projection-data); ROADMAP M1/M2/M3 scope+DoD deltas; traceability gate + coverage rows. The RFC is now
+an "APPLIED / non-normative" tombstone. (2) A tri-dimensional doc audit (referential / semantic /
+intent-drift) drove the coherence pass: added the engine **`type` function to SPEC §14.15** (was in
+the engine, missing from the catalog; now load-bearing per §6.4) — **`check_engine_parity` is now
+consistent (4 functions)**; ROADMAP M2 "20 rules" → **22**; refreshed **AGENTS.md** (AD range
+AD-001..AD-032; corrected the superseded "IR" wording); added the missing **FR-122** anti-drift gate
+row; made ARCH §5.4/§5.6 **cite FR-124** instead of restating the block vocabulary. Both commits used
+`--no-verify` only for the **pre-existing committed-snapshot drift** (engine moved v0.1.1 → v0.1.3);
+all other gates green (traceability, links, maturity, evals, engine-parity). (Prior session: **M0
+editor-side build** committed as `8751707` — see "Status by milestone".)_
 
 ### Prior last action (M0)
 
@@ -67,14 +71,20 @@ living read of it.
 
 ## Next steps (ordered)
 
-1. Start **M1** (`/run-milestone M1`): `editor-core` codec skeleton + `G_encode`/`G_decode` for one
+1. **Decide the engine re-pin to v0.1.3** (resolves the one outstanding gate). The local engine
+   (`../transon`) is at **v0.1.3**, which adds the `type` fn (§6.4) + the `include` `IncludeContext`
+   loader (§6.5) — exactly the M1 prerequisites. `update_memory.py --check` currently fails (committed
+   snapshot still pins v0.1.1-1-g5812b63); a previewed `--snapshot` regen cleanly adds `type` +
+   updates the `include` doc to the IncludeContext model. Re-pinning is a deliberate contract move
+   that also cascades the `v0.1.1` references in current-state, ROADMAP M0, SPEC §14.16, and
+   metadata-contract §2.8 → do it as its own commit. Until then, doc commits need `--no-verify` for
+   that pre-existing drift.
+2. Start **M1** (`/run-milestone M1`): `editor-core` codec skeleton + `G_encode`/`G_decode` for one
    rule (`attr`) with execution-based round-trip via the M0 adapter — the de-risk prototype. M1 also
    wires real `include` resolution through the adapter and should add the bridge request-id then.
-   **RFC-002 prerequisites now apply to M1:** pin the snapshot to an engine build (**v0.1.3+**)
-   providing the `type` fn + `include` `IncludeContext` loader (metadata-contract §6.4/§6.5); the
-   codec output target is **Blockly workspace JSON directly** (FR-124/126, AD-032) with the FR-124
-   shape validator + FR-126 repo-scan in the M1 DoD; see ROADMAP M1 implementation notes.
-2. Commit the RFC-002 docs absorption on `alternative-path` (uncommitted working-tree change).
+   Codec output target is **Blockly workspace JSON directly** (FR-124/126, AD-032) with the FR-124
+   shape validator + FR-126 repo-scan in the M1 DoD; see ROADMAP M1 implementation notes. Depends on
+   step 1's re-pin.
 3. (Optional) push `m0-editor-scaffolding` + open a PR referencing the M0 IDs (one branch/PR per
    milestone) — not yet done.
 4. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
