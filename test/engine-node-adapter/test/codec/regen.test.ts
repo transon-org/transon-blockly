@@ -9,23 +9,43 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { EngineProvider } from '@transon/editor-core';
-import { generateCodec, serializeArtifact } from '@transon/editor-core';
+import {
+  generateCodec,
+  serializeArtifact,
+  stableStringify,
+  GENERATOR_SOURCES,
+} from '@transon/editor-core';
 import { createNodeEngineProvider } from '../../src/index.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ARTIFACTS = join(HERE, '..', '..', '..', '..', 'packages', 'editor-core', 'src', 'codec', 'artifacts');
+const CODEC = join(HERE, '..', '..', '..', '..', 'packages', 'editor-core', 'src', 'codec');
+const ARTIFACTS = join(CODEC, 'artifacts');
+const GENERATORS = join(CODEC, 'generators');
 
 let engine: EngineProvider;
 beforeAll(async () => {
   engine = createNodeEngineProvider();
   await engine.init();
   if (process.env.UPDATE_ARTIFACTS) {
+    // The @-staged generators are committed as data first (so generateCodec can run them),
+    // then the artifacts those generators produce.
+    for (const [file, template] of Object.entries(GENERATOR_SOURCES)) {
+      writeFileSync(join(GENERATORS, file), stableStringify(template));
+    }
     const { encoder, decoder } = await generateCodec(engine);
     writeFileSync(join(ARTIFACTS, 'encoder.json'), serializeArtifact(encoder));
     writeFileSync(join(ARTIFACTS, 'decoder.json'), serializeArtifact(decoder));
   }
 });
 afterAll(() => engine?.dispose());
+
+describe('committed generators match the authoring source (FR-114/115, AD-026)', () => {
+  for (const [file, template] of Object.entries(GENERATOR_SOURCES)) {
+    it(`generators/${file} is byte-equal to its typed source`, () => {
+      expect(stableStringify(template)).toBe(readFileSync(join(GENERATORS, file), 'utf8'));
+    });
+  }
+});
 
 describe('codec regeneration is byte-equal to committed artifacts (FR-119, AD-030)', () => {
   it('encoder.json matches a fresh G_* run', async () => {

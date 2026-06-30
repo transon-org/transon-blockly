@@ -15,6 +15,13 @@ export type {
 } from './vocabulary.js';
 
 // The metadata→codec projection (AD-026). Exposed so the build/regen gate can regenerate the
-// committed artifacts via a host engine; not used by the runtime encode/decode path.
-export { generateCodec, serializeArtifact, M1_RULES } from './codegen.js';
+// committed artifacts + generator sources via a host engine; not used by the runtime path.
+export {
+  generateCodec,
+  serializeArtifact,
+  stableStringify,
+  GENERATOR_SOURCES,
+  GENERATOR_FILES,
+  M1_RULES,
+} from './codegen.js';
 export type { CodecArtifact } from './codegen.js';

@@ -33,6 +33,9 @@ export {
   isRuleBlockType,
   generateCodec,
   serializeArtifact,
+  stableStringify,
+  GENERATOR_SOURCES,
+  GENERATOR_FILES,
   M1_RULES,
 } from './codec/index.js';
 export type {

@@ -15,6 +15,10 @@
 
 import type { EngineProvider, Json } from '../engine/ports.js';
 import { editorMetadata, type CatalogEntry } from '../metadata/snapshot.js';
+// The committed @-staged generators (the projection-as-data). generateCodec runs THESE; the
+// typed builders below are the editable authoring source, held byte-equal by the regen gate.
+import gEncode from './generators/G_encode.json' with { type: 'json' };
+import gDecode from './generators/G_decode.json' with { type: 'json' };
 
 /** The marker the `@`-staged generators run under (AD-027). */
 const META_MARKER = '@';
@@ -168,6 +172,18 @@ const decSkeleton = (allCases: Json): Json => ({ $: 'chain', funcs: [
 /** The prototype rule(s) projected in M1 (the de-risk slice). M2 extends this list. */
 export const M1_RULES = ['attr'];
 
+// The per-rule `@`-staged generators are committed as inspectable, tool-agnostic projection
+// DATA under `src/codec/generators/` (AD-026: the surface is projection(metadata), and the
+// projection itself is data, not hidden code). The typed builders above are the editable
+// authoring source; `generateCodec` runs the committed JSON copies, and the regen gate keeps
+// the two byte-equal (AD-030). The rule-agnostic skeleton stays in this driver — it has the
+// driver-injected dispatch/case holes and does not vary per rule (AD-028).
+export const GENERATOR_FILES = { encode: 'G_encode.json', decode: 'G_decode.json' } as const;
+export const GENERATOR_SOURCES: Record<string, Json> = {
+  [GENERATOR_FILES.encode]: G_RULE_ENCODE,
+  [GENERATOR_FILES.decode]: G_RULE_DECODE_CASES,
+};
+
 /** The committed codec bundle shape: a self-`include`-able fragment map plus an entry name. */
 export interface CodecArtifact {
   entry: string;
@@ -198,8 +214,8 @@ export async function generateCodec(
   for (const name of rules) {
     const entry = catalogRules.find((r: CatalogEntry) => r.name === name);
     if (!entry) throw new Error(`codegen: rule '${name}' not in metadata catalog`);
-    encFragments[`enc__${name}`] = await runGen(engine, G_RULE_ENCODE, entry as unknown as Json);
-    const cases = (await runGen(engine, G_RULE_DECODE_CASES, entry as unknown as Json)) as Record<string, Json>;
+    encFragments[`enc__${name}`] = await runGen(engine, gEncode as unknown as Json, entry as unknown as Json);
+    const cases = (await runGen(engine, gDecode as unknown as Json, entry as unknown as Json)) as Record<string, Json>;
     Object.assign(decCases, cases);
     dispatch[name] = { $: 'include', name: `enc__${name}` };
   }
@@ -210,19 +226,25 @@ export async function generateCodec(
 }
 
 /**
- * Deterministic, key-sorted serialization so the regen gate can byte-compare the committed
- * artifacts against a fresh generation (AD-030). The trailing newline matches POSIX text files.
+ * Deterministic, key-sorted JSON serialization (+ trailing newline) so the regen gates can
+ * byte-compare committed data (artifacts and the generator sources) against a fresh build
+ * (AD-030). The trailing newline matches POSIX text files.
  */
-export function serializeArtifact(a: CodecArtifact): string {
-  const sortKeys = (_key: string, value: unknown): unknown => {
-    if (value && typeof value === 'object' && !Array.isArray(value)) {
-      const src = value as Record<string, unknown>;
+export function stableStringify(value: Json): string {
+  const sortKeys = (_key: string, v: unknown): unknown => {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      const src = v as Record<string, unknown>;
       return Object.keys(src).sort().reduce<Record<string, unknown>>((acc, k) => {
         acc[k] = src[k];
         return acc;
       }, {});
     }
-    return value;
+    return v;
   };
-  return JSON.stringify(a, sortKeys, 2) + '\n';
+  return JSON.stringify(value, sortKeys, 2) + '\n';
+}
+
+/** Serialize a committed codec artifact deterministically (AD-030). */
+export function serializeArtifact(a: CodecArtifact): string {
+  return stableStringify(a as unknown as Json);
 }
