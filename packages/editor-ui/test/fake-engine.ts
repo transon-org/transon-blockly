@@ -41,13 +41,12 @@ export function createFakeEngine(opts: FakeEngineOptions = {}): FakeEngine {
     async transform(template, input, o) {
       this.calls.transform++;
       this.transforms.push({ template, input, marker: o.marker });
-      return (
-        opts.onTransform?.(template, input, o.marker) ?? {
-          status: 'ok',
-          success: true,
-          output: input,
-        }
-      );
+      if (opts.onTransform) return opts.onTransform(template, input, o.marker);
+      // Default: a blockMap call wraps its input as { n: document } — return a minimal MapNode root
+      // so the forward flow's blockMap() doesn't crash; any other call echoes its input as output.
+      const isBlockMap =
+        !!input && typeof input === 'object' && !Array.isArray(input) && 'n' in (input as object);
+      return { status: 'ok', success: true, output: isBlockMap ? { children: [] } : input };
     },
     async version() {
       return { engine: opts.engineVersion ?? 'fake-0.0.0', metadata: opts.metadataVersion ?? '2.0' };

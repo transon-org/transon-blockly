@@ -11,6 +11,7 @@ import { applyEngineStatus } from './engine-status.js';
 import { runForward, applyForward, debounce } from './forward.js';
 import { validateTemplate } from './validate.js';
 import { executeTemplate } from './execute.js';
+import { tryReverse } from './reverse.js';
 import { mountBlockly, type TransonMount } from '../blockly/mount.js';
 import { highlightErrors, clearHighlights } from '../blockly/highlight.js';
 import type { TransonEditorHost } from './host.js';
@@ -38,6 +39,9 @@ export interface EditorController {
   newWorkspace(): void;
   /** Set the sample input from raw panel text; surfaces `json_input` on invalid JSON (§16.4). */
   setInputText(text: string): void;
+  /** Strict bidirectional JSON edit (§7.15): a valid in-surface edit syncs to the workspace; an
+   *  invalid/out-of-surface edit is reported and the workspace is left unchanged. Debounced. */
+  setTemplateText(text: string): void;
   setMode(mode: EditorMode): void;
   /** Validate the current template through the host engine (§6.4). */
   validate(): Promise<void>;
@@ -75,6 +79,21 @@ export function createEditorController(
     readOnly: opts.readOnly,
     onWorkspaceChange: () => debouncedProject(),
   });
+
+  // Reverse §7.15 path: try to sync an edited JSON string back to the workspace. On accept, load the
+  // candidate block and re-project (in_sync); on reject, leave the workspace untouched and surface
+  // the error marked out_of_sync (FR-112/113, AD-024).
+  const applyReverse = async (text: string): Promise<void> => {
+    if (!engine || engine.status !== 'ready') return; // gated; the panel is read-only when not ready
+    const outcome = await tryReverse(engine, text, marker);
+    if (outcome.status === 'accepted') {
+      mount.loadDocument(outcome.block);
+      await project(); // sets workspace/template_json, json_sync in_sync, clears errors + highlights
+    } else {
+      store.setState({ json_sync_status: 'out_of_sync', errors: [outcome.error] });
+    }
+  };
+  const debouncedReverse = debounce((text: string) => void applyReverse(text), opts.debounceMs ?? 150);
 
   // Eager engine init + status polling (Q2: the reference Pyodide host loads on mount). The port has
   // no status event, so poll while idle/loading; re-project when it *becomes* `ready` so generation
@@ -158,6 +177,10 @@ export function createEditorController(
         });
       }
     },
+    setTemplateText(text) {
+      store.setState({ json_sync_status: 'editing' });
+      debouncedReverse(text);
+    },
     setMode(mode) {
       store.setState({ editor_mode: mode });
     },
@@ -186,6 +209,7 @@ export function createEditorController(
       disposed = true;
       if (statusTimer) clearTimeout(statusTimer);
       debouncedProject.cancel();
+      debouncedReverse.cancel();
       mount.dispose();
     },
   };

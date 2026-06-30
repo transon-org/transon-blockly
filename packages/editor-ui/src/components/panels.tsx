@@ -2,6 +2,7 @@
 // controller actions; none touch Blockly or the engine directly. Light styling only — the panels
 // assert behavior (presence, content, actions), not pixels (NFR-045 baseline; M5 polishes a11y).
 
+import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import type { EditorSession } from '../session/types.js';
 import type { EditorController } from '../session/controller.js';
@@ -12,20 +13,54 @@ function pretty(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-/** Generated Transon JSON (§12.7). Read display in D2; editable bidirectional sync is layered in D5. */
-export function JsonPanel({ state }: { state: EditorSession }): JSX.Element {
+/**
+ * Generated Transon JSON (§12.7) with strict bidirectional editing (§7.15). When generation is
+ * available the panel is an editable textarea: its text reflects the generated JSON while in sync,
+ * and a user edit calls back (debounced sync in the controller) and marks out-of-sync until accepted
+ * or reverted. When the engine cannot generate, it shows a gated message (read-only).
+ */
+export function JsonPanel({
+  state,
+  onEdit,
+}: {
+  state: EditorSession;
+  onEdit?(text: string): void;
+}): JSX.Element {
   const gated = state.generation_status === 'unavailable';
+  const generated = pretty(state.template_json);
+  const [text, setText] = useState(generated);
+
+  // Reflect a fresh generation into the editor only while in sync (don't clobber an in-progress or
+  // rejected edit — §7.15 preserves the user's text until accepted/reverted).
+  useEffect(() => {
+    if (state.json_sync_status === 'in_sync') setText(generated);
+  }, [generated, state.json_sync_status]);
+
   return (
-    <section className="transon-panel transon-json-panel" data-testid="json-panel" aria-label="Generated template JSON">
-      <header className="transon-panel-title">Template JSON</header>
+    <section
+      className="transon-panel transon-json-panel"
+      data-testid="json-panel"
+      data-sync={state.json_sync_status}
+      aria-label="Generated template JSON"
+    >
+      <header className="transon-panel-title">
+        Template JSON{state.json_sync_status === 'out_of_sync' ? ' (out of sync)' : ''}
+      </header>
       {gated ? (
         <p className="transon-gated" data-testid="json-gated">
           Generation needs the engine ({state.engine_runtime_status}).
         </p>
-      ) : state.generation_status === 'incomplete' ? (
-        <p className="transon-incomplete" data-testid="json-incomplete">Workspace incomplete.</p>
       ) : (
-        <pre className="transon-code" data-testid="json-content">{pretty(state.template_json)}</pre>
+        <textarea
+          className="transon-code transon-code-input"
+          data-testid="json-content"
+          value={text}
+          spellCheck={false}
+          onChange={(e) => {
+            setText(e.target.value);
+            onEdit?.(e.target.value);
+          }}
+        />
       )}
     </section>
   );

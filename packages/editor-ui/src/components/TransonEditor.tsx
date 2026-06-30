@@ -71,7 +71,9 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
         <Toolbar state={state} controller={controller} view={view} onView={setView} />
         <div className="transon-body transon-compact">
           {canvas}
-          {view !== 'visual' ? <JsonPanel state={state} /> : null}
+          {view !== 'visual' ? (
+            <JsonPanel state={state} onEdit={(t) => controller?.setTemplateText(t)} />
+          ) : null}
         </div>
         <StatusBar state={state} />
       </div>
@@ -85,7 +87,7 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
       <div className="transon-body transon-sandbox">
         <div className="transon-canvas-col">{canvas}</div>
         <div className="transon-side-col">
-          <JsonPanel state={state} />
+          <JsonPanel state={state} onEdit={(t) => controller?.setTemplateText(t)} />
           <InputPanel state={state} onInput={(t) => controller?.setInputText(t)} />
           <OutputPanel state={state} />
           <FilesPanel state={state} />

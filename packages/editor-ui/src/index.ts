@@ -32,6 +32,8 @@ export type { ForwardResult } from './session/forward.js';
 export { validateTemplate } from './session/validate.js';
 export { executeTemplate } from './session/execute.js';
 export type { ExecuteOptions } from './session/execute.js';
+export { tryReverse } from './session/reverse.js';
+export type { ReverseOutcome } from './session/reverse.js';
 
 // ---- host boundary + controller (D2) ----
 export type { TransonEditorHost, ExampleCase } from './session/host.js';
