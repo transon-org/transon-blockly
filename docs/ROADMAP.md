@@ -282,6 +282,34 @@ rule-agnostic behavior runtime; the generated codec reads/writes the Blockly wor
   presentation-completeness check; the **AC-037 synthetic-rule test** driving presentation from the
   data file; a new rule with complete metadata appears as a projected block with no editor code
   change (AC-034); the behavior-runtime-size check shows no per-rule growth (NFR-046).
+- **Status (☑ done — `round-trip-reviewer`-signed-off, all DoD gates green; not pushed).** The metadata
+  catalog is projected to the full Blockly surface, folded in by metadata + the `G_palette`/`G_toolbox`
+  projections + the committed presentation-data file — **no per-rule code** (AC-037/NFR-046). Landed on
+  `m3-editor-blockly` in reviewed slices: **D0 (`12b2751`)** — the new `@transon/editor-blockly` package
+  (Blockly `13.0.0`, AD-021) + `presentation.json` (the §2.9 single source: per-rule title/category/
+  advanced + category order + category→colour) + the FR-127/NFR-048 `check_presentation.py` gate
+  (source-scan + completeness); **D1 (`e17b28f`)** — `G_toolbox` → committed `toolbox.json` (the §12.4
+  categories in order, colours from data); **D2 (`16d59ca`)** — `G_palette` → committed `palette.json`
+  (34 Zelos block defs; the FR-118 widget — dynamic→`input_value`, constant+options→`field_dropdown`,
+  constant→`field_input` — decided IN the projection via `@:cond`, mirroring the encoder's disposition;
+  label "<title> (<rule>)", colour from category); **D3a (`3b2e515`)** — the finite rule-agnostic behavior
+  runtime (1 custom field + 3 structural mutators, NFR-046) + the FR-125 headless palette-load gate (all 34
+  defs register + instantiate) + the FR-126 headless encoder-load gate (the full 147-example + M1 corpus
+  loads in Blockly); **D3b (`cd18877`)** — the NFR-046 `check_behavior_runtime_size.py` gate + AC-037 (a
+  synthetic rule projects from data with the runtime untouched) + AC-036 (the M3 projections are in-surface).
+  The projections forced **one rule-agnostic skeleton change** — the encoder's array arm now emits
+  `extraState.items` so the Blockly mutator can rebuild the `ITEM{n}` inputs (Blockly errors on a connection
+  to an undeclared input, and counting them in TS would violate the no-codec-mapping scan); the decoder
+  ignores it, so round-trip is unchanged. The independent `round-trip-reviewer` (maker≠checker) refuted
+  nothing in M3 scope and found one SHOULD-FIX — a latent crash on the reverse Blockly-save→decode path for
+  an empty array (Blockly drops an empty `inputs:{}`) — **fixed** (`f4de4c8`: decoder `inputs default {}`) +
+  promoted to a proven **FR-126 reverse-path gate** (`blockly-resave.test.ts`, 217 cases: encode→Blockly
+  load→save→decode over the full corpus, incl. scalar type fidelity). **1387 tests** (1364 adapter + 12 core
+  + 11 blockly); byte-equal regen (encoder/decoder/toolbox/palette), no-codec-mapping, behavior-runtime-size,
+  presentation, engine-parity, traceability, maturity — all green. **M3/M4 boundary:** the headless gates
+  verify loadability without a DOM; the interactive Zelos render into a light-DOM scoped container
+  (AD-017/AD-018) + the editor-sync UI (§7.15) land in M4 with jsdom/browser. Living status:
+  [`docs/current-state.md`](current-state.md).
 
 ## M4 — `editor-ui` + `editor-element`: shell, host execution, bidirectional sync
 
@@ -328,7 +356,7 @@ self-hosting demonstration.
 | M0 | Engine `switch`/`cond` + projection-ready export + Node adapter | FR-047/081/116/117/118, AD-008/012/027/029/021 | ☑ |
 | M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 122/123/124/126, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/032/011 | ☑ |
 | M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☑ |
-| M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☐ |
+| M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☑ |
 | M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-033; NFR-028; AD-019/020/024/025/030 | ☐ |
 | M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110, 058, 121, NFR-045, AC-036 | ☐ |
 
@@ -347,7 +375,7 @@ conflict.
 | M0 (engine rules + export) | 🟢 ready | Owner-controlled: `switch`/`cond` rules, `include` marker inheritance, projection-ready split export (AD-012/027/029), Node adapter able to run markers `@`/`$` (AD-008). |
 | M1 (codec skeleton + one-rule codec) | 🟢 ready after M0 | The de-risk prototype; needs M0's export + adapter. Pass criteria gate the rest of the plan. |
 | M2 (full catalog) | 🟢 after M1 | Fold per-rule `include` fragments once M1's loop closes; no new mechanism. |
-| M3 (Blockly projections + behavior runtime) | 🟡 mostly | Needs M0–M2; `G_palette`/`G_toolbox`; encapsulation spike (AD-018); the finite behavior runtime (AD-031). |
+| M3 (Blockly projections + behavior runtime) | 🟢 done | `G_palette`/`G_toolbox` projections + committed palette/toolbox; the finite rule-agnostic behavior runtime (AD-031); FR-125/126/127 + NFR-046 gates; AC-036/037. Interactive Zelos render (AD-017/018) + editor-sync UI → M4. |
 | M4 (UI + runtime) | 🟢 after M3 | Host boundary specified (`SPEC.md` §10.4, AD-008); reference host runs codecs (AD-025/030). |
 | M5 | 🟢 after M4 | Inherits M4; adds embedding, examples, accessibility, self-hosting. |
 
