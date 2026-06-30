@@ -61,7 +61,7 @@ defense against spec/engine drift:
 | Codec-regeneration | committed codec artifacts (encoder/decoder + palette/toolbox) == re-running `G_*` on the current metadata (compare-only; writes only under `UPDATE_ARTIFACTS=1`) | `G_*` projections + build-time codegen (`SPEC.md` FR-119, AD-030) | [~] encoder/decoder: `test/engine-node-adapter/test/codec/regen.test.ts` (palette/toolbox M3) |
 | Behavior-runtime size | the rule-agnostic behavior runtime gains no per-rule branch as the catalog grows | `SPEC.md` NFR-046, AD-031 | [ ] |
 | Workspace-shape validity | encoder output is valid Blockly workspace-serialization JSON over the fixed block vocabulary (`transon_rule_<rule>__<variant>`, `transon_literal`/`transon_array`/`transon_object_literal`/`transon_unsupported`) across the §15.8 corpus | `SPEC.md` FR-124, AD-032 | [~] M1 corpus subset: `test/engine-node-adapter/test/codec/workspace-shape.test.ts` (full §15.8 in M2) |
-| `JsonPathBlockMap` produced as the codec walks | the encoder emits the path→block map during the codec walk (not a separate post-pass); every JSON path maps to its block or nearest enclosing block over the §15.8 corpus | `SPEC.md` FR-122, §9.12 | [ ] |
+| `JsonPathBlockMap` produced as the codec walks | the encoder emits the path→block map during the codec walk (not a separate post-pass); every JSON path maps to its block or nearest enclosing block over the §15.8 corpus | `SPEC.md` FR-122, §9.12 | [~] `test/engine-node-adapter/test/codec/blockmap.test.ts` (entries produced by the map-encoder walk; runtime flattens; M1 corpus subset) |
 | No codec↔workspace mapping (repo-scan) | no module under `packages/*/src` maps codec artifacts to/from a `{type, inputs, fields}` block structure | `SPEC.md` FR-126, AD-032 | [x] `harness/scripts/check_no_codec_mapping.py` (+ `--selftest`) |
 | Encoder output loads in Blockly | encoder output deserializes via Blockly's workspace loader without error (headless) | `SPEC.md` FR-126 | [ ] |
 | Palette definitions load | every complete-metadata rule yields a loadable/instantiable Zelos block definition (headless) | `SPEC.md` FR-125 | [ ] |
@@ -86,7 +86,7 @@ docs/example-corpus templates; custom marker configuration; and import-failure c
 | Every block variant | §15.8, §7.7 | [ ] | |
 | Nested templates | §15.8 | [ ] | |
 | Docs/example-corpus templates | §15.8 | [ ] | |
-| Custom marker configuration | §15.8, FR-063 | [ ] | |
+| Custom marker configuration | §15.8, FR-063 | [x] | `test/engine-node-adapter/test/codec/marker.test.ts` (runtime marker substitution; one codec serves any marker) |
 | Import-failure cases | §15.8, §17 | [ ] | |
 | Round-trip by construction (per rule, generated codec) | §15.1, FR-115, AC-035 | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity); full catalog M2 |
 | Self-hosting projection template | §7.16, FR-121, UC-016, AC-036 | [ ] | a `G_*`/codec template imports + round-trips as a normal in-surface template |
@@ -150,11 +150,11 @@ implementing module and the test that cites the ID.
 | §7.5 Round-trip | FR-035..FR-039 | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution); full corpus M2 |
 | §7.6 Rule coverage | FR-040..FR-044 | [ ] | parity checks above |
 | §7.7 Rule parameters and variants | FR-045..FR-058 | [ ] | required/optional/kind + variant model & import matcher (§15.6) |
-| §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [~] | skeleton-owned `{<marker>:object,fields:X}` escape + precedence + `transon_object_literal` (FR-059/060/061/062/123): `test/engine-node-adapter/test/codec/escape.test.ts`; custom marker (FR-063) centralized as `DOC_MARKER`, full parameterization deferred |
+| §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [x] | skeleton-owned `{<marker>:object,fields:X}` escape + precedence + `transon_object_literal` (FR-059/060/061/062/123): `escape.test.ts`; custom marker (FR-063) via runtime marker substitution: `marker.test.ts` |
 | §7.9 Validation | FR-064..FR-070 | [ ] | engine `Transformer.validate()` via host `EngineProvider` |
 | §7.10 Execution preview | FR-071..FR-076 | [ ] | engine `transform()` via host `EngineProvider` |
 | §7.11 Documentation, metadata & block generation | FR-077..FR-090, FR-127 | [ ] | see metadata-contract.md; gated on metadata-contract §3; presentation/category/colour from data not TS (FR-127, NFR-048) |
-| §7.12 Error mapping | FR-091..FR-095, FR-122 | [ ] | canonical error taxonomy (§16.4); `JsonPathBlockMap` produced as the codec walks (FR-122) |
+| §7.12 Error mapping | FR-091..FR-095, FR-122 | [~] | `JsonPathBlockMap` produced alongside the workspace (FR-091/094/122, §9.12): `test/engine-node-adapter/test/codec/blockmap.test.ts`; highlighting/consumption (FR-092/093/095) is M4 |
 | §7.13 Import / export UX | FR-096..FR-101 | [ ] | |
 | §7.14 Component embedding | FR-102..FR-110 | [ ] | component API |
 | §7.15 Bidirectional JSON editing | FR-111..FR-113 | [ ] | strict in-surface sync (AD-024); now via the generated decoder/encoder |
