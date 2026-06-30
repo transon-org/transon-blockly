@@ -34,3 +34,8 @@ export type { CodecArtifact } from './codegen.js';
 // consumed by the G_palette/G_toolbox projections.
 export { PRESENTATION } from './presentation.js';
 export type { Presentation, RulePresentation } from './presentation.js';
+
+// The committed editor-surface artifacts (palette block definitions + toolbox), loaded by
+// @transon/editor-blockly to register/render the Zelos surface (static data, AD-026/AD-030).
+export { PALETTE_BLOCKS, TOOLBOX } from './surface.js';
+export type { BlockDefinition } from './surface.js';

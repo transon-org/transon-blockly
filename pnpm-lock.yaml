@@ -73,9 +73,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/editor-core
     devDependencies:
+      '@transon/editor-blockly':
+        specifier: workspace:*
+        version: link:../../packages/editor-blockly
       '@types/node':
         specifier: 22.18.9
         version: 22.18.9
+      blockly:
+        specifier: 13.0.0
+        version: 13.0.0(jsdom@27.4.0)
       typescript:
         specifier: 5.9.3
         version: 5.9.3

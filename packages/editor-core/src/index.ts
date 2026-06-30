@@ -43,6 +43,8 @@ export {
   CATALOG_RULES,
   M1_RULES,
   PRESENTATION,
+  PALETTE_BLOCKS,
+  TOOLBOX,
 } from './codec/index.js';
 export type {
   StructuralBlockType,
@@ -52,4 +54,5 @@ export type {
   CodecArtifact,
   Presentation,
   RulePresentation,
+  BlockDefinition,
 } from './codec/index.js';

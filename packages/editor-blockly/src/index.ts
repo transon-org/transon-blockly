@@ -8,3 +8,6 @@
 // engine and adds only Blockly. Light DOM + scoped CSS, never shadow DOM (AD-018).
 
 export const EDITOR_BLOCKLY_PACKAGE = '@transon/editor-blockly';
+
+export { registerTransonRuntime, BEHAVIOR_PRIMITIVES } from './runtime.js';
+export { registerTransonBlocks, getTransonToolbox, toWorkspaceState, loadCodecOutput } from './blocks.js';

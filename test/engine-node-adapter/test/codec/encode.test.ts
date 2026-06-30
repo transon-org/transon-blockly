@@ -34,6 +34,9 @@ describe('array + object recursion, order preserved (FR-022, §15.3)', () => {
   it('a literal array → transon_array with indexed inputs in order', async () => {
     expect(await encode(engine, [1, 2])).toEqual({
       type: 'transon_array',
+      // extraState.items lets the Blockly mutator rebuild the ITEM{n} inputs on load (M3);
+      // UI-only, the decoder ignores it (it walks `inputs`).
+      extraState: { items: [0, 1] },
       inputs: {
         ITEM0: { block: { type: 'transon_literal', fields: { VALUE: 1 } } },
         ITEM1: { block: { type: 'transon_literal', fields: { VALUE: 2 } } },

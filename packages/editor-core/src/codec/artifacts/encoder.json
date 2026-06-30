@@ -7,6 +7,17 @@
         "array": {
           "$": "object",
           "fields": {
+            "extraState": {
+              "$": "object",
+              "fields": {
+                "items": {
+                  "$": "map",
+                  "item": {
+                    "$": "index"
+                  }
+                }
+              }
+            },
             "inputs": {
               "$": "map",
               "key": {

@@ -356,7 +356,12 @@ const G_RULE_DECODE_CASES: Json = { '@': 'chain', funcs: [
 const encSkeleton = (dispatchCases: Json): Json => ({
   $: 'switch', key: { $: 'call', name: 'type', value: { $: 'this' } },
   cases: {
+    // extraState.items = the item indices [0..n-1]; the Blockly `transon_array_mutator` reads its
+    // length to rebuild the ITEM{n} inputs at load time (Blockly errors on an input the block
+    // doesn't declare). UI-only structural state (§11.5), symmetric with object_literal's
+    // extraState.keys; the decoder ignores it (it walks `inputs`), so round-trip is unchanged.
     array: { $: 'object', fields: { type: 'transon_array',
+      extraState: { $: 'object', fields: { items: { $: 'map', item: { $: 'index' } } } },
       inputs: { $: 'map', key: { $: 'format', pattern: 'ITEM{}', value: { $: 'index' } },
                 value: { $: 'object', fields: { block: { $: 'include', name: 'enc' } } } } } },
     object: { $: 'cond',
