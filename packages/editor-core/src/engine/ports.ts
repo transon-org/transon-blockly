@@ -94,8 +94,16 @@ export interface EngineProvider {
 
   /**
    * Execute `template` against `input` under `marker` (SPEC §9.10).
-   * `includeLoader` lets the host resolve `include` fragments by name (AD-010); it maps
-   * onto the engine's `template_loader` delegate.
+   *
+   * `include` resolution (AD-010) crosses this boundary two ways, both mapping onto the
+   * engine's `template_loader` delegate:
+   *   - `includeLoader(name)` — host-driven dynamic resolution (e.g. an embedder's include
+   *     library, M4). The stateless bridge cannot call back mid-transform, so a provider
+   *     may pre-resolve a known name set through it.
+   *   - `includes` — a pre-resolved `name → fragment` map, passed eagerly. The generated
+   *     codec (M1) self-`include`s to recurse and factors its per-rule body into a named
+   *     fragment; both names are known at codegen time, so the codec runner hands the whole
+   *     bundle over directly here rather than through the callback.
    */
   transform(
     template: Json,
@@ -103,6 +111,7 @@ export interface EngineProvider {
     o: {
       marker: string;
       includeLoader?(name: string): Json | undefined;
+      includes?: Record<string, Json>;
     },
   ): Promise<ExecutionResult>;
 

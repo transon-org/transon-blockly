@@ -139,14 +139,19 @@ class NodeEngineProvider implements EngineProvider {
     o: {
       marker: string;
       includeLoader?(name: string): Json | undefined;
+      includes?: Record<string, Json>;
     },
   ): Promise<ExecutionResult> {
-    // `includeLoader` maps onto the engine `template_loader` delegate (AD-010). The
+    // `include` resolution maps onto the engine `template_loader` delegate (AD-010). The
     // newline-JSON bridge is stateless per request and cannot call back across the
     // boundary mid-transform, so includes are passed eagerly as a name->fragment map.
-    // M0 templates use no includes (an empty map is correct); M1 enumerates the names
-    // the codec references and pre-resolves them through `includeLoader`.
-    const includes: Record<string, Json> = collectIncludes(o.includeLoader);
+    // M0 templates used no includes (an empty map); M1's codec passes its fragment bundle
+    // via `o.includes` directly (names known at codegen time), and a host may still supply
+    // an `includeLoader` for dynamic resolution.
+    const includes: Record<string, Json> = collectIncludes(
+      o.includeLoader,
+      o.includes,
+    );
     const res = (await this.#request({
       op: 'transform',
       template,
@@ -210,14 +215,17 @@ class NodeEngineProvider implements EngineProvider {
 }
 
 /**
- * Eagerly materialize include fragments for the stateless bridge. M0 codecs reference
- * no includes, so this returns an empty map; the `includeLoader` is retained on the
- * boundary for M1, where the set of referenced fragment names is known at codegen time.
+ * Eagerly materialize include fragments for the stateless bridge. The M1 codec passes its
+ * fragment bundle directly via `includes` (names known at codegen time); an `includeLoader`
+ * may additionally supply dynamic host fragments. An explicit `includes` entry wins on a
+ * name collision (the codec owns its own fragment names).
  */
 function collectIncludes(
-  _includeLoader?: (name: string) => Json | undefined,
+  includeLoader?: (name: string) => Json | undefined,
+  includes?: Record<string, Json>,
 ): Record<string, Json> {
-  return {};
+  void includeLoader; // dynamic host-driven resolution wires in at M4 (no names to pull yet)
+  return { ...(includes ?? {}) };
 }
 
 /** Create a Node->Python `transon` EngineProvider for tests (AD-011). */

@@ -113,16 +113,24 @@ def _op_validate(req):
 def _make_template_loader(includes, marker):
     """Wrap a name->json include map as an engine template_loader (AD-010).
 
-    The engine's template_loader returns a Transformer, so each resolved include JSON is
-    wrapped in a Transformer that shares the active marker.
+    The v0.1.3 engine always calls the loader as ``loader(name, context=IncludeContext)``
+    (transon rules.py: `include` -> `template_loader(name, context=...)`). The loader must
+    build the sub-Transformer via ``context.transformer(...)`` so the parent's loader,
+    marker, and `max_include_depth` guard are inherited — that is what lets the codec's
+    self-`include` recurse and terminate cleanly at the depth limit instead of looping
+    (metadata-contract §6.5). At the top level there is no context yet, so fall back to a
+    plain Transformer carrying the active marker.
     """
     if not includes:
         return None
 
-    def loader(name):
+    def loader(name, context=None):
         if name not in includes:
             raise TransformationError(f"include not resolvable: {name}")
-        return Transformer(includes[name], marker=marker)
+        template = includes[name]
+        if context is not None:
+            return context.transformer(template)
+        return Transformer(template, marker=marker)
 
     return loader
 
