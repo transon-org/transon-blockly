@@ -50,6 +50,39 @@ const joinNames = (list: Json): Json => ({ $: 'join', items: list, sep: ',', def
 const keyPresent = (paramHole: Json): Json =>
   nev(joinNames({ $: 'chain', funcs: [NODE_KEYS, { $: 'filter', cond: eqv(THIS_T, paramHole) }] }), KEY_NIL);
 
+// The active DOCUMENT marker the codec inspects (distinct from the codec template's own `$`
+// marker). Centralized so a configured marker (FR-063) is a single value to thread; the
+// committed codec targets the default `$`.
+const DOC_MARKER = '$';
+
+// keys of `this` (used by the skeleton, which walks `this` directly rather than via `set node`).
+const THIS_KEYS: Json = { $: 'map', item: { $: 'key' } };
+const isEmptyNames = (list: Json): Json => eqv(joinNames(list), KEY_NIL);
+const thisHasKey = (name: Json): Json =>
+  nev(joinNames({ $: 'chain', funcs: [THIS_KEYS, { $: 'filter', cond: eqv(THIS_T, name) }] }), KEY_NIL);
+
+// The skeleton-owned literal-marker escape (FR-123, §11.4): `this` is an EXACTLY-shaped
+// `{<marker>: "object", fields: X}` — marker value `object`, a `fields` key, and no other key.
+// It represents the literal object X (which may itself carry the marker), and takes precedence
+// over the (M2) `object` rule arm.
+const isEscape: Json = {
+  $: 'expr', op: 'and', values: [
+    eqv({ $: 'attr', name: DOC_MARKER }, 'object'),
+    thisHasKey('fields'),
+    isEmptyNames({ $: 'chain', funcs: [
+      THIS_KEYS, { $: 'filter', cond: nev(THIS_T, DOC_MARKER) }, { $: 'filter', cond: nev(THIS_T, 'fields') },
+    ] }),
+  ],
+};
+// Emit `transon_object_literal` for the literal object that is the current `this` (its key/value
+// pairs recurse). Reused for a marker-free object and for the escape's `fields` payload.
+const encObjectLiteral: Json = { $: 'object', fields: {
+  type: 'transon_object_literal',
+  extraState: { $: 'object', fields: { keys: THIS_KEYS } },
+  inputs: { $: 'map', key: { $: 'format', pattern: 'VALUE{}', value: { $: 'index' } },
+            value: { $: 'object', fields: { block: { $: 'include', name: 'enc' } } } },
+} };
+
 // ---- G_rule_encode: project a rule's encode arm from its metadata ----
 // per-param value input ($); emitted only when the param key is present on the node (FR-025).
 const encRecurse = (paramHole: Json): Json =>
@@ -77,7 +110,7 @@ const isForeignKey: Json = { // THIS is a node key; foreign === differs from eve
 };
 const noForeignKey: Json = eqv(
   joinNames({ $: 'chain', funcs: [
-    NODE_KEYS, { $: 'filter', cond: nev(THIS_T, '$') }, { $: 'filter', cond: isForeignKey },
+    NODE_KEYS, { $: 'filter', cond: nev(THIS_T, DOC_MARKER) }, { $: 'filter', cond: isForeignKey },
   ] }),
   KEY_NIL,
 );
@@ -124,7 +157,7 @@ const decInput = (paramHole: Json): Json => {
 };
 const DEC_RECON: Json = lit({
   $: 'join', items: [
-    lit({ $: 'object', key: '$', value: RULE_NAME }),
+    lit({ $: 'object', key: DOC_MARKER, value: RULE_NAME }),
     lit({ $: 'object', fields: { '@': 'chain', funcs: [
       at('params'), { '@': 'map', key: at('name'), value: decInput(at('name')) },
     ] } }),
@@ -143,12 +176,16 @@ const encSkeleton = (dispatchCases: Json): Json => ({
       inputs: { $: 'map', key: { $: 'format', pattern: 'ITEM{}', value: { $: 'index' } },
                 value: { $: 'object', fields: { block: { $: 'include', name: 'enc' } } } } } },
     object: { $: 'cond',
-      cases: [{ when: { $: 'expr', op: 'eq', values: [{ $: 'attr', name: '$', default: '__transon_no_marker__' }, '__transon_no_marker__'] },
-                then: { $: 'object', fields: { type: 'transon_object_literal',
-                  extraState: { $: 'object', fields: { keys: { $: 'map', item: { $: 'key' } } } },
-                  inputs: { $: 'map', key: { $: 'format', pattern: 'VALUE{}', value: { $: 'index' } },
-                            value: { $: 'object', fields: { block: { $: 'include', name: 'enc' } } } } } } }],
-      default: { $: 'switch', key: { $: 'attr', name: '$' }, cases: dispatchCases,
+      cases: [
+        // marker absent → a normal literal object
+        { when: eqv({ $: 'attr', name: DOC_MARKER, default: '__transon_no_marker__' }, '__transon_no_marker__'),
+          then: encObjectLiteral },
+        // literal-marker escape (FR-123): `{<marker>:object, fields:X}` → the literal object X,
+        // taking precedence over rule dispatch
+        { when: isEscape, then: { $: 'chain', funcs: [{ $: 'attr', name: 'fields' }, encObjectLiteral] } },
+      ],
+      // otherwise dispatch on the rule name; unknown rule → out of surface
+      default: { $: 'switch', key: { $: 'attr', name: DOC_MARKER }, cases: dispatchCases,
                  default: { $: 'object', fields: { type: 'transon_unsupported', extraState: { $: 'object', fields: { raw: { $: 'this' } } } } } } } },
   default: { $: 'object', fields: { type: 'transon_literal', fields: { $: 'object', fields: { VALUE: { $: 'this' } } } } },
 });
@@ -157,11 +194,20 @@ const FIXED_DEC_CASES: Record<string, Json> = {
   transon_literal: { $: 'chain', funcs: [{ $: 'attr', name: 'fields' }, { $: 'attr', name: 'VALUE' }] },
   transon_array: { $: 'chain', funcs: [{ $: 'attr', name: 'inputs' },
     { $: 'map', item: { $: 'chain', funcs: [{ $: 'attr', name: 'block' }, { $: 'include', name: 'dec' }] } }] },
-  transon_object_literal: { $: 'chain', funcs: [{ $: 'attr', name: 'extraState' }, { $: 'attr', name: 'keys' },
+  transon_object_literal: { $: 'chain', funcs: [
+    { $: 'attr', name: 'extraState' }, { $: 'attr', name: 'keys' },
     { $: 'map', key: { $: 'this' },
       value: { $: 'chain', funcs: [{ $: 'get', name: 'blk' }, { $: 'attr', name: 'inputs' },
         { $: 'attr', name: { $: 'format', pattern: 'VALUE{}', value: { $: 'index' } } },
-        { $: 'attr', name: 'block' }, { $: 'include', name: 'dec' }] } }] },
+        { $: 'attr', name: 'block' }, { $: 'include', name: 'dec' }] } },
+    // `this` is now the rebuilt literal object. If it carries the marker key, reproduce the
+    // §11.4 escape `{<marker>:object, fields:<object>}`; otherwise emit it directly (FR-123).
+    { $: 'cond',
+      cases: [{ when: thisHasKey(DOC_MARKER),
+                then: { $: 'join', sep: '', items: [
+                  { $: 'object', key: DOC_MARKER, value: 'object' },
+                  { $: 'object', key: 'fields', value: { $: 'this' } }] } }],
+      default: { $: 'this' } }] },
   transon_unsupported: { $: 'chain', funcs: [{ $: 'attr', name: 'extraState' }, { $: 'attr', name: 'raw' }] },
 };
 const decSkeleton = (allCases: Json): Json => ({ $: 'chain', funcs: [

@@ -96,6 +96,70 @@
                       }
                     ]
                   }
+                },
+                {
+                  "$": "cond",
+                  "cases": [
+                    {
+                      "then": {
+                        "$": "join",
+                        "items": [
+                          {
+                            "$": "object",
+                            "key": "$",
+                            "value": "object"
+                          },
+                          {
+                            "$": "object",
+                            "key": "fields",
+                            "value": {
+                              "$": "this"
+                            }
+                          }
+                        ],
+                        "sep": ""
+                      },
+                      "when": {
+                        "$": "expr",
+                        "op": "!=",
+                        "values": [
+                          {
+                            "$": "join",
+                            "default": "transon::absent-key",
+                            "items": {
+                              "$": "chain",
+                              "funcs": [
+                                {
+                                  "$": "map",
+                                  "item": {
+                                    "$": "key"
+                                  }
+                                },
+                                {
+                                  "$": "filter",
+                                  "cond": {
+                                    "$": "expr",
+                                    "op": "==",
+                                    "values": [
+                                      {
+                                        "$": "this"
+                                      },
+                                      "$"
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            "sep": ","
+                          },
+                          "transon::absent-key"
+                        ]
+                      }
+                    }
+                  ],
+                  "default": {
+                    "$": "this"
+                  }
                 }
               ]
             },

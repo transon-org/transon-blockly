@@ -81,7 +81,7 @@ docs/example-corpus templates; custom marker configuration; and import-failure c
 | Corpus group | SPEC ref | Status | Test reference |
 |--------------|----------|:------:|----------------|
 | Literals (scalar/array/object) | §15.8 | [~] | `test/engine-node-adapter/test/codec/roundtrip.test.ts` (scalar type fidelity, empties, nesting) |
-| Literal marker-key object | §15.8, §11.4 | [ ] | escape (FR-123) deferred past M1; marker-key objects currently round-trip via `transon_unsupported` |
+| Literal marker-key object | §15.8, §11.4 | [~] | skeleton-owned escape (FR-123): `test/engine-node-adapter/test/codec/escape.test.ts` + corpus entries (default marker; custom marker FR-063 deferred) |
 | Every built-in rule | §15.8, §14 | [ ] | |
 | Every block variant | §15.8, §7.7 | [ ] | |
 | Nested templates | §15.8 | [ ] | |
@@ -150,7 +150,7 @@ implementing module and the test that cites the ID.
 | §7.5 Round-trip | FR-035..FR-039 | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution); full corpus M2 |
 | §7.6 Rule coverage | FR-040..FR-044 | [ ] | parity checks above |
 | §7.7 Rule parameters and variants | FR-045..FR-058 | [ ] | required/optional/kind + variant model & import matcher (§15.6) |
-| §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [ ] | object/fields escape; skeleton-owned escape precedence + `transon_object_literal` naming (FR-123) |
+| §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [~] | skeleton-owned `{<marker>:object,fields:X}` escape + precedence + `transon_object_literal` (FR-059/060/061/062/123): `test/engine-node-adapter/test/codec/escape.test.ts`; custom marker (FR-063) centralized as `DOC_MARKER`, full parameterization deferred |
 | §7.9 Validation | FR-064..FR-070 | [ ] | engine `Transformer.validate()` via host `EngineProvider` |
 | §7.10 Execution preview | FR-071..FR-076 | [ ] | engine `transform()` via host `EngineProvider` |
 | §7.11 Documentation, metadata & block generation | FR-077..FR-090, FR-127 | [ ] | see metadata-contract.md; gated on metadata-contract §3; presentation/category/colour from data not TS (FR-127, NFR-048) |

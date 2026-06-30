@@ -34,6 +34,11 @@ export const M1_CORPUS: CorpusEntry[] = [
   // review #1 regression: a `default` value EQUAL to the old presence sentinel must NOT be dropped
   // (presence is key-based, not value-based). Output is the literal default since the key is absent.
   { name: 'attr-default-sentinel-value', template: { $: 'attr', name: 'missing', default: '__transon_absent__' }, input: {} },
+  // literal-marker escape (§11.4, FR-059/123): a literal object carrying the marker key, written
+  // via the `object`/`fields` escape. Content carries the marker, so it round-trips to the escape
+  // form. Executes to the literal object `{"$":"v"}`.
+  { name: 'escape-marker-key-object', template: { $: 'object', fields: { $: 'v' } } },
+  { name: 'escape-marker-key-mixed', template: { $: 'object', fields: { $: 'x', y: [1, 2] } } },
   // out-of-surface → unsupported placeholder, exact preservation (AD-004, FR-031/034, §13.11)
   { name: 'unsupported-rule', template: { $: 'no_such_rule_xyz', x: 1 } },
   // review #2 regression: ambiguous (name+names) and foreign-param `attr` are out-of-surface
