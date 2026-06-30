@@ -56,3 +56,60 @@ describe('custom marker round-trip (FR-063)', () => {
     expect(await decode(engine, await encode(engine, { $: 'attr', name: 'a' }))).toEqual({ $: 'attr', name: 'a' });
   });
 });
+
+// §15.8 custom-marker multi-rule templates: broaden coverage beyond single rules (FR-063).
+// These exercise constant-field params (op, name) and nested structures under a non-$ marker.
+describe('custom marker multi-rule round-trip (§15.8, FR-063)', () => {
+  // chain of attr + expr exercises a constant-field `op` under the custom marker
+  it('chain of attr+expr (constant op field) round-trips under custom marker', async () => {
+    const t: Json = {
+      [MARK]: 'chain',
+      funcs: [
+        { [MARK]: 'attr', name: 'x' },
+        { [MARK]: 'expr', op: '+', value: 1 },
+      ],
+    };
+    const back = await decode(engine, await encode(engine, t, MARK), MARK);
+    expect(back).toEqual(t);
+    // Execution identity: both branches should produce same output
+    const input: Json = { x: 5 };
+    const a = await engine.transform(t, input, { marker: MARK });
+    const b = await engine.transform(back, input, { marker: MARK });
+    expect(b.output).toEqual(a.output);
+    expect(a.output).toBe(6);
+  });
+
+  // map with a nested object — exercises key+value variant and constant-field param (name)
+  it('map with nested object round-trips under custom marker', async () => {
+    const t: Json = {
+      [MARK]: 'map',
+      item: {
+        [MARK]: 'object',
+        key: { [MARK]: 'call', name: 'str', value: { [MARK]: 'index' } },
+        value: { [MARK]: 'item' },
+      },
+    };
+    const back = await decode(engine, await encode(engine, t, MARK), MARK);
+    expect(back).toEqual(t);
+    // Structural: same template shape preserved
+    const input: Json = [10, 20, 30];
+    const a = await engine.transform(t, input, { marker: MARK });
+    const b = await engine.transform(back, input, { marker: MARK });
+    expect(b.success).toBe(a.success);
+    expect(b.output).toEqual(a.output);
+  });
+
+  // Multi-rule chain through cond+filter — exercises multi-arm templates under custom marker
+  it('filter with cond expression round-trips under custom marker', async () => {
+    const t: Json = {
+      [MARK]: 'filter',
+      cond: { [MARK]: 'expr', op: '>', value: 0 },
+    };
+    const back = await decode(engine, await encode(engine, t, MARK), MARK);
+    expect(back).toEqual(t);
+    const input: Json = [-1, 0, 1, 2, -3];
+    const a = await engine.transform(t, input, { marker: MARK });
+    const b = await engine.transform(back, input, { marker: MARK });
+    expect(b.output).toEqual(a.output);
+  });
+});

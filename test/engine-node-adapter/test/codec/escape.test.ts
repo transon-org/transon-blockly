@@ -52,3 +52,30 @@ describe('literal-marker escape decode + round-trip (FR-060/062, §11.4)', () =>
     expect((await engine.transform(back, null, { marker: '$' })).output).toEqual({ $: 'v' });
   });
 });
+
+// FR-123 refinement (M2): the escape fires ONLY when the `fields` payload contains the marker key.
+// A marker-FREE `{$:object, fields:X}` is the `object`/`fields` RULE (it omits NoContent values),
+// NOT the escape — it must project to `transon_rule_object__fields` and round-trip as the rule, not
+// collapse to a bare literal. Regression for the object/fields escape-collision (§11.4, §15.1).
+describe('marker-free {$:object, fields:X} is the object/fields RULE, not the escape (FR-123, §11.4)', () => {
+  it('marker-free payload → transon_rule_object__fields (rule), not transon_object_literal', async () => {
+    const t = { $: 'object', fields: { a: { $: 'attr', name: 'x' }, b: 'lit' } };
+    const ws = await encode(engine, t);
+    expect((ws as { type: string }).type).toBe('transon_rule_object__fields');
+    expect(await decode(engine, ws)).toEqual(t); // round-trips as the RULE (wrapper preserved)
+  });
+  it('marker-bearing payload stays the escape → transon_object_literal', async () => {
+    const ws = await encode(engine, { $: 'object', fields: { $: 'v', y: 1 } });
+    expect((ws as { type: string }).type).toBe('transon_object_literal');
+  });
+  it('the rule omits NoContent values (semantic distinction the literal would not preserve)', async () => {
+    const t = { $: 'object', fields: { missing: { $: 'get', name: 'nope' }, present: { $: 'attr', name: 'x' } } };
+    const back = await decode(engine, await encode(engine, t));
+    expect(back).toEqual(t);
+    // both original and round-tripped execute to {present:'xxx'} (the `missing` NoContent is dropped)
+    const a = await engine.transform(t, { x: 'xxx' }, { marker: '$' });
+    const b = await engine.transform(back, { x: 'xxx' }, { marker: '$' });
+    expect(a.output).toEqual({ present: 'xxx' });
+    expect(b.output).toEqual(a.output);
+  });
+});

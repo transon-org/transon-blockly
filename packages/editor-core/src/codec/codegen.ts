@@ -62,10 +62,26 @@ const isEmptyNames = (list: Json): Json => eqv(joinNames(list), KEY_NIL);
 const thisHasKey = (name: Json): Json =>
   nev(joinNames({ $: 'chain', funcs: [THIS_KEYS, { $: 'filter', cond: eqv(THIS_T, name) }] }), KEY_NIL);
 
+// True when the node's `fields` payload itself contains the marker key. This is what makes the
+// §11.4 escape (a literal object that must *contain* the marker key) distinguishable from the
+// `object`/`fields` RULE: a marker-bearing payload (e.g. `{<marker>:"v"}`) cannot be written as a
+// plain literal, so it is the escape; a marker-FREE payload is the rule.
+const fieldsHasMarkerKey: Json = nev(
+  joinNames({ $: 'chain', funcs: [
+    { $: 'attr', name: 'fields', default: {} },
+    { $: 'map', item: { $: 'key' } },
+    { $: 'filter', cond: eqv(THIS_T, DOC_MARKER) },
+  ] }),
+  KEY_NIL,
+);
+
 // The skeleton-owned literal-marker escape (FR-123, §11.4): `this` is an EXACTLY-shaped
-// `{<marker>: "object", fields: X}` — marker value `object`, a `fields` key, and no other key.
-// It represents the literal object X (which may itself carry the marker), and takes precedence
-// over the (M2) `object` rule arm.
+// `{<marker>: "object", fields: X}` — marker value `object`, a `fields` key, no other key, AND the
+// `fields` payload X *contains the marker key*. It represents the literal object X (§11.4: "a
+// literal object that must contain the marker key") and takes precedence over the `object` rule arm.
+// A marker-FREE `{<marker>:object, fields:X}` is NOT the escape — it is the `object`/`fields` RULE
+// (which omits NO_CONTENT values), so it falls through to the rule arm and round-trips as the rule
+// (`transon_rule_object__fields`), not as a bare literal that would drop the wrapper.
 const isEscape: Json = {
   $: 'expr', op: 'and', values: [
     eqv({ $: 'attr', name: DOC_MARKER }, 'object'),
@@ -73,6 +89,7 @@ const isEscape: Json = {
     isEmptyNames({ $: 'chain', funcs: [
       THIS_KEYS, { $: 'filter', cond: nev(THIS_T, DOC_MARKER) }, { $: 'filter', cond: nev(THIS_T, 'fields') },
     ] }),
+    fieldsHasMarkerKey,
   ],
 };
 // Emit `transon_object_literal` for the literal object that is the current `this` (its key/value

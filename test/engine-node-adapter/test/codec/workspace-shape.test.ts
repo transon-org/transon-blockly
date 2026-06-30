@@ -2,11 +2,49 @@
 // the fixed block vocabulary. The validator below asserts shape only (it performs no
 // codec↔workspace mapping, so it does not live under packages/*/src — FR-126). It must
 // catch a malformed-but-plausible block, not just reject obvious garbage.
+//
+// §15.8: workspace-shape invariant is validated over BOTH the M2 structural corpus AND
+// all 147 engine docs/example-corpus templates (FR-124, §15.8).
+// The examples include ≥4-level nesting (e.g. ExprMonadsComplex, MapListToList at depth 7).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { EngineProvider, Json } from '@transon/editor-core';
-import { encode, STRUCTURAL_BLOCK_TYPES } from '@transon/editor-core';
+import type { EngineProvider, Json, CatalogEntry } from '@transon/editor-core';
+import { encode, STRUCTURAL_BLOCK_TYPES, editorMetadata } from '@transon/editor-core';
 import { createNodeEngineProvider } from '../../src/index.js';
 import { M1_CORPUS } from './corpus.js';
+
+/** A single engine-docs example entry (NFR-047: docs side). */
+interface DocsExample {
+  name: string;
+  template: Json;
+  data: Json;
+  result: Json;
+}
+
+/**
+ * Collect all 147 examples from editorMetadata.docs.{rules,operators,functions}.
+ * Returns [{source, example}] — source is the rule/op/fn name for stable test naming.
+ */
+function collectAllDocsExamples(): { source: string; example: DocsExample }[] {
+  const out: { source: string; example: DocsExample }[] = [];
+  for (const entry of editorMetadata.docs.rules) {
+    for (const ex of ((entry as CatalogEntry & { examples?: DocsExample[] }).examples ?? [])) {
+      out.push({ source: entry.name, example: ex });
+    }
+  }
+  for (const entry of editorMetadata.docs.operators) {
+    for (const ex of ((entry as CatalogEntry & { examples?: DocsExample[] }).examples ?? [])) {
+      out.push({ source: entry.name, example: ex });
+    }
+  }
+  for (const entry of editorMetadata.docs.functions) {
+    for (const ex of ((entry as CatalogEntry & { examples?: DocsExample[] }).examples ?? [])) {
+      out.push({ source: entry.name, example: ex });
+    }
+  }
+  return out;
+}
+
+const DOCS_EXAMPLES = collectAllDocsExamples();
 
 const STRUCTURAL = new Set<string>(STRUCTURAL_BLOCK_TYPES);
 // Variant IDs may contain `+` (e.g. `key+value` from map/object/expr/call metadata).
@@ -70,3 +108,21 @@ describe('FR-124 workspace-shape validator over the §15.8 corpus (AD-032)', () 
     expect(validateBlock({ type: 'transon_array', inputs: { ITEM0: { notBlock: {} } } }).length).toBeGreaterThan(0);
   });
 });
+
+describe(
+  'FR-124 workspace-shape validator over 147 engine docs/example-corpus templates (§15.8, FR-124)',
+  () => {
+    it('has exactly 147 engine example templates to validate (NFR-047)', () => {
+      expect(DOCS_EXAMPLES).toHaveLength(147);
+    });
+
+    for (const { source, example } of DOCS_EXAMPLES) {
+      // Stable test name: {source}__{example.name} — unique across the whole docs corpus.
+      // Examples include ≥4-level nesting (ExprMonadsComplex / MapListToList at depth 7).
+      it(`${source}__${example.name} encodes to valid workspace JSON`, async () => {
+        const ws = await encode(engine, example.template);
+        expect(validateBlock(ws)).toEqual([]);
+      });
+    }
+  },
+);

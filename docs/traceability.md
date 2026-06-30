@@ -81,16 +81,16 @@ docs/example-corpus templates; custom marker configuration; and import-failure c
 | Corpus group | SPEC ref | Status | Test reference |
 |--------------|----------|:------:|----------------|
 | Literals (scalar/array/object) | §15.8 | [~] | `test/engine-node-adapter/test/codec/roundtrip.test.ts` (scalar type fidelity, empties, nesting) |
-| Literal marker-key object | §15.8, §11.4 | [~] | skeleton-owned escape (FR-123): `test/engine-node-adapter/test/codec/escape.test.ts` + corpus entries (default marker; custom marker FR-063 deferred) |
+| Literal marker-key object | §15.8, §11.4 | [x] | skeleton-owned escape, marker-bearing payload only (FR-123 M2 refinement): `escape.test.ts` (incl. marker-free `{$:object,fields:X}` → `object/fields` RULE, not the escape); default + custom marker |
 | Every built-in rule | §15.8, §14 | [x] | all 22 rules: `test/engine-node-adapter/test/codec/corpus.ts` M2 entries + `roundtrip.test.ts` (structural + execution identity per entry) + `catalog-coverage.test.ts` (FR-040) |
 | Every block variant | §15.8, §7.7 | [x] | all rule variants (base, name, names, item, items, key+value, value, values, fields): corpus.ts M2 entries; `catalog-coverage.test.ts` asserts decode case per variant (FR-052/053/054) |
-| Nested templates | §15.8 | [~] | `roundtrip.test.ts` `mixed` entry + attr-nested; deeper nesting deferred to D3 |
-| Docs/example-corpus templates | §15.8 | [ ] | |
+| Nested templates | §15.8 | [x] | `roundtrip.test.ts` (`mixed`, attr-nested) + deep real-world nesting (≥4 levels, e.g. `ExprMonadsComplex`) across the 147 engine examples: `examples-corpus.test.ts` |
+| Docs/example-corpus templates | §15.8 | [x] | all 147 engine `docs.{rules,operators,functions}[*].examples` round-trip (structural + execution identity): `test/engine-node-adapter/test/codec/examples-corpus.test.ts` |
 | Custom marker configuration | §15.8, FR-063 | [x] | `test/engine-node-adapter/test/codec/marker.test.ts` (runtime marker substitution; one codec serves any marker) |
-| Import-failure cases | §15.8, §17 | [ ] | |
+| Import-failure cases | §15.8, §17 | [x] | ambiguous multi-variant (`expr`/`call` value+values, `map` item+items, `object` key+value+fields), zero-param-with-foreign-key, unknown rule, foreign param → `transon_unsupported` + exact preservation (AD-004): `test/engine-node-adapter/test/codec/unsupported-variants.test.ts` |
 | Round-trip by construction (per rule, generated codec) | §15.1, FR-115, AC-035 | [x] | full catalog (all 22 rules): `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity); `catalog-coverage.test.ts` (FR-040, AC-006, AC-035) |
 | Self-hosting projection template | §7.16, FR-121, UC-016, AC-036 | [ ] | a `G_*`/codec template imports + round-trips as a normal in-surface template |
-| Workspace-shape invariant (per corpus entry) | §15.8, FR-124, AD-032 | [x] | `test/engine-node-adapter/test/codec/workspace-shape.test.ts` (full M2 corpus; all 22 rules + all variants + out-of-surface + literals) |
+| Workspace-shape invariant (per corpus entry) | §15.8, FR-124, AD-032 | [x] | `test/engine-node-adapter/test/codec/workspace-shape.test.ts` (full M2 corpus + all 147 engine examples; 22 rules + all variants + constant fields + out-of-surface + literals) |
 
 ## Acceptance criteria coverage (§20)
 
@@ -126,8 +126,8 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-026 | Custom marker | [ ] | |
 | AC-027 | Tests (generation/import/export/round-trip/...) | [ ] | |
 | AC-028 | Metadata-driven generic block (gated on metadata-contract §3) | [ ] | |
-| AC-029 | Block variants for mutually exclusive parameters | [ ] | |
-| AC-030 | Variant import matching | [ ] | |
+| AC-029 | Block variants for mutually exclusive parameters | [x] | per-variant blocks for every multi-variant rule (`attr`/`object`/`map`/`expr`/`call`): `catalog-coverage.test.ts`, `roundtrip.test.ts`; mutually-exclusive groups present together → `transon_unsupported`: `unsupported-variants.test.ts` |
+| AC-030 | Variant import matching | [x] | exact per-variant match; ambiguous/partial/foreign → `transon_unsupported` with exact preservation (§15.6): `test/engine-node-adapter/test/codec/unsupported-variants.test.ts` |
 | AC-031 | Sandbox mode | [ ] | |
 | AC-032 | Compact editor mode | [ ] | |
 | AC-033 | Bidirectional JSON editing (strict in-surface) | [ ] | |
@@ -150,7 +150,7 @@ implementing module and the test that cites the ID.
 | §7.5 Round-trip | FR-035..FR-039 | [~] | FR-035/036 full 22-rule catalog: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity for all corpus entries); FR-037..039 surface check completeness deferred |
 | §7.6 Rule coverage | FR-040..FR-044 | [~] | FR-040 all 22 rules folded in + CATALOG_RULES metadata-derived: `catalog-coverage.test.ts`; FR-041 all 28 operator tokens (14+14 aliases): `operators.test.ts`; FR-042 all 4 functions: `operators.test.ts`; FR-043..044 palette/export pending UI |
 | §7.7 Rule parameters and variants | FR-045..FR-058 | [~] | FR-045 required params, FR-046 optional omission, FR-052/053/054 variant model + per-variant matching: `roundtrip.test.ts` (all corpus entries), `catalog-coverage.test.ts` (dec case per variant); FR-055 no silent rewrite: unsupported entries in corpus + `encode.test.ts`; FR-047 constant-vs-dynamic distinction + FR-118 field-vs-input disposition: `operators.test.ts` (constant `op`/`name` → `fields`, dynamic params → `inputs`; encoder+decoder, all variants); FR-058 constant-choice UI (M5, pending) |
-| §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [x] | skeleton-owned `{<marker>:object,fields:X}` escape + precedence + `transon_object_literal` (FR-059/060/061/062/123): `escape.test.ts`; custom marker (FR-063) via runtime marker substitution: `marker.test.ts` |
+| §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [x] | skeleton-owned escape, precedence + `transon_object_literal` (FR-059/060/061/062/123); **M2 FR-123 refinement**: escape fires only for a marker-bearing `fields` payload — a marker-free `{<marker>:object,fields:X}` is the `object`/`fields` RULE (`transon_rule_object__fields`), not the escape: `escape.test.ts`; custom marker (FR-063): `marker.test.ts` |
 | §7.9 Validation | FR-064..FR-070 | [ ] | engine `Transformer.validate()` via host `EngineProvider` |
 | §7.10 Execution preview | FR-071..FR-076 | [ ] | engine `transform()` via host `EngineProvider` |
 | §7.11 Documentation, metadata & block generation | FR-077..FR-090, FR-127 | [ ] | see metadata-contract.md; gated on metadata-contract §3; presentation/category/colour from data not TS (FR-127, NFR-048) |

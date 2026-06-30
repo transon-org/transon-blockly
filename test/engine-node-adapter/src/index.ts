@@ -70,7 +70,16 @@ function resolvePython(opts: NodeEngineProviderOptions): Resolved {
 interface PendingRequest {
   resolve(value: Record<string, unknown>): void;
   reject(err: Error): void;
+  timer?: ReturnType<typeof setTimeout>;
 }
+
+/**
+ * Per-request response budget. Real ops are sub-millisecond (the runner is a long-lived
+ * subprocess), so this only ever trips when the runner is wedged, has died without an `exit`
+ * event, or the newline-JSON FIFO has desynced. On expiry we reject and tear the subprocess
+ * down so a test FAILS FAST instead of hanging forever (and leaking an orphaned worker).
+ */
+const REQUEST_TIMEOUT_MS = 30_000;
 
 class NodeEngineProvider implements EngineProvider {
   status: EngineProvider['status'] = 'idle';
@@ -179,20 +188,30 @@ class NodeEngineProvider implements EngineProvider {
 
   dispose(): void {
     this.#failAll(new Error('provider disposed'));
+    this.#teardownProc();
+    this.status = 'idle';
+  }
+
+  /** Close the readline + kill the subprocess (idempotent). Leaves the queue to the caller. */
+  #teardownProc(): void {
     this.#rl?.close();
     this.#rl = null;
     const proc = this.#proc;
     this.#proc = null;
     if (proc) {
-      proc.stdin.end();
-      proc.kill();
+      try {
+        proc.stdin.end();
+      } catch {
+        /* stdin may already be closed */
+      }
+      proc.kill('SIGKILL');
     }
-    this.status = 'idle';
   }
 
   #onLine(line: string): void {
     const pending = this.#queue.shift();
     if (!pending) return;
+    if (pending.timer) clearTimeout(pending.timer);
     try {
       pending.resolve(JSON.parse(line) as Record<string, unknown>);
     } catch (err) {
@@ -203,14 +222,34 @@ class NodeEngineProvider implements EngineProvider {
   #failAll(err: Error): void {
     const queue = this.#queue;
     this.#queue = [];
-    for (const pending of queue) pending.reject(err);
+    for (const pending of queue) {
+      if (pending.timer) clearTimeout(pending.timer);
+      pending.reject(err);
+    }
   }
 
   #request(req: Record<string, unknown>): Promise<Record<string, unknown>> {
     const proc = this.#proc;
     if (!proc) return Promise.reject(new Error('provider not initialized'));
     return new Promise((resolveReq, rejectReq) => {
-      this.#queue.push({ resolve: resolveReq, reject: rejectReq });
+      const pending: PendingRequest = { resolve: resolveReq, reject: rejectReq };
+      pending.timer = setTimeout(() => {
+        // No response within the budget: the runner is wedged or the FIFO desynced. Drop this
+        // request, tear the subprocess down, and fail every pending request — never hang.
+        const idx = this.#queue.indexOf(pending);
+        if (idx >= 0) this.#queue.splice(idx, 1);
+        this.status = 'failed';
+        rejectReq(
+          new Error(
+            `engine request timed out after ${REQUEST_TIMEOUT_MS}ms (op: ${String(req.op)})${
+              this.#stderr ? `: ${this.#stderr}` : ''
+            }`,
+          ),
+        );
+        this.#teardownProc();
+        this.#failAll(new Error('engine torn down after request timeout'));
+      }, REQUEST_TIMEOUT_MS);
+      this.#queue.push(pending);
       proc.stdin.write(JSON.stringify(req) + '\n');
     });
   }

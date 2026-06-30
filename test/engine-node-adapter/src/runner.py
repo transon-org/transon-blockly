@@ -208,7 +208,19 @@ def main():
             response = {"status": "error", "error_message": f"bad json: {exc}"}
         else:
             response = _handle(req)
-        sys.stdout.write(json.dumps(response) + "\n")
+        try:
+            payload = json.dumps(response)
+        except (TypeError, ValueError) as exc:
+            # A transform can return success with a value the bridge cannot serialize (e.g. an
+            # engine NoContent sentinel leaking into output). Never crash this long-lived process
+            # on the write — emit a structured error so the Node adapter rejects cleanly instead
+            # of blocking forever on a now-dead subprocess.
+            payload = json.dumps({
+                "status": "error",
+                "error_type": "SerializationError",
+                "error_message": f"engine output is not JSON-serializable: {exc}",
+            })
+        sys.stdout.write(payload + "\n")
         sys.stdout.flush()
 
 

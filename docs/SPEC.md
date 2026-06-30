@@ -438,10 +438,16 @@ itself (FR-121, AC-036).
 - **FR-063** The editor shall support custom marker keys when configured.
 - **FR-123** The literal marker-key object escape (a JSON object carrying the active marker key
   with a `fields` payload, §11.4) shall be owned by the **codec skeleton** and take **precedence**
-  over the `object` rule's `fields` variant. It matches **exactly** marker + `fields`; any
-  additional key falls through to ordinary rule/surface handling (an undeclared parameter is out of
-  surface, §15.7). The structural literal-object block type shall be **named to avoid collision**
-  with the `object` rule block (e.g. `transon_object_literal`, §13.7).
+  over the `object` rule's `fields` variant **when, and only when, the `fields` payload itself
+  contains the active marker key** — the case a plain literal cannot express (§11.4). It matches
+  **exactly** marker + `fields` with a **marker-bearing payload**; any additional key falls through
+  to ordinary rule/surface handling (an undeclared parameter is out of surface, §15.7). A
+  `{<marker>: object, fields: X}` whose payload `X` is **marker-free** is the ordinary `object`/
+  `fields` **rule** (it builds a dict, omitting `NoContent` values) and shall be projected as the
+  rule block `transon_rule_object__fields`, not the literal-object block — so it round-trips as the
+  rule rather than collapsing to a bare literal (§15.1). The structural literal-object block type
+  shall be **named to avoid collision** with the `object` rule block (e.g. `transon_object_literal`,
+  §13.7).
 
 ### 7.9 Validation
 
@@ -917,6 +923,12 @@ A literal object that must contain the marker key is emitted through the `object
 
 This is the single canonical description of the literal-marker escape, referenced by FR-060,
 FR-061, UC-011, §15.5.
+
+The escape applies **only** when the `fields` payload contains the marker key (as above) — that is
+the case a plain literal object cannot express directly. A `{ "$": "object", "fields": X }` whose
+payload `X` does **not** contain the marker key is the ordinary `object`/`fields` **rule** (it
+builds a dict and omits `NoContent` values, which a plain literal does not), and is projected as
+the rule block, not the escape (FR-123). Both forms round-trip to `{ "$": "object", "fields": X }`.
 
 ### 11.5 Workspace Projection (canonical UI-only attributes)
 
