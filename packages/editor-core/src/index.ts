@@ -27,6 +27,7 @@ export {
   encode,
   decode,
   blockMap,
+  runCodecArtifact,
   CodecError,
   CODEC_MARKER,
   STRUCTURAL_BLOCK_TYPES,

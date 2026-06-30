@@ -489,8 +489,13 @@ function enrichEntry(entry: unknown): unknown {
 export async function generateCodec(
   engine: EngineProvider,
   rules: string[] = CATALOG_RULES,
+  // Optional catalog override (default: the pinned metadata catalog). This exists so the AC-034
+  // proof can project a SYNTHETIC rule through the *committed* generators + skeleton with zero
+  // projection-template change — demonstrating that a new rule folds in by metadata alone. The
+  // committed artifacts are always generated from `editorMetadata.catalog.rules` (the default).
+  catalog: CatalogEntry[] = editorMetadata.catalog.rules,
 ): Promise<{ encoder: CodecArtifact; decoder: CodecArtifact; blockmap: CodecArtifact }> {
-  const catalogRules = editorMetadata.catalog.rules;
+  const catalogRules = catalog;
   const encFragments: Record<string, Json> = {};
   const decCases: Record<string, Json> = { ...FIXED_DEC_CASES };
   const dispatch: Record<string, Json> = {};

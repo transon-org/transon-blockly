@@ -117,6 +117,22 @@ export function decode(engine: EngineProvider, workspace: Json, marker: string =
 }
 
 /**
+ * Run an arbitrary codec artifact (not just the committed encoder/decoder) through the host engine,
+ * the same two-pass way `encode`/`decode` run the committed ones (marker substitution + the host
+ * `EngineProvider`, AD-030). Used to execute a *freshly generated* codec — e.g. the AC-034
+ * projection-coverage proof that a synthetic rule folds in with no projection change, and the
+ * future runtime metadata-source policy (re-generate the codec from host metadata, ROADMAP).
+ */
+export function runCodecArtifact(
+  engine: EngineProvider,
+  artifact: { entry: string; fragments: Record<string, Json> },
+  input: Json,
+  marker: string = CODEC_MARKER,
+): Promise<Json> {
+  return runArtifact(engine, artifact as Artifact, input, marker);
+}
+
+/**
  * The `JsonPathBlockMap` for a document — emitted alongside the workspace as the codec walks
  * (FR-091/094/122, §9.12). Each entry maps a JSON `template_path` to its `block_id` (the path),
  * with `rule_name`/`parameter_name` where applicable and the `nearest_parent_block_id` for the

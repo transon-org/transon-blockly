@@ -125,13 +125,13 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-025 | Include loader behavior | [ ] | |
 | AC-026 | Custom marker | [ ] | |
 | AC-027 | Tests (generation/import/export/round-trip/...) | [ ] | |
-| AC-028 | Metadata-driven generic block (gated on metadata-contract §3) | [ ] | |
+| AC-028 | Metadata-driven generic block (gated on metadata-contract §3) | [x] | a synthetic rule's blocks (constant field + dynamic input, 2 variants) are projected from metadata alone via the committed generators: `test/engine-node-adapter/test/codec/projection-coverage.test.ts` |
 | AC-029 | Block variants for mutually exclusive parameters | [x] | per-variant blocks for every multi-variant rule (`attr`/`object`/`map`/`expr`/`call`): `catalog-coverage.test.ts`, `roundtrip.test.ts`; mutually-exclusive groups present together → `transon_unsupported`: `unsupported-variants.test.ts` |
 | AC-030 | Variant import matching | [x] | exact per-variant match; ambiguous/partial/foreign → `transon_unsupported` with exact preservation (§15.6): `test/engine-node-adapter/test/codec/unsupported-variants.test.ts` |
 | AC-031 | Sandbox mode | [ ] | |
 | AC-032 | Compact editor mode | [ ] | |
 | AC-033 | Bidirectional JSON editing (strict in-surface) | [ ] | |
-| AC-034 | Projection coverage: new rule across all surfaces, no editor/projection change | [ ] | |
+| AC-034 | Projection coverage: new rule across all surfaces, no editor/projection change | [x] | `generateCodec` projects a synthetic rule via the committed generators + skeleton with a catalog override only (zero projection-file edit); it encodes/decodes/round-trips + field-vs-input disposition: `test/engine-node-adapter/test/codec/projection-coverage.test.ts` (the default codec excludes it — committed artifacts unaffected) |
 | AC-035 | Round-trip by construction (generated encoder/decoder, per rule) | [x] | full 22-rule catalog (encoder+decoder from one metadata source; structural + execution identity): `test/engine-node-adapter/test/codec/roundtrip.test.ts`; `catalog-coverage.test.ts` asserts enc + dec arms for all rules/variants |
 | AC-036 | Self-hosting projection template loads + round-trips | [ ] | |
 | AC-037 | Presentation (title/category/advanced/colour) from data, not TypeScript; synthetic-rule projection test | [ ] | |
@@ -158,7 +158,7 @@ implementing module and the test that cites the ID.
 | §7.13 Import / export UX | FR-096..FR-101 | [ ] | |
 | §7.14 Component embedding | FR-102..FR-110 | [ ] | component API |
 | §7.15 Bidirectional JSON editing | FR-111..FR-113 | [ ] | strict in-surface sync (AD-024); now via the generated decoder/encoder |
-| §7.16 Template-driven projection surface | FR-114..FR-121, FR-124..FR-126 | [~] | Full 22-rule catalog + `G_encode`/`G_decode` projections; FR-118/FR-124 field-vs-input disposition from `kind` (D2): constant params → `fields`, dynamic params → `inputs` via entry enrichment + @-time filtering (`packages/editor-core/src/codec/codegen.ts`); `operators.test.ts`; FR-121 self-hosting M5; FR-125 palette M3 |
+| §7.16 Template-driven projection surface | FR-114..FR-121, FR-124..FR-126 | [~] | Full 22-rule catalog + `G_encode`/`G_decode` projections; FR-118/FR-124 field-vs-input disposition from `kind` (D2): constant params → `fields`, dynamic params → `inputs` via entry enrichment + @-time filtering (`packages/editor-core/src/codec/codegen.ts`); `operators.test.ts`; FR-120 new-rule-from-metadata: `projection-coverage.test.ts`; FR-121 self-hosting M5; FR-125 palette M3 |
 
 ## Non-functional & architecture decisions
 
@@ -175,7 +175,7 @@ dedicated tests:
 | NFR-035 / AD-009 | `file` writes captured, not written to disk | execution tests (AC-024) | [ ] |
 | AD-010 | `include` resolved via host loader; missing loader reported | execution tests (AC-025) | [ ] |
 | NFR-036..039 / NFR-040 / AD-012 | Metadata schema versioning + mismatch detection | see metadata-contract.md §5; typed snapshot loader (`packages/editor-core/test/snapshot.test.ts`) | [~] |
-| AD-026 / FR-114/115/120 / AC-034 | Editor surface = projections of metadata; new rule, no editor/projection change | projection-coverage test + codec-regeneration check | [~] `attr` arm projected from metadata; codec-regeneration byte-equal (`test/engine-node-adapter/test/codec/regen.test.ts`); AC-034 multi-rule M2 |
+| AD-026 / FR-114/115/120 / AC-034 | Editor surface = projections of metadata; new rule, no editor/projection change | projection-coverage test + codec-regeneration check | [x] all 22 rules projected from metadata; codec-regeneration byte-equal (`regen.test.ts`); a synthetic rule folds in via a catalog override with no projection change (`projection-coverage.test.ts`, FR-120/AC-034/AC-028) |
 | AD-027 / FR-116 | Distinct-marker staging (`@`/`$`); `include` default-marker inheritance; no `eval` | generator staging tests (`test/engine-node-adapter/test/adapter.markers.test.ts`); engine `include` marker test (engine repo) | [~] codec `@`→`$` projection + self-`include` recursion: `…/adapter.markers.test.ts`, `…/adapter.includes.test.ts`, `…/codec/regen.test.ts` |
 | AD-028 / FR-117 | Codec = skeleton + projected arms; skeleton owns invariants | codec-skeleton unit tests (recursion/ordering/marker-escape/surface) | [~] skeleton (dispatch/recursion/ordering/unsupported): `test/engine-node-adapter/test/codec/encode.test.ts`, `roundtrip.test.ts`, `ceiling.test.ts` (marker-escape M1-follow-on) |
 | AD-029 / FR-118 | `switch`/`cond` lazy dispatch + field-vs-input disposition from `kind` in the generated codec | dispatch + lazy-branch tests; disposition: `operators.test.ts` (all 28 ops + 4 fns with constant param → `fields`, dynamic → `inputs`; decode reverses) | [~] disposition D2 done: `operators.test.ts`; full switch/cond lazy-branch tests (engine repo) pending |
