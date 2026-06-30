@@ -8,13 +8,60 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `f4de4c8` — editor: M3 review — decoder reverse-path hardening + FR-126 Blockly-resave gate |
-| Branch | `m3-editor-blockly` |
+| Repo HEAD | `98e70eb` — editor: M4 review — §7.15 surface-check must-fix (token in data ≠ out-of-surface) |
+| Branch | `m4-editor-ui` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**M4 COMPLETE (`/run-milestone M4`) — ROADMAP ☑, `round-trip-reviewer`-signed-off, all DoD gates green;
+NOT pushed.** Branch `m4-editor-ui` (off `m3-editor-blockly`). The runnable editor in both UI modes,
+wired to a host engine that runs user templates **and** the projection codecs (AD-030). Three new
+packages: `@transon/editor-ui` (private React UI), `@transon/editor-element` (public, ESM + IIFE), and
+`examples/reference-host` (the Pyodide demo host, AD-025). **SPEC-first (`1902f64`):** resolved the design
+STOPs — §10.4/§17.9 corrected so the visual⇄JSON projection is **engine-gated** (the prior "engine-free
+generation" was superseded pre-pivot text; under AD-026/030 generation/import run the codec through the
+host engine), ARCH §6/§6.4 encode/decode naming fixed (forward=`decode`, reverse=`encode`), and AC-038 +
+§13.13 on-canvas mutators moved out of "Future". **Slices:** **D0 (`4da6c18`)** scaffold + AD-021 pins
+(React 18.3.1, @vitejs/plugin-react 5.2.0, jsdom 27.4.0); **D1 (`58b6dd6`)** the framework-agnostic
+`EditorSession` store (§9.3 + flow fields) + forward projection (workspace→JSON via core `decode`+`blockMap`,
+gated on engine-ready) + §16.4 taxonomy; **D2 (`204c0ac`)** the React shell (sandbox §12.1 / compact §12.2
+over the `EditorController`) + the interactive light-DOM Zelos mount (AD-017/018 — **Blockly 13 `inject`
+works under jsdom** with the En locale + SVG/canvas stubs in `test/setup.ts`) + editable
+`field_transon_scalar` (FR-015) + AC-038 +/- mutators (**object keys became editable `KEY{i}` fields
+collected back into `extraState.keys`**, decoder contract unchanged); **D3 (`b9703d2`)** validate/execute
+via the host (AC-012…016) + captured `file` writes (AC-024) + include loader pre-resolved map & dynamic JS
+callback (AC-025) + `json_input` validation + engine status (AC-023) + the Pyodide `createPyodideHost`
+(glue mirrors `runner.py` over a JSON-string boundary, no `eval`); **D4 (`8f698a4`)** error→block
+highlighting via a path-index↔block_map walk (Blockly API only, scan-clean) resolving exact/nearest-parent/
+root (FR-091…095, AC-017); **D5 (`e32e04a`)** strict §7.15 sync (`tryReverse`: parse→encode→surface-check→
+round-trip gate; accept loads, reject leaves the workspace unchanged — FR-111…113, AC-033, AD-024); **D6
+(`8b0b9ba`)** `createTransonEditor()` + `<transon-editor>` (light DOM, ESM + self-contained IIFE, **ships no
+engine** AD-019/020/008, AC-022) + the runnable Pyodide playground. **Independent `round-trip-reviewer`
+(maker≠checker) refuted every concern except one MUST-FIX** — the §7.15 surface check matched the bare
+token `transon_unsupported` ANYWHERE in the serialized block, so an in-surface document whose *data*
+contained that string was wrongly rejected (FR-111 break) — **fixed (`98e70eb`)** with a structural
+block-type walk (`Object.values` + `.type`, gate-clean) + a 4-case regression; reviewer also confirmed
+scalar type-fidelity, object-key round-trip, path-index, forward unwrap, and the no-engine IIFE all sound.
+**Key M4 mechanics learned:** an empty Blockly workspace serializes to `{}` (save() omits empty sections);
+the store's `workspace` is the Blockly ENVELOPE, the codec's `decode` takes the unwrapped top block;
+`setWarningText` needs a RENDERED (injected) workspace to register a WARNING icon (headless doesn't); an
+out-of-surface doc round-trips too (via the exact-preserving placeholder), so the SURFACE CHECK (not the
+round-trip gate) rejects it; the editor-ui↔adapter dep must stay one-directional (a circular dev-dep
+breaks turbo `^build`) — the §7.15 controller integration mocks `tryReverse` instead. **1477 tests**
+(core 12 + blockly 16 + ui 41 + element 12 + adapter 1389 + reference-host 7); build + typecheck + all gates
+green. **Next:** push `m1`/`m2`/`m3`/`m4` + open PR(s); then **M5** (`/run-milestone M5`): `@transon/
+editor-react`, example expected-vs-actual UX, import/export UX (FR-096…110), full embedding API
+(FR-102…110), accessibility, the self-hosting demo. **M5 watch-outs from M4:** (a) the JSON-panel
+controlled-textarea reflects `template_json` only while in_sync (preserves the edit while out_of_sync);
+(b) real engine errors carry only a text location trail (not a structured path), so highlighting falls
+back to the root block — structured paths would need an engine change; (c) the Pyodide host's real
+in-browser load is unverified by CI (jsdom can't load Pyodide) — verify it in a browser / M5 Playwright;
+(d) the IIFE no-engine assertion skips if `dist/iife.js` is absent (the dep+source scans always run)._
+
+### Prior last action (M3)
 
 _**M3 COMPLETE (`/run-milestone M3`) — ROADMAP ☑, `round-trip-reviewer`-signed-off, all DoD gates green;
 NOT pushed.** Branch `m3-editor-blockly` (off `m2-full-catalog`). The metadata catalog is projected to the
@@ -230,24 +277,34 @@ living read of it.
   runtime (`@transon/editor-blockly`: 1 field + 3 structural mutators). FR-125 (palette-load) + FR-126
   (encoder-load, both directions) + FR-127/NFR-048 (presentation-from-data) + NFR-046 (runtime-size) + AC-036
   (self-hosting in-surface) + AC-037 (synthetic-rule-from-data) all gated. 1387 tests. See **Last action**.
-- **M4–M5** — ☐ not started. M4: editor-ui + element shell, host execution, error highlighting, the
-  interactive Zelos render (AD-017/018, jsdom/browser), bidirectional sync (§7.15).
+- **M4 — `editor-ui` + `editor-element`: shell + host execution + bidirectional sync** — ☑ done
+  (committed `1902f64`→`98e70eb`, not pushed; `round-trip-reviewer` sign-off). The runnable editor in
+  sandbox + compact modes over the `EditorController`/`EditorSession` store; interactive light-DOM Zelos
+  mount (AD-017/018, jsdom); host validate/execute (AC-012…016/024/025); error→block highlighting
+  (AC-017); strict §7.15 bidirectional sync (AC-033); editable scalar field (FR-015) + on-canvas
+  array/object mutators (AC-038); `createTransonEditor()` + `<transon-editor>` (ESM + IIFE, no engine,
+  AC-022); the Pyodide reference host (AD-025). One reviewer must-fix (§7.15 surface check) fixed +
+  regression-locked. 1477 tests. See **Last action**.
+- **M5** — ☐ not started. React entry (`@transon/editor-react`), example expected-vs-actual UX,
+  import/export UX (FR-096…110), full embedding API, accessibility, self-hosting demo.
 
 ## Next steps (ordered)
 
 1. **Push the milestone branches + open PR(s)** (one branch/PR per milestone — none pushed yet):
-   `m1-codec-skeleton` (M1), `m2-full-catalog` (M2, off M1), `m3-editor-blockly` (M3, off M2). Reference the
-   covered FR/AC IDs. If they should merge to `main` in order, rebase each after the prior lands.
-2. **M4** (`/run-milestone M4`): `editor-ui` + `editor-element` — the shell + sandbox/compact modes +
-   `EditorSession` store; wire the host `EngineProvider` to run user templates **and** the codecs (the
-   reference Pyodide host, AD-025); error→block highlighting from the skeleton-produced `JsonPathBlockMap`;
-   the **interactive Zelos render into a light-DOM scoped container (AD-017/AD-018)** + `createTransonEditor()`
-   + `<transon-editor>`; strict bidirectional JSON editing (§7.15, AD-024). **M4 watch-outs from M3:** (a) the
-   reverse Blockly-save→decode path is **codec-proven** (`blockly-resave.test.ts`, incl. scalar type fidelity)
-   but the editor SYNC wiring (accept valid in-surface edit / reject + keep workspace, EditorSession) is M4;
-   (b) the structural mutators provide state hooks only — the visual gear/⊕/⊖ mutator UI is M4/future; (c)
-   `field_transon_scalar` holds any JSON scalar headlessly — its editable widget + validation UI is M4; (d)
-   jsdom/happy-dom test envs are introduced at M4 (the M3 gates are pure-`node` headless). **Regen flow** (if
+   `m1-codec-skeleton` (M1), `m2-full-catalog` (M2, off M1), `m3-editor-blockly` (M3, off M2),
+   `m4-editor-ui` (M4, off M3). Reference the covered FR/AC IDs. If they should merge to `main` in order,
+   rebase each after the prior lands.
+2. **M5** (`/run-milestone M5`): `@transon/editor-react` (`<TransonEditor>` with React as a peer); example
+   loading with expected-vs-actual output (FR-075/076/079, AC-018/019); import/export UX (FR-096…101); the
+   full embedding API (FR-102…110) — callbacks beyond onChange/onValidate/onExecute, read-only/theming/marker
+   config, progressive disclosure (§12.6); accessibility (keyboard/contrast/focus/screen-reader, §19.5,
+   NFR-045); the self-hosting demo (open a `G_*`/codec template in the editor, AC-036/UC-016). **M5
+   watch-outs from M4:** (a) real engine errors carry only a text location trail, not a structured path —
+   highlighting falls back to the root block; structured paths would need an engine change; (b) the Pyodide
+   host's real in-browser load is unverified by CI (jsdom can't load Pyodide) — verify in a browser / via the
+   §19.4/§19.5 Playwright MCP; (c) the JSON-panel controlled-textarea reflects `template_json` only while
+   in_sync; (d) the IIFE no-engine assertion skips when `dist/iife.js` is absent (dep+source scans always
+   run). **Regen flow** (if
    a generator changes): write generators → `pnpm --filter editor-core build` → `UPDATE_ARTIFACTS=1` test →
    rebuild → repeat (the double-build, because run.ts bundles the artifacts) → a normal run must be byte-equal.
 3. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +

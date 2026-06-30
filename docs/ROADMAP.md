@@ -338,6 +338,37 @@ and the projection codecs across the boundary.
   in-surface edit syncs via the encoder, otherwise error + workspace unchanged, AC-033); the
   mutator-driven structure round-trips identically to JSON-authored structure (AC-038); the behavior
   runtime stays rule-agnostic after the mutator addition (NFR-046 size gate).
+- **Status (☑ done — `round-trip-reviewer`-signed-off, all DoD gates green; not pushed).** The runnable
+  editor in both UI modes, wired to a host engine that runs user templates **and** the projection
+  codecs. Landed on `m4-editor-ui` (off `m3-editor-blockly`) in reviewed slices: **SPEC-first (`1902f64`)**
+  — resolved the design STOPs: §10.4/§17.9 corrected so the visual⇄JSON projection is engine-gated
+  (the prior "engine-free generation" was superseded pre-pivot text), ARCH §6/§6.4 encode/decode naming
+  fixed, AC-038 + §13.13 on-canvas mutators added (out of "Future"); **D0 (`4da6c18`)** — the three new
+  packages (`@transon/editor-ui` private React+jsdom, `@transon/editor-element` public, `examples/
+  reference-host`) + AD-021 pins (React 18.3.1, @vitejs/plugin-react 5.2.0, jsdom 27.4.0); **D1
+  (`58b6dd6`)** — the framework-agnostic `EditorSession` store (§9.3 + flow fields) + forward projection
+  (workspace→JSON via core `decode`+`blockMap`, gated on engine-ready) + the §16.4 taxonomy; **D2
+  (`204c0ac`)** — the React shell (sandbox §12.1 / compact §12.2 over the `EditorController`), the
+  interactive light-DOM Zelos mount (AD-017/018, verified Blockly 13 `inject` works under jsdom with the
+  En locale + SVG/canvas stubs), the editable `field_transon_scalar` (FR-015, typed fidelity), and the
+  AC-038 +/- mutators (object keys became editable fields collected into `extraState.keys`, decoder
+  contract unchanged); **D3 (`b9703d2`)** — validate/execute via the host (AC-012…016), captured `file`
+  writes (AC-024), include loader (AC-025), `json_input` validation, engine status (AC-023), and the
+  Pyodide reference host (`createPyodideHost`, glue mirrors `runner.py` over a JSON-string boundary,
+  no `eval`, AD-025/030); **D4 (`8f698a4`)** — error→block highlighting: a path-index↔block_map walk
+  (Blockly API, scan-clean) resolving exact / nearest-parent / root (FR-091…095, AC-017); **D5
+  (`e32e04a`)** — strict bidirectional sync §7.15 (`tryReverse`: parse→encode→surface-check→round-trip
+  gate; accept loads, reject leaves the workspace unchanged — FR-111…113, AC-033, AD-024); **D6
+  (`8b0b9ba`)** — `createTransonEditor()` + `<transon-editor>` (light DOM, ESM + self-contained IIFE,
+  ships no engine — AD-019/020/008, AC-022) + the runnable Pyodide playground. The independent
+  `round-trip-reviewer` (maker≠checker) refuted every concern except one **must-fix** — the §7.15 surface
+  check matched the bare token `transon_unsupported` anywhere in the serialized block, so an in-surface
+  document whose *data* contained that string was wrongly rejected (FR-111) — **fixed (`98e70eb`)** with a
+  structural block-type walk + a 4-case regression. **1477 tests** (core 12 + blockly 16 + ui 41 +
+  element 12 + adapter 1389 + reference-host 7); no-codec-mapping, behavior-runtime-size, presentation,
+  engine-parity, traceability, maturity, evals — all green. **M5 carry-over:** `@transon/editor-react`,
+  example expected-vs-actual UX, import/export UX (FR-096…110), full embedding API, accessibility, and the
+  self-hosting demo. Living status: [`docs/current-state.md`](current-state.md).
 
 ## M5 — React entry, examples, embedding, accessibility & self-hosting
 
@@ -364,7 +395,7 @@ self-hosting demonstration.
 | M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 122/123/124/126, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/032/011 | ☑ |
 | M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☑ |
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☑ |
-| M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-001/012…017/023…025/031…033/038; NFR-028/046; AD-017/018/019/020/024/025/030/031 | ◐ |
+| M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-001/012…017/023…025/031…033/038; NFR-028/046; AD-017/018/019/020/024/025/030/031 | ☑ |
 | M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110, 058, 121, NFR-045, AC-036 | ☐ |
 
 ## Readiness assessment
@@ -383,8 +414,8 @@ conflict.
 | M1 (codec skeleton + one-rule codec) | 🟢 ready after M0 | The de-risk prototype; needs M0's export + adapter. Pass criteria gate the rest of the plan. |
 | M2 (full catalog) | 🟢 after M1 | Fold per-rule `include` fragments once M1's loop closes; no new mechanism. |
 | M3 (Blockly projections + behavior runtime) | 🟢 done | `G_palette`/`G_toolbox` projections + committed palette/toolbox; the finite rule-agnostic behavior runtime (AD-031); FR-125/126/127 + NFR-046 gates; AC-036/037. Interactive Zelos render (AD-017/018) + editor-sync UI → M4. |
-| M4 (UI + runtime) | 🟢 after M3 | Host boundary specified (`SPEC.md` §10.4, AD-008); reference host runs codecs (AD-025/030). |
-| M5 | 🟢 after M4 | Inherits M4; adds embedding, examples, accessibility, self-hosting. |
+| M4 (UI + runtime) | 🟢 done | Shell (sandbox/compact) + `EditorSession` store + interactive light-DOM Zelos mount (AD-017/018, jsdom) + host validate/execute + error highlighting + strict §7.15 sync + `createTransonEditor()`/`<transon-editor>` (ESM+IIFE, no engine) + the Pyodide reference host (AD-025). `round-trip-reviewer`-signed-off. |
+| M5 | 🟢 after M4 | Inherits M4; adds React entry, embedding, examples, accessibility, self-hosting. |
 
 ### Remaining inputs to define before coding starts
 
