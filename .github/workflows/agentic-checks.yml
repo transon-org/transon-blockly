@@ -55,3 +55,7 @@ jobs:
       # 7. Editor-owned presentation is data, not TS literals, and complete (FR-127, NFR-048).
       - name: Presentation projection-data (FR-127)
         run: python harness/scripts/check_presentation.py
+
+      # 8. Blockly behavior runtime stays finite + rule-agnostic (NFR-046, AD-031).
+      - name: Behavior runtime size (NFR-046)
+        run: python harness/scripts/check_behavior_runtime_size.py

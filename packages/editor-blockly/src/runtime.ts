@@ -120,8 +120,7 @@ function ignoreDuplicate(fn: () => void): void {
 export function registerTransonRuntime(): void {
   if (registered) return;
   registered = true;
-  const reg = Blockly.fieldRegistry.register as unknown as (name: string, cls: unknown) => void;
-  ignoreDuplicate(() => reg('field_transon_scalar', FieldTransonScalar));
+  ignoreDuplicate(() => Blockly.fieldRegistry.register('field_transon_scalar', FieldTransonScalar));
   ignoreDuplicate(() => Blockly.Extensions.registerMutator('transon_array_mutator', ARRAY_MUTATOR));
   ignoreDuplicate(() => Blockly.Extensions.registerMutator('transon_object_mutator', OBJECT_MUTATOR));
   ignoreDuplicate(() => Blockly.Extensions.registerMutator('transon_unsupported_mutator', UNSUPPORTED_MUTATOR));
