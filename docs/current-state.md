@@ -8,13 +8,58 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `c77d029` — docs: M1 done — ROADMAP ☑ + handoff (escape, blockMap, custom marker) |
-| Branch | `m1-codec-skeleton` |
+| Repo HEAD | `69d1472` — editor: M2 D4 — AC-034 synthetic-rule projection proof + runCodecArtifact |
+| Branch | `m2-full-catalog` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**M2 COMPLETE (`/run-milestone M2`) — ROADMAP ☑, two `round-trip-reviewer` sign-offs, all DoD gates
+green; NOT pushed.** Branch `m2-full-catalog` (off `m1-codec-skeleton`). The full 22-rule catalog
+round-trips by construction through the generated codec, folded in by metadata + one rule-agnostic
+generator change (no skeleton growth per rule, AC-034). **Four reviewed slices:** **D1 (`142bbc9`)** —
+catalog fold (`CATALOG_RULES` = metadata-derived) + **empty-operand-safe matcher**: the M1 matcher used
+`expr and` over a `$`-runtime list that is EMPTY for the six zero-param rules (`this/parent/item/key/
+index/value`) → engine `DefinitionError` (verified); reframed `allRequiredPresent`/`isForeignKey` onto
+the join-of-empty membership pattern (`joinNames(...) == KEY_NIL`). **D2 (`3925e18`)** — **field-vs-input
+disposition** (FR-118): the only two `kind:"constant"` params (`expr.op`, `call.name`) project to block
+`fields` (verbatim scalar, key-based presence), dynamic → `inputs`; `kind` is joined onto variant params
+in `generateCodec` (`enrichEntry`) — variant params lack `kind`, only rule-level params carry it — so the
+generators branch at `@`-time; operators (28 tokens) + functions (4) round-trip with the constant verbatim
+in `fields` (FR-041/042, AC-007/008). **D3 (`6dfacdb`)** — full §15.8 corpus: **all 147** engine
+`docs.{rules,operators,functions}[*].examples` round-trip (structural + execution identity); import-failure
+(ambiguous multi-variant, foreign param, unknown rule, zero-param+foreign) → `transon_unsupported` + exact
+preservation (§15.6/FR-055); multi-rule custom marker; workspace-shape (FR-124) over the full 147 + corpus.
+**D4 (`69d1472`)** — **AC-034** proof: a synthetic rule folds into the codec via a new
+`generateCodec(engine, rules, catalog?)` override with ZERO projection-file change (constant field + dynamic
+input + variant match + unsupported); added `runCodecArtifact` (runs any artifact; the seam for M4's runtime
+metadata-source policy). **The example corpus caught a real bug the 1st review under-rated as a NIT — the
+`object/fields` escape collision:** the M1 literal-marker escape matched `{$:object, fields:X}` by shape and
+encoded it as `transon_object_literal`, shadowing the now-folded-in `object`/`fields` RULE — a marker-FREE
+`{$:object, fields:{...}}` decoded to a bare literal, dropping the rule wrapper (round-trip AND semantic
+break: the rule omits NoContent, the literal errors; that `TypeError` then crashed `runner.py`'s `json.dumps`
+and **hung the suite** → orphaned vitest workers). **Fixed surgically** (skeleton, rule-agnostic): the escape
+fires ONLY when the `fields` payload itself contains the **active** marker key (`fieldsHasMarkerKey`, §11.4:
+"a literal object that must contain the marker key"); a marker-free payload falls through to the rule arm →
+`transon_rule_object__fields`. **SPEC-first:** FR-123 + §11.4 refined; `escape.test.ts` + `marker.test.ts`
+(custom-marker discrimination — `{@@:object, fields:{$:1}}` → RULE, proving the active-marker check) lock it.
+**Test bridge hardened** so this class of failure can never silently hang again: `runner.py` guards
+`json.dumps` (returns a structured `SerializationError` instead of crashing); the adapter adds a 30s
+per-request timeout + teardown that fails fast (also fixes the zombie-process accumulation seen mid-session).
+**763 tests pass** (757 adapter + 6 editor-core); engine-parity (22/28/4), no-codec-mapping + selftest,
+traceability, byte-equal codec-regeneration (AD-030), maturity 93%, evals — all green. **2nd
+`round-trip-reviewer` verdict: object/fields fix CORRECT + COMPLETE (incl. custom marker), bridge hardening
+SAFE, M2 ready to mark done** (one SHOULD-FIX — committed custom-marker escape test — now landed; one NIT:
+`{$:object, fields:<non-dict>}` → `CodecError` not `transon_unsupported`, pre-existing invalid-input behavior,
+unchanged by the fix). **Next:** push `m1-codec-skeleton` + `m2-full-catalog` and open PR(s) (one branch/PR
+per milestone — neither pushed); then **M3** (`/run-milestone M3`): `G_palette`/`G_toolbox` + Blockly Zelos +
+the finite behavior runtime. **M3 watch-outs from M2:** the `object/fields` `fields` param is a map-of-templates
+with no metadata `kind` for it — the field/input widget projection must handle it; and `{$:object, fields:X}`
+renders as the escape (`transon_object_literal`) only for marker-bearing X, else the `object/fields` rule block._
+
+### Prior last action (M1)
 
 _**M1 codec slice committed (`d4c550e`) — round-trip-reviewer-signed-off, all gates green.** Branch
 `m1-codec-skeleton`. (0) **Engine re-pin to v0.1.3** committed (`197d034`) — the M1 prerequisite (`type`
@@ -111,22 +156,28 @@ living read of it.
   (AD-026/030); literal-marker escape (FR-059…063/123), exact-variant surface check (§15.7),
   `JsonPathBlockMap` (FR-091/094/122), custom marker (FR-063); workspace-shape + FR-126 gates pass; clean
   recursion ceiling (§6.5). 133 tests.
-- **M2–M5** — ☐ not started. M2 folds the full 22-rule catalog in by extending `generateCodec`'s
-  `M1_RULES` list + the committed `G_*` arms (the M1 mechanism already supports it; no skeleton change,
-  AC-034; watch field-`kind` disposition, FR-118).
+- **M2 — full catalog** — ☑ done (committed `142bbc9`→`69d1472` + the closeout, not pushed; two
+  `round-trip-reviewer` sign-offs). All 22 rules + every variant round-trip by construction (147 engine
+  examples + corpus); constant-field disposition (FR-118); import-failure → `transon_unsupported`;
+  AC-034 synthetic-rule proof; object/fields escape-collision fix (FR-123/§11.4 refined); test bridge
+  hardened. 763 tests. See **Last action** for detail.
+- **M3–M5** — ☐ not started. M3: `G_palette`/`G_toolbox` + Blockly Zelos + the finite behavior runtime.
 
 ## Next steps (ordered)
 
-1. **Push `m1-codec-skeleton` + open a PR** referencing the M1 IDs (one branch/PR per milestone — M1 is
-   ☑ done, reviewed, all gates green, but **not pushed**). 11+ commits from `197d034` (re-pin) through
-   `db451c0` (blockMap path fix).
-2. **M2** (`/run-milestone M2`): fold the full 22-rule catalog by extending `generateCodec`'s `M1_RULES`
-   list + adding the committed `G_*` arms (no skeleton change; AC-034). The mechanism is proven; the new
-   work is per-rule metadata coverage + the full §15.8 round-trip corpus. **Watch:** field-`kind` params
-   — `attr` is all-dynamic (all value inputs); other rules have `kind:"field"` params that need the
-   field-vs-input disposition in `G_encode` (FR-118), and operators/functions via resolved enums.
-   Regen flow when a generator changes: write generators → rebuild (dist imports them) → regenerate
-   artifacts → rebuild (the double-build, or `UPDATE_ARTIFACTS=1` twice).
+1. **Push the milestone branches + open PR(s)** (one branch/PR per milestone — none pushed yet):
+   `m1-codec-skeleton` (M1) and `m2-full-catalog` (M2, off M1). Reference the covered FR/AC IDs. If M1
+   should merge to `main` first, rebase `m2-full-catalog` after.
+2. **M3** (`/run-milestone M3`): `editor-blockly` — `G_palette` (block defs) + `G_toolbox` (categories)
+   projections rendered to Zelos + the finite rule-agnostic behavior runtime; the committed
+   presentation-data file (title/category/advanced + colour); headless palette/encoder-load gates.
+   **Watch-outs carried from M2:** (a) the `object/fields` `fields` param is a **map-of-templates** with
+   no metadata `kind` modelling it — the field/input widget projection (FR-118/127) must handle it; (b)
+   `{<marker>:object, fields:X}` is the escape (`transon_object_literal`) only for a **marker-bearing** X,
+   else the `object/fields` rule block — the palette/behavior must mirror that disposition; (c) Blockly
+   `13.0.0` is introduced at M3 (AD-021). **Regen flow** (if a generator changes): write generators →
+   `pnpm --filter editor-core build` → `UPDATE_ARTIFACTS=1` test → rebuild → repeat (the double-build,
+   because run.ts bundles the artifacts) → a normal run must be byte-equal.
 3. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
    `update_memory.py --check --require-engine` on, once the engine is pip-installable in CI.
 

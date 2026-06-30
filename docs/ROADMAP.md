@@ -237,6 +237,27 @@ not by growing one template; every rule and variant round-trips by construction.
   workspace-shape validator** runs over the full §15.8 corpus; ambiguous/partial variant matches
   reported as `import_unsupported`; adding a rule to the metadata snapshot makes it
   encode/decode/round-trip with **no projection-template change** (AC-034).
+- **Status (☑ done — two `round-trip-reviewer` sign-offs, all DoD gates green; not pushed).** The full
+  22-rule catalog round-trips by construction through the generated codec, folded in by **metadata +
+  one rule-agnostic generator change**, no skeleton growth per rule (AC-034). Landed on `m2-full-catalog`
+  in four reviewed slices: **D1 (`142bbc9`)** — catalog fold + the empty-operand-safe variant matcher
+  (the M1 `expr and []` assumption breaks for the six zero-param rules → reframed onto the join-of-empty
+  membership pattern); **D2 (`3925e18`)** — constant-param field-vs-input disposition (FR-118): the two
+  `kind:"constant"` params (`expr.op`/`call.name`) project to block `fields`, dynamic params to `inputs`,
+  via `kind` joined onto variant params in `generateCodec` (`enrichEntry`) so the generators branch at
+  `@`-time; operators (28 tokens) + functions (4) round-trip with the constant verbatim in `fields`
+  (FR-041/042, AC-007/008); **D3 (`6dfacdb`)** — the full §15.8 corpus: all **147** engine
+  `docs.*.examples` round-trip (structural + execution identity), ambiguous/foreign import-failure →
+  `transon_unsupported` + exact preservation (§15.6/FR-055), multi-rule custom marker, workspace-shape
+  (FR-124) over the full 147 + corpus; **D4 (`69d1472`)** — the **AC-034** proof: a synthetic rule folds
+  into the codec via a `generateCodec` catalog override with zero projection-file change. The example
+  corpus surfaced + drove a fix to a real **object/fields escape collision** (the M1 literal-marker escape
+  shadowed the folded-in `object`/`fields` RULE for marker-free payloads → round-trip + semantic break);
+  fixed surgically (the escape fires only for a marker-bearing payload, §11.4) with FR-123/§11.4 refined
+  (SPEC-first). The test bridge was hardened (runner.py serialization guard + adapter per-request timeout)
+  so an unserializable engine output can no longer hang the suite. **760 tests pass** (754 adapter + 6
+  editor-core); engine-parity, no-codec-mapping, traceability, and byte-equal codec-regeneration all green.
+  Living status: [`docs/current-state.md`](current-state.md).
 
 ## M3 — `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime
 
@@ -306,7 +327,7 @@ self-hosting demonstration.
 |-----------|-------|---------|:------:|
 | M0 | Engine `switch`/`cond` + projection-ready export + Node adapter | FR-047/081/116/117/118, AD-008/012/027/029/021 | ☑ |
 | M1 | `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule | FR-114…119, 122/123/124/126, 019…039, 059…063, 091/094, §15.7, AC-035, AD-026/028/030/032/011 | ☑ |
-| M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☐ |
+| M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☑ |
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☐ |
 | M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-033; NFR-028; AD-019/020/024/025/030 | ☐ |
 | M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110, 058, 121, NFR-045, AC-036 | ☐ |

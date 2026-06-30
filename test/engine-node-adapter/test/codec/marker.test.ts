@@ -113,3 +113,27 @@ describe('custom marker multi-rule round-trip (§15.8, FR-063)', () => {
     expect(b.output).toEqual(a.output);
   });
 });
+
+// FR-123 / §11.4 under a CUSTOM marker: the escape-vs-rule disposition must key off the ACTIVE
+// marker, never a hardcoded `$`. Regression for the object/fields escape collision (review SHOULD-FIX).
+describe('object/fields escape vs rule under a custom marker (FR-063, FR-123, §11.4)', () => {
+  it('payload carrying the ACTIVE marker → escape (transon_object_literal)', async () => {
+    const t: Json = { [MARK]: 'object', fields: { [MARK]: 'v' } };
+    const ws = await encode(engine, t, MARK);
+    expect((ws as { type: string }).type).toBe('transon_object_literal');
+    expect(await decode(engine, ws, MARK)).toEqual(t);
+  });
+  it('payload with a NON-active marker key (`$` when marker is `@@`) → object/fields RULE', async () => {
+    // The discriminating case: a hardcoded-`$` check would wrongly treat `{$:1}` as the escape.
+    const t: Json = { [MARK]: 'object', fields: { $: 1 } };
+    const ws = await encode(engine, t, MARK);
+    expect((ws as { type: string }).type).toBe('transon_rule_object__fields');
+    expect(await decode(engine, ws, MARK)).toEqual(t);
+  });
+  it('marker-free payload → object/fields RULE under a custom marker', async () => {
+    const t: Json = { [MARK]: 'object', fields: { a: { [MARK]: 'attr', name: 'k' } } };
+    const ws = await encode(engine, t, MARK);
+    expect((ws as { type: string }).type).toBe('transon_rule_object__fields');
+    expect(await decode(engine, ws, MARK)).toEqual(t);
+  });
+});

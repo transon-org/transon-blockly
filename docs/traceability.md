@@ -81,7 +81,7 @@ docs/example-corpus templates; custom marker configuration; and import-failure c
 | Corpus group | SPEC ref | Status | Test reference |
 |--------------|----------|:------:|----------------|
 | Literals (scalar/array/object) | §15.8 | [~] | `test/engine-node-adapter/test/codec/roundtrip.test.ts` (scalar type fidelity, empties, nesting) |
-| Literal marker-key object | §15.8, §11.4 | [x] | skeleton-owned escape, marker-bearing payload only (FR-123 M2 refinement): `escape.test.ts` (incl. marker-free `{$:object,fields:X}` → `object/fields` RULE, not the escape); default + custom marker |
+| Literal marker-key object | §15.8, §11.4 | [x] | skeleton-owned escape, marker-bearing payload only (FR-123 M2 refinement): `escape.test.ts` (marker-free `{$:object,fields:X}` → `object/fields` RULE, not the escape); custom-marker escape-vs-rule disposition keys off the active marker: `marker.test.ts` |
 | Every built-in rule | §15.8, §14 | [x] | all 22 rules: `test/engine-node-adapter/test/codec/corpus.ts` M2 entries + `roundtrip.test.ts` (structural + execution identity per entry) + `catalog-coverage.test.ts` (FR-040) |
 | Every block variant | §15.8, §7.7 | [x] | all rule variants (base, name, names, item, items, key+value, value, values, fields): corpus.ts M2 entries; `catalog-coverage.test.ts` asserts decode case per variant (FR-052/053/054) |
 | Nested templates | §15.8 | [x] | `roundtrip.test.ts` (`mixed`, attr-nested) + deep real-world nesting (≥4 levels, e.g. `ExprMonadsComplex`) across the 147 engine examples: `examples-corpus.test.ts` |
