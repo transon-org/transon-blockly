@@ -36,15 +36,29 @@ const ENCODER = encoderArtifact as unknown as Artifact;
 const DECODER = decoderArtifact as unknown as Artifact;
 const BLOCKMAP = blockmapArtifact as unknown as Artifact;
 
-/** The block-map encoder emits a nested {entry, children}; the runtime flattens it depth-first
- *  into the flat JsonPathBlockMap (§9.12). This reads the map encoder's own output, not workspace
- *  blocks, so it is not a codec↔workspace mapping (FR-126). */
+/** The block-map encoder emits a nested tree of {seg, rule_name?, parameter_name?, children}; the
+ *  runtime assembles the flat JsonPathBlockMap (§9.12), building each node's unique, escaped JSON
+ *  path (`block_id`/`template_path`) and `nearest_parent_block_id` (FR-094) from the tree. This
+ *  reads the map encoder's own output, not workspace blocks, so it is not a codec↔workspace
+ *  mapping (FR-126). */
 interface MapNode {
-  entry: JsonPathBlockMapEntry;
+  seg?: string | number;
+  rule_name?: string;
+  parameter_name?: string;
   children: MapNode[];
 }
-function flattenBlockMap(node: MapNode): JsonPathBlockMapEntry[] {
-  return [node.entry, ...node.children.flatMap(flattenBlockMap)];
+/** Escape a path segment so the `/`-joined path is unambiguous even for keys containing `/` or
+ *  `~` (JSON Pointer / RFC 6901): `~` → `~0`, `/` → `~1`. */
+function escapeSegment(seg: string | number): string {
+  return String(seg).replace(/~/g, '~0').replace(/\//g, '~1');
+}
+function flattenBlockMap(node: MapNode, parentPath: string | null): JsonPathBlockMapEntry[] {
+  const path = parentPath === null ? '$' : `${parentPath}/${escapeSegment(node.seg ?? '')}`;
+  const entry: JsonPathBlockMapEntry = { template_path: path, block_id: path };
+  if (parentPath !== null) entry.nearest_parent_block_id = parentPath;
+  if (node.rule_name !== undefined) entry.rule_name = node.rule_name;
+  if (node.parameter_name !== undefined) entry.parameter_name = node.parameter_name;
+  return [entry, ...node.children.flatMap((c) => flattenBlockMap(c, path))];
 }
 
 /** Substitute the configured DOCUMENT marker for the placeholder the codec carries (FR-063). The
@@ -109,8 +123,8 @@ export function decode(engine: EngineProvider, workspace: Json, marker: string =
  * enclosing block. Consumed for error→block highlighting in M4 (FR-092/093/095).
  */
 export async function blockMap(engine: EngineProvider, document: Json, marker: string = CODEC_MARKER): Promise<JsonPathBlockMap> {
-  const root = (await runArtifact(engine, BLOCKMAP, { n: document, p: '$', par: null }, marker)) as unknown as MapNode;
-  return flattenBlockMap(root);
+  const root = (await runArtifact(engine, BLOCKMAP, { n: document }, marker)) as unknown as MapNode;
+  return flattenBlockMap(root, null);
 }
 
 /** A failure surfaced by the host engine while running a codec artifact (§16.4 taxonomy). */

@@ -48,4 +48,15 @@ describe('JsonPathBlockMap production (FR-091/122, §9.12)', () => {
     expect(map).toHaveLength(1);
     expect(map[0]).toMatchObject({ template_path: '$', block_id: '$' });
   });
+
+  it('block_id is unique even for object keys containing the path separator (escaped, RFC 6901)', async () => {
+    // `{"a/b":1}` and `{"a":{"b":2}}` must not collide: the `/` in the key is escaped to `~1`.
+    const map = await blockMap(engine, { 'a/b': 1, a: { b: 2 } });
+    const ids = map.map((e) => e.block_id);
+    expect(new Set(ids).size).toBe(ids.length); // all block_ids unique
+    const m = byPath(map);
+    expect(m.has('$/a~1b')).toBe(true); // the key "a/b"
+    expect(m.has('$/a/b')).toBe(true); // the nested a → b
+    expect(m.get('$/a~1b')).not.toEqual(m.get('$/a/b'));
+  });
 });

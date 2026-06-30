@@ -217,24 +217,21 @@ const decSkeleton = (allCases: Json): Json => ({ $: 'chain', funcs: [
 ] });
 
 // ---- block-map encoder (FR-091/094/122, §9.12) ----
-// A fixed, metadata-free template that walks the document threading a {n,p,par,pn} context and
-// emits a NESTED {entry, children}; the runtime flattens it into the JsonPathBlockMap. It is
-// emitted ALONGSIDE the workspace and is separate from the main codec (which stays untouched).
-// `block_id` is the node's JSON path (stable + unique); a node without its own block maps to the
-// nearest enclosing block via `nearest_parent_block_id` (FR-094).
+// A fixed, metadata-free template that walks the document and emits a NESTED tree of nodes, each
+// carrying its raw path SEGMENT (the parent key/index), `rule_name` (rule nodes), and
+// `parameter_name` (rule params). The runtime assembles the flat JsonPathBlockMap — the unique,
+// escaped JSON path (`block_id`/`template_path`) and `nearest_parent_block_id` (FR-094) — from the
+// tree (escaping `/` in keys, which the engine cannot). Emitted ALONGSIDE the workspace; separate
+// from the main codec, which stays untouched.
 const MSELF: Json = { $: 'get', name: 'self' };
 const mField = (name: string): Json => ({ $: 'chain', funcs: [MSELF, { $: 'attr', name }] });
 const M_N = mField('n');
-const M_P = mField('p');
-const M_PAR = mField('par');
-const mCtx = (n: Json, p: Json, pname?: Json): Json => ({
-  $: 'object', fields: pname === undefined ? { n, p, par: M_P } : { n, p, par: M_P, pn: pname },
+const mCtx = (n: Json, seg: Json, pname?: Json): Json => ({
+  $: 'object', fields: pname === undefined ? { n, seg } : { n, seg, pn: pname },
 });
-const mCpath = (seg: Json): Json => ({ $: 'join', items: [M_P, { $: 'call', name: 'str', value: seg }], sep: '/' });
-const mEntry = (extra: Record<string, Json>): Json => ({
-  $: 'object',
-  // parameter_name is omitted (NO_CONTENT) unless this node is a rule param; rule_name added by the rule arm.
-  fields: { template_path: M_P, block_id: M_P, nearest_parent_block_id: M_PAR, parameter_name: mField('pn'), ...extra },
+// a tree node: its segment + parameter_name (omitted via NO_CONTENT when absent), optional rule_name, children.
+const mNode = (rule: Json | null, children: Json): Json => ({
+  $: 'object', fields: { seg: mField('seg'), parameter_name: mField('pn'), ...(rule ? { rule_name: rule } : {}), children },
 });
 const mRecurse = (ctxObj: Json): Json => ({ $: 'chain', funcs: [ctxObj, { $: 'include', name: 'mapenc' }] });
 const M_KEY: Json = { $: 'key' };
@@ -244,7 +241,7 @@ const mChildren = (seg: Json, pname: Json | undefined, dropMarker: boolean): Jso
   $: 'chain', funcs: [
     M_N,
     ...(dropMarker ? [{ $: 'filter', cond: nev(M_KEY, DOC_MARKER) }] : []),
-    { $: 'map', item: mRecurse(mCtx(THIS_T, mCpath(seg), pname)) },
+    { $: 'map', item: mRecurse(mCtx(THIS_T, seg, pname)) },
   ],
 });
 const BLOCKMAP_ENCODER: Json = { $: 'chain', funcs: [
@@ -253,13 +250,11 @@ const BLOCKMAP_ENCODER: Json = { $: 'chain', funcs: [
     cases: {
       object: { $: 'cond',
         cases: [{ when: nev({ $: 'chain', funcs: [M_N, { $: 'attr', name: DOC_MARKER, default: '__transon_no_marker__' }] }, '__transon_no_marker__'),
-                  then: { $: 'object', fields: {
-                    entry: mEntry({ rule_name: { $: 'chain', funcs: [M_N, { $: 'attr', name: DOC_MARKER }] } }),
-                    children: mChildren(M_KEY, M_KEY, true) } } }],
-        default: { $: 'object', fields: { entry: mEntry({}), children: mChildren(M_KEY, undefined, false) } } },
-      array: { $: 'object', fields: { entry: mEntry({}), children: mChildren(M_INDEX, undefined, false) } },
+                  then: mNode({ $: 'chain', funcs: [M_N, { $: 'attr', name: DOC_MARKER }] }, mChildren(M_KEY, M_KEY, true)) }],
+        default: mNode(null, mChildren(M_KEY, undefined, false)) },
+      array: mNode(null, mChildren(M_INDEX, undefined, false)),
     },
-    default: { $: 'object', fields: { entry: mEntry({}), children: [] } } } ] };
+    default: mNode(null, []) } ] };
 
 /** The prototype rule(s) projected in M1 (the de-risk slice). M2 extends this list. */
 export const M1_RULES = ['attr'];

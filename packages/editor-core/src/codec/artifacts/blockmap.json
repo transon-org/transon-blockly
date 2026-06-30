@@ -41,44 +41,8 @@
                               "n": {
                                 "$": "this"
                               },
-                              "p": {
-                                "$": "join",
-                                "items": [
-                                  {
-                                    "$": "chain",
-                                    "funcs": [
-                                      {
-                                        "$": "get",
-                                        "name": "self"
-                                      },
-                                      {
-                                        "$": "attr",
-                                        "name": "p"
-                                      }
-                                    ]
-                                  },
-                                  {
-                                    "$": "call",
-                                    "name": "str",
-                                    "value": {
-                                      "$": "index"
-                                    }
-                                  }
-                                ],
-                                "sep": "/"
-                              },
-                              "par": {
-                                "$": "chain",
-                                "funcs": [
-                                  {
-                                    "$": "get",
-                                    "name": "self"
-                                  },
-                                  {
-                                    "$": "attr",
-                                    "name": "p"
-                                  }
-                                ]
+                              "seg": {
+                                "$": "index"
                               }
                             }
                           },
@@ -91,62 +55,31 @@
                     }
                   ]
                 },
-                "entry": {
-                  "$": "object",
-                  "fields": {
-                    "block_id": {
-                      "$": "chain",
-                      "funcs": [
-                        {
-                          "$": "get",
-                          "name": "self"
-                        },
-                        {
-                          "$": "attr",
-                          "name": "p"
-                        }
-                      ]
+                "parameter_name": {
+                  "$": "chain",
+                  "funcs": [
+                    {
+                      "$": "get",
+                      "name": "self"
                     },
-                    "nearest_parent_block_id": {
-                      "$": "chain",
-                      "funcs": [
-                        {
-                          "$": "get",
-                          "name": "self"
-                        },
-                        {
-                          "$": "attr",
-                          "name": "par"
-                        }
-                      ]
-                    },
-                    "parameter_name": {
-                      "$": "chain",
-                      "funcs": [
-                        {
-                          "$": "get",
-                          "name": "self"
-                        },
-                        {
-                          "$": "attr",
-                          "name": "pn"
-                        }
-                      ]
-                    },
-                    "template_path": {
-                      "$": "chain",
-                      "funcs": [
-                        {
-                          "$": "get",
-                          "name": "self"
-                        },
-                        {
-                          "$": "attr",
-                          "name": "p"
-                        }
-                      ]
+                    {
+                      "$": "attr",
+                      "name": "pn"
                     }
-                  }
+                  ]
+                },
+                "seg": {
+                  "$": "chain",
+                  "funcs": [
+                    {
+                      "$": "get",
+                      "name": "self"
+                    },
+                    {
+                      "$": "attr",
+                      "name": "seg"
+                    }
+                  ]
                 }
               }
             },
@@ -197,46 +130,10 @@
                                     "n": {
                                       "$": "this"
                                     },
-                                    "p": {
-                                      "$": "join",
-                                      "items": [
-                                        {
-                                          "$": "chain",
-                                          "funcs": [
-                                            {
-                                              "$": "get",
-                                              "name": "self"
-                                            },
-                                            {
-                                              "$": "attr",
-                                              "name": "p"
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "$": "call",
-                                          "name": "str",
-                                          "value": {
-                                            "$": "key"
-                                          }
-                                        }
-                                      ],
-                                      "sep": "/"
-                                    },
-                                    "par": {
-                                      "$": "chain",
-                                      "funcs": [
-                                        {
-                                          "$": "get",
-                                          "name": "self"
-                                        },
-                                        {
-                                          "$": "attr",
-                                          "name": "p"
-                                        }
-                                      ]
-                                    },
                                     "pn": {
+                                      "$": "key"
+                                    },
+                                    "seg": {
                                       "$": "key"
                                     }
                                   }
@@ -250,84 +147,53 @@
                           }
                         ]
                       },
-                      "entry": {
-                        "$": "object",
-                        "fields": {
-                          "block_id": {
-                            "$": "chain",
-                            "funcs": [
-                              {
-                                "$": "get",
-                                "name": "self"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "p"
-                              }
-                            ]
+                      "parameter_name": {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "get",
+                            "name": "self"
                           },
-                          "nearest_parent_block_id": {
-                            "$": "chain",
-                            "funcs": [
-                              {
-                                "$": "get",
-                                "name": "self"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "par"
-                              }
-                            ]
-                          },
-                          "parameter_name": {
-                            "$": "chain",
-                            "funcs": [
-                              {
-                                "$": "get",
-                                "name": "self"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "pn"
-                              }
-                            ]
-                          },
-                          "rule_name": {
-                            "$": "chain",
-                            "funcs": [
-                              {
-                                "$": "chain",
-                                "funcs": [
-                                  {
-                                    "$": "get",
-                                    "name": "self"
-                                  },
-                                  {
-                                    "$": "attr",
-                                    "name": "n"
-                                  }
-                                ]
-                              },
-                              {
-                                "$": "attr",
-                                "name": "transon::document-marker"
-                              }
-                            ]
-                          },
-                          "template_path": {
-                            "$": "chain",
-                            "funcs": [
-                              {
-                                "$": "get",
-                                "name": "self"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "p"
-                              }
-                            ]
+                          {
+                            "$": "attr",
+                            "name": "pn"
                           }
-                        }
+                        ]
+                      },
+                      "rule_name": {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "self"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "n"
+                              }
+                            ]
+                          },
+                          {
+                            "$": "attr",
+                            "name": "transon::document-marker"
+                          }
+                        ]
+                      },
+                      "seg": {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "get",
+                            "name": "self"
+                          },
+                          {
+                            "$": "attr",
+                            "name": "seg"
+                          }
+                        ]
                       }
                     }
                   },
@@ -393,44 +259,8 @@
                                 "n": {
                                   "$": "this"
                                 },
-                                "p": {
-                                  "$": "join",
-                                  "items": [
-                                    {
-                                      "$": "chain",
-                                      "funcs": [
-                                        {
-                                          "$": "get",
-                                          "name": "self"
-                                        },
-                                        {
-                                          "$": "attr",
-                                          "name": "p"
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "$": "call",
-                                      "name": "str",
-                                      "value": {
-                                        "$": "key"
-                                      }
-                                    }
-                                  ],
-                                  "sep": "/"
-                                },
-                                "par": {
-                                  "$": "chain",
-                                  "funcs": [
-                                    {
-                                      "$": "get",
-                                      "name": "self"
-                                    },
-                                    {
-                                      "$": "attr",
-                                      "name": "p"
-                                    }
-                                  ]
+                                "seg": {
+                                  "$": "key"
                                 }
                               }
                             },
@@ -440,100 +270,6 @@
                             }
                           ]
                         }
-                      }
-                    ]
-                  },
-                  "entry": {
-                    "$": "object",
-                    "fields": {
-                      "block_id": {
-                        "$": "chain",
-                        "funcs": [
-                          {
-                            "$": "get",
-                            "name": "self"
-                          },
-                          {
-                            "$": "attr",
-                            "name": "p"
-                          }
-                        ]
-                      },
-                      "nearest_parent_block_id": {
-                        "$": "chain",
-                        "funcs": [
-                          {
-                            "$": "get",
-                            "name": "self"
-                          },
-                          {
-                            "$": "attr",
-                            "name": "par"
-                          }
-                        ]
-                      },
-                      "parameter_name": {
-                        "$": "chain",
-                        "funcs": [
-                          {
-                            "$": "get",
-                            "name": "self"
-                          },
-                          {
-                            "$": "attr",
-                            "name": "pn"
-                          }
-                        ]
-                      },
-                      "template_path": {
-                        "$": "chain",
-                        "funcs": [
-                          {
-                            "$": "get",
-                            "name": "self"
-                          },
-                          {
-                            "$": "attr",
-                            "name": "p"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "$": "object",
-            "fields": {
-              "children": [],
-              "entry": {
-                "$": "object",
-                "fields": {
-                  "block_id": {
-                    "$": "chain",
-                    "funcs": [
-                      {
-                        "$": "get",
-                        "name": "self"
-                      },
-                      {
-                        "$": "attr",
-                        "name": "p"
-                      }
-                    ]
-                  },
-                  "nearest_parent_block_id": {
-                    "$": "chain",
-                    "funcs": [
-                      {
-                        "$": "get",
-                        "name": "self"
-                      },
-                      {
-                        "$": "attr",
-                        "name": "par"
                       }
                     ]
                   },
@@ -550,7 +286,7 @@
                       }
                     ]
                   },
-                  "template_path": {
+                  "seg": {
                     "$": "chain",
                     "funcs": [
                       {
@@ -559,11 +295,43 @@
                       },
                       {
                         "$": "attr",
-                        "name": "p"
+                        "name": "seg"
                       }
                     ]
                   }
                 }
+              }
+            }
+          },
+          "default": {
+            "$": "object",
+            "fields": {
+              "children": [],
+              "parameter_name": {
+                "$": "chain",
+                "funcs": [
+                  {
+                    "$": "get",
+                    "name": "self"
+                  },
+                  {
+                    "$": "attr",
+                    "name": "pn"
+                  }
+                ]
+              },
+              "seg": {
+                "$": "chain",
+                "funcs": [
+                  {
+                    "$": "get",
+                    "name": "self"
+                  },
+                  {
+                    "$": "attr",
+                    "name": "seg"
+                  }
+                ]
               }
             }
           },
