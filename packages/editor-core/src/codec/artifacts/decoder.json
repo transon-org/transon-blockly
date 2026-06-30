@@ -517,6 +517,3498 @@
                 }
               ]
             },
+            "transon_rule_call__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "call"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "name": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "name"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "name"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_call__value": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "call"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "name": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "name"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "name"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "value"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "value"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_call__values": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "call"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "name": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "name"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "name"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "values": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "values"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "values"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_chain__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "chain"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "funcs": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "funcs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "funcs"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_cond__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "cond"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "cases": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "cases"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "cases"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "default": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "default"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "default"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_expr__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "expr"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "op": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "op"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "op"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_expr__value": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "expr"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "op": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "op"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "op"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "value"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "value"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_expr__values": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "expr"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "op": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "op"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "op"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "values": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "values"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "values"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_file__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "file"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "content": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "content"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "content"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "name": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "name"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "name"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_filter__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "filter"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "cond": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "cond"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "cond"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_format__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "format"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "default": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "default"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "default"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "pattern": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "pattern"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "pattern"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "value"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "value"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_get__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "get"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "default": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "default"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "default"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "name": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "name"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "name"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_include__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "include"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "default": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "default"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "default"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "name": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "name"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "name"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_index__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "index"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
+                }
+              ]
+            },
+            "transon_rule_item__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "item"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
+                }
+              ]
+            },
+            "transon_rule_join__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "join"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "default": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "default"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "default"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "items": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "items"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "items"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "sep": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "sep"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "sep"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_key__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "key"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
+                }
+              ]
+            },
+            "transon_rule_map__item": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "map"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "item": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "item"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "item"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_map__items": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "map"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "items": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "items"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "items"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_map__key+value": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "map"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "key": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "key"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "key"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "value"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "value"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_object__fields": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "object"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "fields": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "fields"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "fields"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_object__key+value": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "object"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "key": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "key"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "key"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "value": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "value"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "value"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_parent__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "parent"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
+                }
+              ]
+            },
+            "transon_rule_set__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "set"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "name": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "name"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "name"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_switch__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "switch"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "cases": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "cases"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "cases"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "default": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "default"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "default"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    "key": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "key"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "key"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "transon_rule_this__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "this"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
+                }
+              ]
+            },
+            "transon_rule_value__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "value"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
+                }
+              ]
+            },
+            "transon_rule_zip__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "zip"
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "items": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "items"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "items"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
             "transon_unsupported": {
               "$": "chain",
               "funcs": [

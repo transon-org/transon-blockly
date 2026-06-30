@@ -9,7 +9,8 @@ import { createNodeEngineProvider } from '../../src/index.js';
 import { M1_CORPUS } from './corpus.js';
 
 const STRUCTURAL = new Set<string>(STRUCTURAL_BLOCK_TYPES);
-const RULE_BLOCK = /^transon_rule_[a-z0-9]+__[a-z0-9]+$/;
+// Variant IDs may contain `+` (e.g. `key+value` from map/object/expr/call metadata).
+const RULE_BLOCK = /^transon_rule_[a-z0-9]+__[a-z0-9+]+$/;
 const ALLOWED_KEYS = new Set(['type', 'fields', 'inputs', 'extraState']);
 
 /** Validate a single workspace block-serialization node over the fixed vocabulary. */

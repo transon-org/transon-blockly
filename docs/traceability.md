@@ -82,15 +82,15 @@ docs/example-corpus templates; custom marker configuration; and import-failure c
 |--------------|----------|:------:|----------------|
 | Literals (scalar/array/object) | §15.8 | [~] | `test/engine-node-adapter/test/codec/roundtrip.test.ts` (scalar type fidelity, empties, nesting) |
 | Literal marker-key object | §15.8, §11.4 | [~] | skeleton-owned escape (FR-123): `test/engine-node-adapter/test/codec/escape.test.ts` + corpus entries (default marker; custom marker FR-063 deferred) |
-| Every built-in rule | §15.8, §14 | [ ] | |
-| Every block variant | §15.8, §7.7 | [ ] | |
-| Nested templates | §15.8 | [ ] | |
+| Every built-in rule | §15.8, §14 | [x] | all 22 rules: `test/engine-node-adapter/test/codec/corpus.ts` M2 entries + `roundtrip.test.ts` (structural + execution identity per entry) + `catalog-coverage.test.ts` (FR-040) |
+| Every block variant | §15.8, §7.7 | [x] | all rule variants (base, name, names, item, items, key+value, value, values, fields): corpus.ts M2 entries; `catalog-coverage.test.ts` asserts decode case per variant (FR-052/053/054) |
+| Nested templates | §15.8 | [~] | `roundtrip.test.ts` `mixed` entry + attr-nested; deeper nesting deferred to D3 |
 | Docs/example-corpus templates | §15.8 | [ ] | |
 | Custom marker configuration | §15.8, FR-063 | [x] | `test/engine-node-adapter/test/codec/marker.test.ts` (runtime marker substitution; one codec serves any marker) |
 | Import-failure cases | §15.8, §17 | [ ] | |
-| Round-trip by construction (per rule, generated codec) | §15.1, FR-115, AC-035 | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity); full catalog M2 |
+| Round-trip by construction (per rule, generated codec) | §15.1, FR-115, AC-035 | [x] | full catalog (all 22 rules): `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity); `catalog-coverage.test.ts` (FR-040, AC-006, AC-035) |
 | Self-hosting projection template | §7.16, FR-121, UC-016, AC-036 | [ ] | a `G_*`/codec template imports + round-trips as a normal in-surface template |
-| Workspace-shape invariant (per corpus entry) | §15.8, FR-124, AD-032 | [~] | `test/engine-node-adapter/test/codec/workspace-shape.test.ts` (M1 corpus subset; asserts the fixed vocabulary + catches malformed blocks) |
+| Workspace-shape invariant (per corpus entry) | §15.8, FR-124, AD-032 | [x] | `test/engine-node-adapter/test/codec/workspace-shape.test.ts` (full M2 corpus; all 22 rules + all variants + out-of-surface + literals) |
 
 ## Acceptance criteria coverage (§20)
 
@@ -103,12 +103,12 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-003 | Nested template | [ ] | |
 | AC-004 | Literal object | [ ] | |
 | AC-005 | Literal marker-key object | [ ] | |
-| AC-006 | All built-in rules available | [ ] | |
+| AC-006 | All built-in rules available | [x] | all 22 rules folded into the generated codec: `test/engine-node-adapter/test/codec/catalog-coverage.test.ts` (enc__<name> fragment per rule + decode case per variant); `roundtrip.test.ts` (structural + execution identity) |
 | AC-007 | Operators available | [ ] | |
 | AC-008 | Functions available | [ ] | |
 | AC-009 | Import supported template | [~] | `attr` + structural via the generated decoder: `test/engine-node-adapter/test/codec/decode.test.ts` (full UI import M4) |
 | AC-010 | Export generated template | [~] | generated encoder: `test/engine-node-adapter/test/codec/encode.test.ts` (full UI export M4) |
-| AC-011 | Strict semantic round-trip | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts`; full catalog M2 |
+| AC-011 | Strict semantic round-trip | [x] | full 22-rule catalog: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity for all corpus entries) |
 | AC-012 | Validation with engine | [ ] | |
 | AC-013 | Runtime execution with engine | [ ] | |
 | AC-014 | Output preview | [ ] | |
@@ -132,7 +132,7 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-032 | Compact editor mode | [ ] | |
 | AC-033 | Bidirectional JSON editing (strict in-surface) | [ ] | |
 | AC-034 | Projection coverage: new rule across all surfaces, no editor/projection change | [ ] | |
-| AC-035 | Round-trip by construction (generated encoder/decoder, per rule) | [~] | `attr` prototype (encoder+decoder from one metadata source; structural + execution identity): `test/engine-node-adapter/test/codec/roundtrip.test.ts`; full catalog M2 |
+| AC-035 | Round-trip by construction (generated encoder/decoder, per rule) | [x] | full 22-rule catalog (encoder+decoder from one metadata source; structural + execution identity): `test/engine-node-adapter/test/codec/roundtrip.test.ts`; `catalog-coverage.test.ts` asserts enc + dec arms for all rules/variants |
 | AC-036 | Self-hosting projection template loads + round-trips | [ ] | |
 | AC-037 | Presentation (title/category/advanced/colour) from data, not TypeScript; synthetic-rule projection test | [ ] | |
 
@@ -147,9 +147,9 @@ implementing module and the test that cites the ID.
 | §7.2 Blockly workspace | FR-012..FR-018 | [ ] | blocks, literals, rule-vs-literal distinction |
 | §7.3 Transon JSON generation | FR-019..FR-026 | [~] | encoder over `attr` + literals/array/object: `test/engine-node-adapter/test/codec/encode.test.ts` (marker key, params, omit-empty) |
 | §7.4 Import from Transon JSON | FR-027..FR-034 | [~] | decoder + unsupported placeholder: `test/engine-node-adapter/test/codec/decode.test.ts`, `encode.test.ts` (out-of-surface → `transon_unsupported`, §13.11); full surface check (§15.7) continues past M1 |
-| §7.5 Round-trip | FR-035..FR-039 | [~] | `attr` prototype: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution); full corpus M2 |
-| §7.6 Rule coverage | FR-040..FR-044 | [ ] | parity checks above |
-| §7.7 Rule parameters and variants | FR-045..FR-058 | [ ] | required/optional/kind + variant model & import matcher (§15.6) |
+| §7.5 Round-trip | FR-035..FR-039 | [~] | FR-035/036 full 22-rule catalog: `test/engine-node-adapter/test/codec/roundtrip.test.ts` (structural + execution identity for all corpus entries); FR-037..039 surface check completeness deferred |
+| §7.6 Rule coverage | FR-040..FR-044 | [~] | FR-040 all 22 rules folded in + CATALOG_RULES metadata-derived: `catalog-coverage.test.ts`; FR-041..044 (operators/functions/palette/export) partially via engine-parity `harness/scripts/check_engine_parity.py`; FR-042..044 pending UI |
+| §7.7 Rule parameters and variants | FR-045..FR-058 | [~] | FR-045 required params, FR-046 optional omission, FR-052/053/054 variant model + per-variant matching: `roundtrip.test.ts` (all corpus entries), `catalog-coverage.test.ts` (dec case per variant); FR-055 no silent rewrite: unsupported entries in corpus + `encode.test.ts`; FR-118 constant-param field-vs-input disposition (D2, pending); FR-058 constant-choice UI (M5, pending) |
 | §7.8 Literal object / marker escaping | FR-059..FR-063, FR-123 | [x] | skeleton-owned `{<marker>:object,fields:X}` escape + precedence + `transon_object_literal` (FR-059/060/061/062/123): `escape.test.ts`; custom marker (FR-063) via runtime marker substitution: `marker.test.ts` |
 | §7.9 Validation | FR-064..FR-070 | [ ] | engine `Transformer.validate()` via host `EngineProvider` |
 | §7.10 Execution preview | FR-071..FR-076 | [ ] | engine `transform()` via host `EngineProvider` |

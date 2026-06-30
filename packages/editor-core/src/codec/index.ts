@@ -22,6 +22,7 @@ export {
   stableStringify,
   GENERATOR_SOURCES,
   GENERATOR_FILES,
+  CATALOG_RULES,
   M1_RULES,
 } from './codegen.js';
 export type { CodecArtifact } from './codegen.js';

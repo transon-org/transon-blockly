@@ -37,6 +37,7 @@ export {
   stableStringify,
   GENERATOR_SOURCES,
   GENERATOR_FILES,
+  CATALOG_RULES,
   M1_RULES,
 } from './codec/index.js';
 export type {

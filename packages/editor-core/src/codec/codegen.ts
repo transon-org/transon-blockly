@@ -96,19 +96,64 @@ const encRecurse = (paramHole: Json): Json =>
   });
 
 // WHEN: the node is an EXACT match for this variant — every required param is a key AND no
-// non-marker key is foreign to the variant's declared params. (Lists are non-empty for every
-// catalog variant, so `expr and` is always given ≥1 operand.)
-const allRequiredPresent: Json = {
-  $: 'expr', op: 'and',
-  values: { '@': 'chain', funcs: [
-    at('params'), { '@': 'filter', cond: at('required') },
-    { '@': 'map', item: keyPresent(at('name')) },
-  ] },
-};
-const isForeignKey: Json = { // THIS is a node key; foreign === differs from every declared param name
-  $: 'expr', op: 'and',
-  values: { '@': 'chain', funcs: [at('params'), { '@': 'map', item: nev(THIS_T, at('name')) }] },
-};
+// non-marker key is foreign to the variant's declared params.
+//
+// R1 FIX (empty-operand): The six zero-param rules (`this`, `parent`, `item`, `key`, `index`,
+// `value`) have an empty required-param list and an empty variant-param list. The ORIGINAL
+// `allRequiredPresent` (expr and over [keyPresent(p) for required p]) and `isForeignKey`
+// (expr and over [nev(this, p.name) for p in variant.params]) both used `expr and` over a
+// $-runtime list that may be empty → DefinitionError (engine requires ≥1 operand for `and`).
+//
+// FIX: reframe both onto the join-of-empty membership pattern already used by `keyPresent`/
+// `noForeignKey`. `{$:join, items:[], default:KEY_NIL}` → `KEY_NIL`, so `join == KEY_NIL` is
+// vacuously true on empty lists.
+//
+// allRequiredPresent:
+//   NEW: "no required param is absent from node keys"
+//   Build the @-time literal array of required param names, embed it in the $-codec, then at
+//   $-runtime filter it keeping only names absent from node keys, join, compare to KEY_NIL.
+//   Empty required list → $:filter over [] → [] → join default → KEY_NIL == KEY_NIL → true ✓
+//
+//   Inner filter condition: save the current param name as _rp, then check if _rp is absent
+//   from node keys using a keyPresent-style $-filter on NODE_KEYS.
+//
+const allRequiredPresent: Json = eqv(
+  joinNames({ $: 'chain', funcs: [
+    // @-time: produce literal array of required param names ([] for zero-param rules)
+    { '@': 'chain', funcs: [
+      at('params'), { '@': 'filter', cond: at('required') }, { '@': 'map', item: at('name') }
+    ] },
+    // $-time: filter keeping those ABSENT from node keys
+    { $: 'filter', cond: { $: 'chain', funcs: [
+      { $: 'set', name: '_rp' },   // save current param name (this = param name in outer $:filter)
+      // is _rp not a node key?
+      eqv(
+        joinNames({ $: 'chain', funcs: [NODE_KEYS, { $: 'filter', cond: eqv(THIS_T, { $: 'get', name: '_rp' }) }] }),
+        KEY_NIL,
+      ),
+    ] } },
+  ] }),
+  KEY_NIL,
+);
+
+// isForeignKey: THIS is a node key; foreign === no declared param name equals THIS key.
+//   NEW: "no declared param has this name"
+//   Build the @-time literal array of variant param names, embed in the $-codec, then at
+//   $-runtime save the node key as _fk, filter the param names by == _fk, join, compare
+//   to KEY_NIL.
+//   Empty params list → $:filter over [] → [] → join default → KEY_NIL == KEY_NIL → true
+//   (correct: with no declared params every key is foreign) ✓
+//
+const isForeignKey: Json = eqv( // THIS is a node key; foreign === no declared param has this name
+  joinNames({ $: 'chain', funcs: [
+    { $: 'set', name: '_fk' },    // save node key (this = node key in outer $:filter over NODE_KEYS)
+    // @-time: produce literal array of variant param names ([] for zero-param rules)
+    { '@': 'chain', funcs: [at('params'), { '@': 'map', item: at('name') }] },
+    // $-time: filter keeping param names that match the saved node key
+    { $: 'filter', cond: eqv({ $: 'this' }, { $: 'get', name: '_fk' }) },
+  ] }),
+  KEY_NIL,
+);
 const noForeignKey: Json = eqv(
   joinNames({ $: 'chain', funcs: [
     NODE_KEYS, { $: 'filter', cond: nev(THIS_T, DOC_MARKER) }, { $: 'filter', cond: isForeignKey },
@@ -256,8 +301,19 @@ const BLOCKMAP_ENCODER: Json = { $: 'chain', funcs: [
     },
     default: mNode(null, []) } ] };
 
-/** The prototype rule(s) projected in M1 (the de-risk slice). M2 extends this list. */
-export const M1_RULES = ['attr'];
+/**
+ * Full catalog of rules derived from engine metadata (FR-040, AC-006, AC-034).
+ * Derived from `editorMetadata.catalog.rules` at module load time so a future engine
+ * update with a new rule folds in automatically (no code change needed — AC-034).
+ *
+ * DO NOT add field-kind disposition (FR-118) here — that is D2. The two `kind:"constant"`
+ * params (`expr.op`, `call.name`) stay as value inputs in this slice; they round-trip
+ * correctly (a scalar op like `"+"` encodes as a `transon_literal` input block).
+ */
+export const CATALOG_RULES: string[] = editorMetadata.catalog.rules.map((r: CatalogEntry) => r.name);
+
+/** @deprecated Use CATALOG_RULES. Kept for existing imports (M1 alias). */
+export const M1_RULES = CATALOG_RULES;
 
 // The per-rule `@`-staged generators are committed as inspectable, tool-agnostic projection
 // DATA under `src/codec/generators/` (AD-026: the surface is projection(metadata), and the
@@ -291,7 +347,7 @@ async function runGen(engine: EngineProvider, generator: Json, ruleEntry: Json):
  */
 export async function generateCodec(
   engine: EngineProvider,
-  rules: string[] = M1_RULES,
+  rules: string[] = CATALOG_RULES,
 ): Promise<{ encoder: CodecArtifact; decoder: CodecArtifact; blockmap: CodecArtifact }> {
   const catalogRules = editorMetadata.catalog.rules;
   const encFragments: Record<string, Json> = {};

@@ -39,7 +39,8 @@ export function ruleBlockType(rule: string, variant: string): string {
 
 /** True when `type` is a `transon_rule_<rule>__<variant>` block type. */
 export function isRuleBlockType(type: string): boolean {
-  return /^transon_rule_[a-z0-9]+__[a-z0-9]+$/.test(type);
+  // Variant IDs may contain `+` (e.g. `key+value`, `key+value` from map/object metadata).
+  return /^transon_rule_[a-z0-9]+__[a-z0-9+]+$/.test(type);
 }
 
 /**

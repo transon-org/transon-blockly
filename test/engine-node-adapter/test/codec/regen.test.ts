@@ -1,4 +1,8 @@
-// FR-119, AD-030 — strict codec-regeneration gate.
+// FR-115, FR-119, AD-030 — strict codec-regeneration gate.
+//
+// FR-115: the encoder and decoder are GENERATED from metadata (not hand-written): the
+// `@`-staged generators (`G_encode`/`G_decode`) run over the pinned metadata and the
+// generator sources are committed as data (AD-026, AD-030).
 //
 // The committed encoder/decoder artifacts must be byte-equal to a fresh run of the `@`-staged
 // generators over the pinned metadata. The gate *compares only* (fails on drift) and writes
