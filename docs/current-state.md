@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `bb9c0d9` — editor: M1 T0 — adapter resolves include fragments for the codec (FR-119, §6.5) |
+| Repo HEAD | `d4c550e` — editor: M1 codec — G_encode/G_decode for attr, round-trip by construction |
 | Branch | `m1-codec-skeleton` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -16,13 +16,13 @@
 
 ## Last action
 
-_**M1 codec de-risk built + green; round-trip-reviewer review in progress, commit pending.** Branch
+_**M1 codec slice committed (`d4c550e`) — round-trip-reviewer-signed-off, all gates green.** Branch
 `m1-codec-skeleton`. (0) **Engine re-pin to v0.1.3** committed (`197d034`) — the M1 prerequisite (`type`
 fn + `include` `IncludeContext` loader); cascaded `v0.1.1`→`v0.1.3` doc refs. (1) **T0 adapter fix**
 committed (`bb9c0d9`): the v0.1.3 `include` loader is `loader(name, context=…)` → must build via
 `context.transformer(…)` (self-`include` recursion + depth guard); added the `EngineProvider.transform`
-`includes` bundle channel + fixed `collectIncludes`. (2) **The codec is built + tested but NOT yet
-committed** (staged in the working tree): `packages/editor-core/src/codec/` = `codegen.ts` (the `@`-staged
+`includes` bundle channel + fixed `collectIncludes`. (2) **The M1 codec slice landed (`d4c550e`):**
+`packages/editor-core/src/codec/` = `codegen.ts` (the `@`-staged
 `G_encode`/`G_decode` arms projected from `attr` metadata + fixed skeleton + `generateCodec`/`serializeArtifact`),
 `run.ts` (engine-free encode/decode via the host port, `CODEC_MAX_INCLUDE_DEPTH=25`), `vocabulary.ts`
 (block types + `WorkspaceBlock`/`JsonPathBlockMap`), committed `artifacts/{encoder,decoder}.json`;
@@ -89,8 +89,8 @@ living read of it.
   scaffolding + AD-021 pins, `@transon/editor-core` stub (`EngineProvider` port + snapshot loader), and
   the Node→Python `test/engine-node-adapter` running markers `@`/`$` — reviewed + gate-green. Only the
   CI engine-pin flip (M-09: `--require-engine`) remains, waiting on `transon` being pip-installable in CI.
-- **M1 — `editor-core` codec skeleton + `G_encode`/`G_decode` for `attr`** — ◐ in progress (de-risk
-  proven; round-trip + DoD gates green; review pending; not yet committed). Codec lives in
+- **M1 — `editor-core` codec skeleton + `G_encode`/`G_decode` for `attr`** — ◐ in progress (codec
+  committed `d4c550e`, reviewer-signed-off; all gates green). Codec lives in
   `packages/editor-core/src/codec/`; engine-executed tests in `test/engine-node-adapter/test/codec/`.
   `decode(encode(T)) == T` structurally + by execution over the M1 corpus (AC-035); arms projected from
   metadata with byte-equal regen (AD-026/030); workspace-shape + FR-126 gates pass; clean recursion
