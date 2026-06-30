@@ -10,3 +10,22 @@
 // highlighting, D5 bidirectional sync.
 
 export const EDITOR_UI_PACKAGE = '@transon/editor-ui';
+
+// ---- EditorSession store (D1) ----
+export { createEditorStore } from './session/store.js';
+export type { EditorStore, Listener } from './session/store.js';
+export { emptySession, DEFAULT_MARKER } from './session/types.js';
+export type {
+  EditorSession,
+  EditorMode,
+  ValidationStatus,
+  ExecutionStatus,
+  JsonSyncStatus,
+  EngineRuntimeStatus,
+  GenerationStatus,
+} from './session/types.js';
+export { ERROR_CATEGORY, engineErrorCode, codecErrorCode } from './session/errors.js';
+export type { ErrorCode, EditorError } from './session/errors.js';
+export { engineRuntimeStatus, isEngineReady, applyEngineStatus } from './session/engine-status.js';
+export { runForward, applyForward, isEmptyWorkspace, topBlock, debounce } from './session/forward.js';
+export type { ForwardResult } from './session/forward.js';

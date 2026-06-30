@@ -120,7 +120,7 @@ ACs are the v1 acceptance gate. Each must be demonstrated by at least one test.
 | AC-020 | Tooltip from metadata | [ ] | |
 | AC-021 | No backend persistence | [ ] | |
 | AC-022 | Embeddable component | [ ] | |
-| AC-023 | Host engine runtime loading state | [ ] | |
+| AC-023 | Host engine runtime loading state | [~] | M4 D1: the store mirrors `EngineProvider.status` (absent/idle/loading/ready/failed) and gates validate/execute accordingly: `packages/editor-ui/test/engine-status.test.ts` (NFR-028); UI display + the Pyodide host transitions land D2/D3 |
 | AC-024 | Captured file writes | [ ] | |
 | AC-025 | Include loader behavior | [ ] | |
 | AC-026 | Custom marker | [ ] | |
@@ -143,9 +143,9 @@ implementing module and the test that cites the ID.
 
 | Subsection | Requirement IDs | Status | Notes |
 |------------|-----------------|:------:|-------|
-| §7.1 Editor shell and modes | FR-001..FR-011 | [ ] | sandbox/compact modes, panels, embedding callbacks |
+| §7.1 Editor shell and modes | FR-001..FR-011 | [~] | M4 D1: the framework-agnostic `EditorSession` store (§9.3 shape + forward projection + engine-gating) landed — `packages/editor-ui/test/{store,forward,no-engine,engine-status}.test.ts`; sandbox/compact modes, panels, embedding callbacks (the actual shell) are D2/D6 |
 | §7.2 Blockly workspace | FR-012..FR-018 | [~] | FR-012/013/014/015 templates/nesting/literals as projected Zelos blocks that load + connect headlessly: `packages/editor-blockly/test/palette-load.test.ts`, `test/engine-node-adapter/test/codec/blockly-load.test.ts`; FR-016 rule-vs-literal block distinction: `palette.test.ts`; FR-017 comments + FR-018 no-raw-edit are interactive-UI (M4) |
-| §7.3 Transon JSON generation | FR-019..FR-026 | [~] | encoder over `attr` + literals/array/object: `test/engine-node-adapter/test/codec/encode.test.ts` (marker key, params, omit-empty) |
+| §7.3 Transon JSON generation | FR-019..FR-026 | [~] | encoder over `attr` + literals/array/object: `test/engine-node-adapter/test/codec/encode.test.ts` (marker key, params, omit-empty); M4 D1 forward flow (workspace→JSON via `decode`, gated on engine-ready §10.4): `test/engine-node-adapter/test/ui/forward.test.ts` (real engine: generation == document, block map populated), `packages/editor-ui/test/forward.test.ts` (gating/wiring) |
 | §7.4 Import from Transon JSON | FR-027..FR-034 | [~] | decoder + unsupported placeholder: `test/engine-node-adapter/test/codec/decode.test.ts`, `encode.test.ts` (out-of-surface → `transon_unsupported`, §13.11); full surface check (§15.7) continues past M1 |
 | §7.5 Round-trip | FR-035..FR-039 | [~] | FR-035/036 full 22-rule catalog: `roundtrip.test.ts` (structural + execution identity); **FR-039** automated round-trip tests across all built-in rules: `roundtrip.test.ts` + `examples-corpus.test.ts` (147 engine examples) + `catalog-coverage.test.ts`; **FR-037** (§11.5 UI-only attributes) + **FR-038** (clear report when strict round-trip not guaranteed) are UI-surfacing → M4 |
 | §7.6 Rule coverage | FR-040..FR-044 | [~] | FR-040 all 22 rules folded in + CATALOG_RULES metadata-derived: `catalog-coverage.test.ts`; FR-041 all 28 operator tokens (14+14 aliases): `operators.test.ts`; FR-042 all 4 functions: `operators.test.ts`; FR-044 toolbox grouping by §12.4 category + FR-043 metadata-derived rule/category names: `toolbox.test.ts` (`G_toolbox` projection); FR-043 palette labels show title+rule name (OQ-008): `palette.test.ts` |
@@ -154,7 +154,7 @@ implementing module and the test that cites the ID.
 | §7.9 Validation | FR-064..FR-070 | [ ] | engine `Transformer.validate()` via host `EngineProvider` |
 | §7.10 Execution preview | FR-071..FR-076 | [ ] | engine `transform()` via host `EngineProvider` |
 | §7.11 Documentation, metadata & block generation | FR-077..FR-090, FR-127 | [~] | FR-084/088/089 metadata-projected Zelos block defs (`G_palette`): labels, param inputs, FR-118 widget (dynamic→`input_value`, constant+options→`field_dropdown`, constant→`field_input`), required structure — `test/engine-node-adapter/test/codec/palette.test.ts`; FR-090 baseline-not-polished; FR-127 presentation/category/colour from data (`presentation.json` + `check_presentation.py`); headless load FR-125 in editor-blockly (D3); FR-077..083/085..087 host/diagnostics M4/M5 |
-| §7.12 Error mapping | FR-091..FR-095, FR-122 | [~] | `JsonPathBlockMap` produced alongside the workspace (FR-091/094/122, §9.12): `test/engine-node-adapter/test/codec/blockmap.test.ts`; highlighting/consumption (FR-092/093/095) is M4 |
+| §7.12 Error mapping | FR-091..FR-095, FR-122 | [~] | `JsonPathBlockMap` produced alongside the workspace (FR-091/094/122, §9.12): `test/engine-node-adapter/test/codec/blockmap.test.ts`; M4 D1 wires the map into the session forward flow (`test/engine-node-adapter/test/ui/forward.test.ts`); highlighting/consumption (FR-092/093/095) is M4 D4 |
 | §7.13 Import / export UX | FR-096..FR-101 | [ ] | |
 | §7.14 Component embedding | FR-102..FR-110 | [ ] | component API |
 | §7.15 Bidirectional JSON editing | FR-111..FR-113 | [ ] | strict in-surface sync (AD-024); now via the generated decoder/encoder |

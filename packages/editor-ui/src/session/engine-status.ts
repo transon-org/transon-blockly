@@ -1,0 +1,46 @@
+// Engine runtime status mirroring + projection gating (NFR-028, AC-023, §10.4, §17.9).
+//
+// Q1 / SPEC §10.4 (corrected for the projection model, AD-026/030): generation, import-sync,
+// validation, and execution all run through the host engine, so they are available ONLY when an
+// engine exists AND is `ready`. With no engine (`absent`) or any non-ready state, those actions are
+// disabled while block authoring + raw JSON text handling stay available. This module is the single
+// place that decides "is the engine usable right now" and reflects it into the session.
+
+import type { EngineProvider } from '@transon/editor-core';
+import type { EditorStore } from './store.js';
+import type { EngineRuntimeStatus } from './types.js';
+
+/** Map a (possibly absent) host engine to the surfaced runtime status (`absent` ≠ `idle`). */
+export function engineRuntimeStatus(engine: EngineProvider | undefined): EngineRuntimeStatus {
+  return engine ? engine.status : 'absent';
+}
+
+/** The single gate: are engine-backed actions (projection/validate/execute) usable right now? */
+export function isEngineReady(engine: EngineProvider | undefined): boolean {
+  return !!engine && engine.status === 'ready';
+}
+
+/**
+ * Reflect the current engine runtime status into the store and gate the engine-backed verdicts.
+ * When the engine is not ready, validation/execution show `disabled`; when it becomes ready they
+ * reset to `idle` so the next user action can run. Authoring/JSON-text actions are never gated here.
+ * Call this after `init()`, on any host-signalled status change, and from the mount lifecycle (D2).
+ */
+export function applyEngineStatus(store: EditorStore, engine: EngineProvider | undefined): void {
+  const status = engineRuntimeStatus(engine);
+  const ready = status === 'ready';
+  const prev = store.getState();
+  store.setState({
+    engine_runtime_status: status,
+    validation_status: ready
+      ? prev.validation_status === 'disabled'
+        ? 'idle'
+        : prev.validation_status
+      : 'disabled',
+    execution_status: ready
+      ? prev.execution_status === 'disabled'
+        ? 'idle'
+        : prev.execution_status
+      : 'disabled',
+  });
+}

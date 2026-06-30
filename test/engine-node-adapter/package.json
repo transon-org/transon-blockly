@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@transon/editor-blockly": "workspace:*",
+    "@transon/editor-ui": "workspace:*",
     "@types/node": "22.18.9",
     "blockly": "13.0.0",
     "typescript": "5.9.3",

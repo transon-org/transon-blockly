@@ -190,6 +190,9 @@ importers:
       '@transon/editor-blockly':
         specifier: workspace:*
         version: link:../../packages/editor-blockly
+      '@transon/editor-ui':
+        specifier: workspace:*
+        version: link:../../packages/editor-ui
       '@types/node':
         specifier: 22.18.9
         version: 22.18.9
