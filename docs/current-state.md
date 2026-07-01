@@ -8,13 +8,72 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `98e70eb` — editor: M4 review — §7.15 surface-check must-fix (token in data ≠ out-of-surface) |
-| Branch | `m4-editor-ui` |
+| Repo HEAD | `1cf0be6` — editor: M5 review — depth-cap CodecError is a runtime limit, not "unsupported" |
+| Branch | `m5-react-embedding` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**M5 COMPLETE (`/run-milestone M5`) — ROADMAP ☑, `round-trip-reviewer`-signed-off, all DoD gates green;
+NOT pushed.** Branch `m5-react-embedding` (off `m4-editor-ui`). The complete consumer-facing surface:
+React entry, examples, embedding, progressive disclosure, self-hosting, accessibility. **SPEC-first
+(`26691ee`):** ratified **FR-128** (theming = scoped `--transon-*` CSS custom properties, chrome-only;
+block/category colours stay data-driven, FR-127) + **AC-039** (accessibility baseline binds the §19.5
+suite to a checkable DoD) — both were `should`-level with no contract/DoD; user-approved the minimal
+designs. **Slices:** **D0 (`4404b3d`)** `@transon/editor-react` — `<TransonEditor ref>` with React as a
+**PEER** (internals + Blockly bundled, React/engine external; a build test proves peer-not-bundled,
+AD-019) + embedding callbacks carry the engine `ValidationResult`/`ExecutionResult` payloads
+(`validate.ts`/`execute.ts` now RETURN the result; the controller threads it — FR-011/105/106).
+**D1 (`b68b1f6`)** embedding config over the one `EditorControllerOptions` funnel: read-only (FR-107,
+gates reverse edits + New), chrome-only CSS-var theming (FR-108/128, only `--transon-*` keys on the shell
+root), configurable §12.4 categories (FR-109, `filterToolbox` over a COPY, unknown names reported),
+custom-marker import+export round-trip (FR-110/AC-026, real engine), `<transon-editor>` event payloads in
+`detail` (FR-011). **D2 (`0ddb2bd`)** `buildExampleCorpus` (147 raw docs examples → **89 content-deduped**
+`ExampleCase`; the 44 dups are one example under several operators) + Examples picker + `loadExample`
+(template+input+expected; InputPanel re-keyed on `selected_example`) + OutputPanel expected-vs-actual with
+a **non-colour** ✓matches/✗differs label (FR-009/075/076/079/099, AC-018/019); new session field
+`expected_output_json`. **D3 (`2edf480`)** toolbar Import (file → §7.15 gate)/Copy/Download (Blob,
+canonical-only §11.6) + FR-101 `confirmReplace` unsaved guard (empty ws → no prompt) + no-backend
+(FR-096…101, AC-021). **D4 (`5a49cfb`)** metadata tooltips (FR-078/AC-020 via `ruleTooltip` enriching
+palette defs in `blocks.ts`, graceful FR-077), engine+metadata versions in the StatusBar (FR-080,
+`loadEngineVersions`, NFR-040 mismatch flag), FR-058 dropdown cited, **§12.6 progressive disclosure**
+(`progressiveToolbox`: advanced-blocks toggle + palette search — **data-driven from committed
+`presentation.json`, NO `G_toolbox` regen** → codec byte-unchanged; via `mount.setToolboxView`→
+`updateToolbox` + `controller.setPaletteView` + Toolbar toggle/search). **D5 (`630186f`)** self-hosting
+through the running editor (UC-016): the §7.15 import gate ACCEPTS `G_palette`/`G_toolbox` (in-surface +
+round-trip faithful) + forward regenerates them identically; the deepest `G_encode`/`G_decode` exceed the
+host-stack recursion ceiling (§6.5) → rejected cleanly. **D6 (`689a50c`)** accessibility: committed scoped
+light-DOM stylesheet (`styles.ts`: AA-contrast `--transon-*` tokens + `:focus-visible`, injected by the
+mount) + ARIA audit (labels on every panel/region, canvas `role=region`, status `role=status`/`aria-live`,
+textareas labelled) + deterministic jsdom **axe-core** scan (0 critical/serious ARIA violations).
+**Real-browser verified** via the reference-host (Playwright MCP): axe **0 violations incl. contrast**,
+`:focus-visible` 2px outline, and the in-browser **Pyodide engine reaches `ready`** — closing M4 watch-out
+(c) that Pyodide load was CI-unverified. **Independent `round-trip-reviewer` (maker≠checker): SAFE TO
+MERGE** — verified **codec byte-identity** (editor-core tree hash IDENTICAL to M4 `282fce6`, zero
+drift/regen), refuted every concern (marker consistency under 5 adversarial probes, faithful self-hosting,
+un-weakened import gate + `guardReplace` can't skip the surface check, purely-additive callbacks/
+`expected_output_json`); one SHOULD-FIX — the §6.5 depth-cap `CodecError` was mislabelled
+`import_unsupported` (≡ a §15.7 surface violation) — **fixed (`1cf0be6`)** → `runtime_transformation`
+(faithful to the engine `TransformationError`) + a D5 assertion. **1551 tests** (core 12 + blockly 20 +
+ui 92 + element 12 + react 5 + adapter 1403 + reference-host 7); typecheck + no-codec-mapping +
+behavior-runtime-size + presentation + engine-parity + traceability + maturity + evals — all green.
+**Key M5 mechanics learned:** the three surfaces share ONE `EditorControllerOptions` (config lands once);
+editor-react must BUNDLE the private internals (editor-ui is `private:true`) while keeping react a peer;
+docs example names are NOT unique (dedupe by content); an uncontrolled InputPanel needs a `key` to reflect
+a programmatic example-input load; progressive disclosure stays FR-127-clean by reading `presentation.json`
+(not a TS rule list); a `<footer role=status>` trips axe (footer's implicit contentinfo) → use a `div`;
+the depth ceiling makes the editor's own G_encode/G_decode un-openable (clean reject), so AC-036 scopes to
+palette/toolbox ("at least one"). **Next:** push `m1`/`m2`/`m3`/`m4`/`m5` + open PR(s) — **M0–M5 all
+complete**, none pushed. Remaining known item: the by-design M-09 CI engine-pin flip (`--require-engine`),
+waiting on `transon` pip-installable in CI. **M5 follow-ups (non-blocking):** the Playwright/axe browser
+checks were run live via MCP (verified) but NOT committed as a CI job — a `@playwright/test` +
+`@axe-core/playwright` e2e job against the built reference-host would make contrast/keyboard/Pyodide checks
+CI-gated; real engine errors still carry only a text location trail (highlighting falls back to root) —
+structured paths need an engine change._
+
+### Prior last action (M4)
 
 _**M4 COMPLETE (`/run-milestone M4`) — ROADMAP ☑, `round-trip-reviewer`-signed-off, all DoD gates green;
 NOT pushed.** Branch `m4-editor-ui` (off `m3-editor-blockly`). The runnable editor in both UI modes,
@@ -285,30 +344,33 @@ living read of it.
   array/object mutators (AC-038); `createTransonEditor()` + `<transon-editor>` (ESM + IIFE, no engine,
   AC-022); the Pyodide reference host (AD-025). One reviewer must-fix (§7.15 surface check) fixed +
   regression-locked. 1477 tests. See **Last action**.
-- **M5** — ☐ not started. React entry (`@transon/editor-react`), example expected-vs-actual UX,
-  import/export UX (FR-096…110), full embedding API, accessibility, self-hosting demo.
+- **M5 — `editor-react` + examples + embedding + accessibility + self-hosting** — ☑ done (committed
+  `26691ee`→`1cf0be6`, not pushed; `round-trip-reviewer`-signed-off, codec byte-unchanged). New public
+  `@transon/editor-react` (React peer); full embedding config (read-only/theming FR-128/categories/marker);
+  examples corpus (89 deduped) with expected-vs-actual; import/copy/download + unsaved guard; tooltips +
+  version diagnostics; §12.6 progressive disclosure (data-driven, no regen); self-hosting through the
+  editor (UC-016); accessibility (§19.5, real-browser axe-verified: 0 violations incl. contrast, Pyodide
+  `ready`). **1551 tests**; all gates green. See **Last action**.
 
 ## Next steps (ordered)
 
-1. **Push the milestone branches + open PR(s)** (one branch/PR per milestone — none pushed yet):
-   `m1-codec-skeleton` (M1), `m2-full-catalog` (M2, off M1), `m3-editor-blockly` (M3, off M2),
-   `m4-editor-ui` (M4, off M3). Reference the covered FR/AC IDs. If they should merge to `main` in order,
-   rebase each after the prior lands.
-2. **M5** (`/run-milestone M5`): `@transon/editor-react` (`<TransonEditor>` with React as a peer); example
-   loading with expected-vs-actual output (FR-075/076/079, AC-018/019); import/export UX (FR-096…101); the
-   full embedding API (FR-102…110) — callbacks beyond onChange/onValidate/onExecute, read-only/theming/marker
-   config, progressive disclosure (§12.6); accessibility (keyboard/contrast/focus/screen-reader, §19.5,
-   NFR-045); the self-hosting demo (open a `G_*`/codec template in the editor, AC-036/UC-016). **M5
-   watch-outs from M4:** (a) real engine errors carry only a text location trail, not a structured path —
-   highlighting falls back to the root block; structured paths would need an engine change; (b) the Pyodide
-   host's real in-browser load is unverified by CI (jsdom can't load Pyodide) — verify in a browser / via the
-   §19.4/§19.5 Playwright MCP; (c) the JSON-panel controlled-textarea reflects `template_json` only while
-   in_sync; (d) the IIFE no-engine assertion skips when `dist/iife.js` is absent (dep+source scans always
-   run). **Regen flow** (if
-   a generator changes): write generators → `pnpm --filter editor-core build` → `UPDATE_ARTIFACTS=1` test →
-   rebuild → repeat (the double-build, because run.ts bundles the artifacts) → a normal run must be byte-equal.
+1. **Push the milestone branches + open PR(s)** — **all of M0–M5 are complete and NOT pushed** (one
+   branch/PR per milestone): `m0-editor-scaffolding` (M0), `m1-codec-skeleton` (M1), `m2-full-catalog`
+   (M2, off M1), `m3-editor-blockly` (M3, off M2), `m4-editor-ui` (M4, off M3), `m5-react-embedding`
+   (M5, off M4). Reference the covered FR/AC IDs. If they should merge to `main` in order, rebase each
+   after the prior lands.
+2. **M5 follow-ups (non-blocking polish, optional).** (a) Commit the accessibility BROWSER layer as a CI
+   job — a `@playwright/test` + `@axe-core/playwright` e2e against the built `examples/reference-host`
+   (contrast, keyboard nav, visible focus, real Pyodide load, browser self-hosting demo). It was run LIVE
+   via the Playwright MCP and passed (axe 0 violations incl. contrast; Pyodide `ready`), but is not yet a
+   committed gate. (b) Structured error→block highlighting still falls back to the root block because real
+   engine errors carry only a text location trail — a structured template-path would need an engine change.
 3. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
    `update_memory.py --check --require-engine` on, once the engine is pip-installable in CI.
+
+**Regen flow** (only if a codec generator changes — M5 did NOT): write generators →
+`pnpm --filter editor-core build` → `UPDATE_ARTIFACTS=1` test → rebuild (double-build, run.ts bundles the
+artifacts) → a normal run must be byte-equal.
 
 ## Open blockers / waiting-on
 

@@ -386,6 +386,43 @@ self-hosting demonstration.
   read-only/theming/marker configuration; progressive disclosure (`SPEC.md` §12.6); the self-hosting
   demo/test (open a `G_*`/codec template in the editor, AC-036, UC-016); keyboard
   navigation/contrast/focus/screen-reader labels and the accessibility test suite.
+- **Status (☑ done — `round-trip-reviewer`-signed-off, all DoD gates green; not pushed).** The
+  complete consumer-facing surface, on `m5-react-embedding` (off `m4-editor-ui`). **SPEC-first
+  (`26691ee`)**: ratified **FR-128** (theming = scoped `--transon-*` CSS custom properties, chrome-only;
+  block/category colours stay data-driven, FR-127) and **AC-039** (accessibility baseline binding the
+  §19.5 suite to a checkable DoD) — both were `should`-level with no normative contract/DoD.
+  **Slices:** **D0 (`4404b3d`)** — new public `@transon/editor-react` (`<TransonEditor ref>` with React
+  as a **peer** — the internals + Blockly bundled, React/engine external; a build test proves React is
+  peer-not-bundled, AD-019) + embedding callbacks now carry the engine `ValidationResult`/
+  `ExecutionResult` payloads (FR-011/105/106). **D1 (`b68b1f6`)** — the embedding config surface over the
+  one `EditorControllerOptions` funnel: read-only (FR-107), chrome-only CSS-var theming (FR-108/128),
+  configurable §12.4 categories (FR-109, filter over a copy), custom-marker import/export round-trip
+  (FR-110/AC-026, real-engine), `<transon-editor>` event payloads in `detail` (FR-011). **D2 (`0ddb2bd`)**
+  — the example corpus (`buildExampleCorpus`: 147 raw docs examples → 89 content-deduped `ExampleCase`)
+  + Examples picker + `loadExample` + expected-vs-actual OutputPanel with a non-colour match label
+  (FR-009/075/076/079/099, AC-018/019). **D3 (`2edf480`)** — import (file → §7.15 gate)/copy/download
+  (canonical-only, §11.6) + the FR-101 unsaved-changes guard (`confirmReplace`) + no-backend
+  (FR-096…101, AC-021). **D4 (`5a49cfb`)** — metadata tooltips (FR-078/AC-020, graceful FR-077),
+  engine+metadata versions in diagnostics (FR-080, NFR-040 mismatch flag), the FR-058 dropdown cited,
+  and §12.6 progressive disclosure (advanced-blocks toggle + palette search — **data-driven from the
+  committed `presentation.json`, no `G_toolbox` regen**, so the codec stays byte-unchanged).
+  **D5 (`630186f`)** — self-hosting through the running editor (UC-016): the §7.15 import gate accepts
+  `G_palette`/`G_toolbox` (in-surface + round-trip faithful) and the forward projection regenerates them
+  identically; the deepest `G_encode`/`G_decode` exceed the host-stack recursion ceiling (§6.5) and are
+  rejected cleanly. **D6 (`689a50c`)** — accessibility (NFR-045/AC-039): a committed scoped light-DOM
+  stylesheet (AA-contrast `--transon-*` tokens + `:focus-visible`), an ARIA audit (labels on every major
+  panel/region, status `role=status`/`aria-live`), and a deterministic jsdom axe scan (0 critical/serious
+  ARIA violations) — **real-browser verified** via the reference-host (axe **0 violations incl. contrast**,
+  visible focus, and the in-browser **Pyodide engine reaches `ready`**, closing the M4 CI-unverified
+  watch-out). The independent `round-trip-reviewer` (maker≠checker) verified **codec byte-identity**
+  (editor-core tree hash unchanged vs M4 — no drift/regen), refuted every correctness concern (marker
+  consistency under 5 adversarial probes, faithful self-hosting, un-weakened import gate, additive
+  callbacks), and found one SHOULD-FIX — the §6.5 depth-cap `CodecError` was mislabelled
+  `import_unsupported` (≡ a surface violation) instead of the runtime limit it is — **fixed (`1cf0be6`)**
+  → `runtime_transformation` + a D5 assertion. **1551 tests** (core 12 + blockly 20 + ui 92 + element 12
+  + react 5 + adapter 1403 + reference-host 7); typecheck + no-codec-mapping + behavior-runtime-size +
+  presentation + engine-parity + traceability + maturity + evals — all green. Living status:
+  [`docs/current-state.md`](current-state.md).
 
 ---
 
@@ -398,7 +435,7 @@ self-hosting demonstration.
 | M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☑ |
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☑ |
 | M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-001/012…017/023…025/031…033/038; NFR-028/046; AD-017/018/019/020/024/025/030/031 | ☑ |
-| M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110/128, 058, 121, NFR-045, AC-018…022/026/036/039, AD-019 | ◐ |
+| M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110/128, 058, 121, NFR-045, AC-018…022/026/036/039, AD-019 | ☑ |
 
 ## Readiness assessment
 
@@ -417,7 +454,7 @@ conflict.
 | M2 (full catalog) | 🟢 after M1 | Fold per-rule `include` fragments once M1's loop closes; no new mechanism. |
 | M3 (Blockly projections + behavior runtime) | 🟢 done | `G_palette`/`G_toolbox` projections + committed palette/toolbox; the finite rule-agnostic behavior runtime (AD-031); FR-125/126/127 + NFR-046 gates; AC-036/037. Interactive Zelos render (AD-017/018) + editor-sync UI → M4. |
 | M4 (UI + runtime) | 🟢 done | Shell (sandbox/compact) + `EditorSession` store + interactive light-DOM Zelos mount (AD-017/018, jsdom) + host validate/execute + error highlighting + strict §7.15 sync + `createTransonEditor()`/`<transon-editor>` (ESM+IIFE, no engine) + the Pyodide reference host (AD-025). `round-trip-reviewer`-signed-off. |
-| M5 | 🟢 after M4 | Inherits M4; adds React entry, embedding, examples, accessibility, self-hosting. |
+| M5 | 🟢 done | React entry (`@transon/editor-react`, React peer) + full embedding config (read-only/theming/categories/marker) + examples with expected-vs-actual + import/export UX + diagnostics/tooltips + §12.6 progressive disclosure + self-hosting (UC-016) + accessibility (§19.5, real-browser axe-verified). `round-trip-reviewer`-signed-off; codec byte-unchanged. |
 
 ### Remaining inputs to define before coding starts
 
