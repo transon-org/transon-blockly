@@ -36,14 +36,19 @@ describe('<transon-editor> (AD-019, AD-018)', () => {
     }
   });
 
-  it('re-emits the editor change callback as a DOM CustomEvent (FR-011)', async () => {
+  it('re-emits the editor callbacks as DOM CustomEvents, payload in event.detail (FR-011)', async () => {
     const el = makeElement();
-    const onChange = vi.fn();
-    el.addEventListener('change', onChange);
+    let changeEvent: CustomEvent | undefined;
+    el.addEventListener('change', (e) => (changeEvent = e as CustomEvent));
     document.body.appendChild(el);
     try {
-      // the initial projection fires onChange(null) asynchronously
-      await vi.waitFor(() => expect(onChange).toHaveBeenCalled());
+      // the initial projection fires onChange(null) asynchronously, carried in event.detail
+      await vi.waitFor(() => expect(changeEvent).toBeInstanceOf(CustomEvent));
+      expect(changeEvent).toHaveProperty('detail'); // template payload travels in `detail`
+      expect(changeEvent!.detail).toBeNull(); // empty workspace → null template
+      // validate/execute use the identical `new CustomEvent(name, { detail: result })` construction
+      // (element.ts); the ValidationResult/ExecutionResult payloads are proven at the controller in
+      // editor-ui/test/callbacks.test.tsx.
     } finally {
       el.remove();
     }

@@ -2,6 +2,15 @@
 // these and the embedding host implements `engine`; everything else is optional configuration.
 
 import type { EditorMetadata, EngineProvider, Json } from '@transon/editor-core';
+import type { ToolboxCategoryConfig } from '../blockly/toolbox.js';
+
+/**
+ * Theming hooks (FR-108/FR-128): scoped CSS custom properties applied to the editor's light-DOM
+ * root (AD-018). Keys are `--transon-*` custom properties theming editor **chrome only** (panels,
+ * toolbar, typography); non-`--transon-*` keys are ignored. Block/category colours stay data-driven
+ * from the committed presentation data (FR-127) and are not theme-overridable in v1.
+ */
+export type TransonTheme = Record<string, string>;
 
 /** A documentation/playground example (SPEC §9.8). Host-supplied corpus for the Examples panel. */
 export interface ExampleCase {
@@ -30,7 +39,10 @@ export interface TransonEditorHost {
   marker?: string;
   examples?: ExampleCase[];
   metadata?: EditorMetadata;
-  theme?: unknown;
+  /** Chrome-only CSS-var theming hooks (FR-108/FR-128). */
+  theme?: TransonTheme;
+  /** Hide/reorder the fixed §12.4 toolbox categories (FR-109). */
+  categories?: ToolboxCategoryConfig;
   /** Dynamic include resolver (AD-010, §16.6) — for an in-process host that can call back. */
   includeLoader?(name: string): Json | undefined;
   /** Pre-resolved `name → fragment` includes (§16.6) — for a stateless host (the Node bridge). */

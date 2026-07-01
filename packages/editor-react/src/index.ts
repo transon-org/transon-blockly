@@ -12,4 +12,11 @@ export type { TransonEditorProps, TransonEditorRef } from './TransonEditor.js';
 
 // Re-export the host boundary + config types so consumers can type their embedding config without
 // depending on the internal UI package directly.
-export type { TransonEditorHost, ExampleCase, EditorMode, EditorController } from '@transon/editor-ui';
+export type {
+  TransonEditorHost,
+  ExampleCase,
+  EditorMode,
+  EditorController,
+  TransonTheme,
+  ToolboxCategoryConfig,
+} from '@transon/editor-ui';

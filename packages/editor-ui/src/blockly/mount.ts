@@ -10,6 +10,7 @@ import * as Blockly from 'blockly/core';
 import * as En from 'blockly/msg/en';
 import type { Json } from '@transon/editor-core';
 import { registerTransonBlocks, getTransonToolbox, loadCodecOutput } from '@transon/editor-blockly';
+import { filterToolbox, type ToolboxCategoryConfig } from './toolbox.js';
 
 /** Scoped root class applied to the host container (AD-018: light DOM, scoped CSS prefix). */
 export const TRANSON_ROOT_CLASS = 'transon-editor';
@@ -28,6 +29,8 @@ export function ensureBlocklyReady(): void {
 export interface TransonMountOptions {
   /** Read-only canvas (FR-107). */
   readOnly?: boolean;
+  /** Hide/reorder the §12.4 toolbox categories (FR-109). */
+  categories?: ToolboxCategoryConfig;
   /** Fired on a meaningful (non-UI, non-programmatic) workspace edit, with the serialized envelope. */
   onWorkspaceChange?(workspace: Json): void;
 }
@@ -54,8 +57,9 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
   ensureBlocklyReady();
   container.classList.add(TRANSON_ROOT_CLASS);
 
+  const toolbox = filterToolbox(getTransonToolbox(), opts.categories);
   const workspace = Blockly.inject(container, {
-    toolbox: getTransonToolbox() as Blockly.utils.toolbox.ToolboxDefinition,
+    toolbox: toolbox as Blockly.utils.toolbox.ToolboxDefinition,
     renderer: 'zelos',
     readOnly: opts.readOnly ?? false,
     trashcan: true,

@@ -17,4 +17,10 @@ export {
 
 // Re-export the host boundary types so embedders can type their config without depending on the
 // internal UI package directly.
-export type { TransonEditorHost, ExampleCase, EditorMode } from '@transon/editor-ui';
+export type {
+  TransonEditorHost,
+  ExampleCase,
+  EditorMode,
+  TransonTheme,
+  ToolboxCategoryConfig,
+} from '@transon/editor-ui';

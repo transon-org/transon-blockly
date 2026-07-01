@@ -55,9 +55,12 @@ export class TransonEditorElement extends HTMLElement {
       readOnly: this.hasAttribute('readonly'),
       template: parseAttr(this.getAttribute('template')),
       input: parseAttr(this.getAttribute('input')),
+      // Re-emit the editor callbacks as DOM CustomEvents; the payloads travel in `event.detail`
+      // (FR-011): change → the generated template, validate → the ValidationResult, execute → the
+      // ExecutionResult (ARCHITECTURE §5.3).
       onChange: (t) => this.dispatchEvent(new CustomEvent('change', { detail: t })),
-      onValidate: () => this.dispatchEvent(new CustomEvent('validate')),
-      onExecute: () => this.dispatchEvent(new CustomEvent('execute')),
+      onValidate: (result) => this.dispatchEvent(new CustomEvent('validate', { detail: result })),
+      onExecute: (result) => this.dispatchEvent(new CustomEvent('execute', { detail: result })),
     });
   }
 

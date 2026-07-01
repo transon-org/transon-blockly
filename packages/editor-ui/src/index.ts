@@ -36,13 +36,17 @@ export { tryReverse } from './session/reverse.js';
 export type { ReverseOutcome } from './session/reverse.js';
 
 // ---- host boundary + controller (D2) ----
-export type { TransonEditorHost, ExampleCase } from './session/host.js';
+export type { TransonEditorHost, ExampleCase, TransonTheme } from './session/host.js';
 export { createEditorController } from './session/controller.js';
 export type { EditorController, EditorControllerOptions } from './session/controller.js';
 
 // ---- interactive Blockly mount (D2) ----
 export { mountBlockly, ensureBlocklyReady, TRANSON_ROOT_CLASS } from './blockly/mount.js';
 export type { TransonMount, TransonMountOptions } from './blockly/mount.js';
+
+// ---- runtime toolbox category config (M5 D1, FR-109) ----
+export { filterToolbox } from './blockly/toolbox.js';
+export type { ToolboxCategoryConfig } from './blockly/toolbox.js';
 
 // ---- error → block highlighting (D4) ----
 export { buildPathIndex, highlightErrors, clearHighlights } from './blockly/highlight.js';

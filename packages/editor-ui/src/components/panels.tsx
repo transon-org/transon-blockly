@@ -22,19 +22,23 @@ function pretty(value: unknown): string {
 export function JsonPanel({
   state,
   onEdit,
+  readOnly = false,
 }: {
   state: EditorSession;
   onEdit?(text: string): void;
+  /** Read-only embedding (FR-107): the panel shows the generated JSON but does not sync edits. */
+  readOnly?: boolean;
 }): JSX.Element {
   const gated = state.generation_status === 'unavailable';
   const generated = pretty(state.template_json);
   const [text, setText] = useState(generated);
 
   // Reflect a fresh generation into the editor only while in sync (don't clobber an in-progress or
-  // rejected edit — §7.15 preserves the user's text until accepted/reverted).
+  // rejected edit — §7.15 preserves the user's text until accepted/reverted). Read-only always
+  // mirrors the generated JSON (there is no user edit to preserve).
   useEffect(() => {
-    if (state.json_sync_status === 'in_sync') setText(generated);
-  }, [generated, state.json_sync_status]);
+    if (readOnly || state.json_sync_status === 'in_sync') setText(generated);
+  }, [generated, state.json_sync_status, readOnly]);
 
   return (
     <section
@@ -56,10 +60,15 @@ export function JsonPanel({
           data-testid="json-content"
           value={text}
           spellCheck={false}
-          onChange={(e) => {
-            setText(e.target.value);
-            onEdit?.(e.target.value);
-          }}
+          readOnly={readOnly}
+          onChange={
+            readOnly
+              ? undefined
+              : (e) => {
+                  setText(e.target.value);
+                  onEdit?.(e.target.value);
+                }
+          }
         />
       )}
     </section>
@@ -154,22 +163,30 @@ export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
 
 export type ViewMode = 'visual' | 'json' | 'split';
 
-/** Toolbar actions (§12.3). D2 wires New + Toggle View; Validate/Run are gated on engine-ready. */
+/** Toolbar actions (§12.3). D2 wires New + Toggle View; Validate/Run are gated on engine-ready.
+ *  Read-only (FR-107) disables the authoring actions (New) while keeping Validate/Run/View. */
 export function Toolbar({
   state,
   controller,
   view,
   onView,
+  readOnly = false,
 }: {
   state: EditorSession;
   controller: EditorController | null;
   view?: ViewMode;
   onView?(v: ViewMode): void;
+  readOnly?: boolean;
 }): JSX.Element {
   const ready = state.engine_runtime_status === 'ready';
   return (
     <div className="transon-toolbar" data-testid="toolbar" role="toolbar" aria-label="Editor actions">
-      <button type="button" data-testid="btn-new" onClick={() => controller?.newWorkspace()}>
+      <button
+        type="button"
+        data-testid="btn-new"
+        disabled={readOnly}
+        onClick={() => controller?.newWorkspace()}
+      >
         New
       </button>
       <button

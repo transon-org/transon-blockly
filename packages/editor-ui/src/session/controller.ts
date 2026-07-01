@@ -80,6 +80,7 @@ export function createEditorController(
 
   const mount: TransonMount = mountBlockly(container, {
     readOnly: opts.readOnly,
+    categories: host.categories,
     onWorkspaceChange: () => debouncedProject(),
   });
 
@@ -181,6 +182,7 @@ export function createEditorController(
       }
     },
     setTemplateText(text) {
+      if (opts.readOnly) return; // read-only mode: the JSON panel does not sync edits back (FR-107)
       store.setState({ json_sync_status: 'editing' });
       debouncedReverse(text);
     },

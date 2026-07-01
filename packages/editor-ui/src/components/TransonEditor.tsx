@@ -5,12 +5,13 @@
 // actions.
 
 import { useEffect, useRef, useState } from 'react';
-import type { JSX } from 'react';
+import type { CSSProperties, JSX } from 'react';
 import {
   createEditorController,
   type EditorController,
   type EditorControllerOptions,
 } from '../session/controller.js';
+import type { TransonTheme } from '../session/host.js';
 import { emptySession, type EditorSession } from '../session/types.js';
 import {
   JsonPanel,
@@ -27,6 +28,17 @@ export type TransonEditorProps = EditorControllerOptions & {
    *  `createTransonEditor()` / `<transon-editor>` surface uses to build its handle (D6). */
   onReady?(controller: EditorController): void;
 };
+
+/**
+ * Build the inline style carrying the theme's scoped CSS custom properties (FR-108/FR-128). Only
+ * `--transon-*` keys are honored (chrome-only); other keys are ignored so a theme cannot inject
+ * arbitrary style. Block/category colours stay data-driven (FR-127) — they are not CSS vars here.
+ */
+function themeStyle(theme: TransonTheme | undefined): CSSProperties | undefined {
+  if (!theme) return undefined;
+  const vars = Object.entries(theme).filter(([k]) => k.startsWith('--transon-'));
+  return vars.length ? (Object.fromEntries(vars) as CSSProperties) : undefined;
+}
 
 export function TransonEditor(props: TransonEditorProps): JSX.Element {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -57,6 +69,8 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
 
   const controller = controllerRef.current;
   const mode = state.editor_mode;
+  const readOnly = props.readOnly ?? false;
+  const shellStyle = themeStyle(props.host.theme);
 
   // The Blockly container is ALWAYS mounted (the controller's workspace is bound to this exact DOM
   // node); view switches toggle visibility via CSS so the instance is never orphaned.
@@ -72,12 +86,22 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
 
   if (mode === 'compact') {
     return (
-      <div className="transon-editor-shell" data-testid="editor-shell" data-mode="compact">
-        <Toolbar state={state} controller={controller} view={view} onView={setView} />
+      <div
+        className="transon-editor-shell"
+        data-testid="editor-shell"
+        data-mode="compact"
+        data-readonly={readOnly ? '' : undefined}
+        style={shellStyle}
+      >
+        <Toolbar state={state} controller={controller} view={view} onView={setView} readOnly={readOnly} />
         <div className="transon-body transon-compact">
           {canvas}
           {view !== 'visual' ? (
-            <JsonPanel state={state} onEdit={(t) => controller?.setTemplateText(t)} />
+            <JsonPanel
+              state={state}
+              onEdit={(t) => controller?.setTemplateText(t)}
+              readOnly={readOnly}
+            />
           ) : null}
         </div>
         <StatusBar state={state} />
@@ -87,12 +111,18 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
 
   // Sandbox / playground (§12.1).
   return (
-    <div className="transon-editor-shell" data-testid="editor-shell" data-mode="sandbox">
-      <Toolbar state={state} controller={controller} />
+    <div
+      className="transon-editor-shell"
+      data-testid="editor-shell"
+      data-mode="sandbox"
+      data-readonly={readOnly ? '' : undefined}
+      style={shellStyle}
+    >
+      <Toolbar state={state} controller={controller} readOnly={readOnly} />
       <div className="transon-body transon-sandbox">
         <div className="transon-canvas-col">{canvas}</div>
         <div className="transon-side-col">
-          <JsonPanel state={state} onEdit={(t) => controller?.setTemplateText(t)} />
+          <JsonPanel state={state} onEdit={(t) => controller?.setTemplateText(t)} readOnly={readOnly} />
           <InputPanel state={state} onInput={(t) => controller?.setInputText(t)} />
           <OutputPanel state={state} />
           <FilesPanel state={state} />
