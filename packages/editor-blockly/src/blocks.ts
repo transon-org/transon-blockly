@@ -5,15 +5,43 @@
 // reads a block's inputs/fields/extraState).
 
 import * as Blockly from 'blockly/core';
-import { PALETTE_BLOCKS, TOOLBOX } from '@transon/editor-core';
+import { PALETTE_BLOCKS, TOOLBOX, editorMetadata } from '@transon/editor-core';
 import { registerTransonRuntime } from './runtime.js';
 
 let blocksRegistered = false;
 
+const RULE_TYPE_PREFIX = 'transon_rule_';
+
+/** Rule name → its metadata description, for block tooltips (FR-078). Built lazily from the docs
+ *  payload; missing/empty docs simply yield no tooltip (FR-077, graceful). */
+let ruleDescriptions: Map<string, string> | undefined;
+function ruleDescriptionMap(): Map<string, string> {
+  if (!ruleDescriptions) {
+    ruleDescriptions = new Map();
+    for (const r of editorMetadata.docs?.rules ?? []) {
+      const desc = (r as { description?: unknown }).description;
+      if (typeof desc === 'string' && desc.trim()) ruleDescriptions.set(r.name, desc);
+    }
+  }
+  return ruleDescriptions;
+}
+
+/**
+ * The metadata tooltip for a palette block type (FR-078, AC-020), or `undefined` when the type is not
+ * a rule block or its rule has no metadata description (FR-077, graceful). A rule block type is
+ * `transon_rule_<rule>__<variant>`; the rule name has no `__`, so it is the segment before it.
+ */
+export function ruleTooltip(blockType: string): string | undefined {
+  if (!blockType.startsWith(RULE_TYPE_PREFIX)) return undefined;
+  const rule = blockType.slice(RULE_TYPE_PREFIX.length).split('__')[0];
+  return rule ? ruleDescriptionMap().get(rule) : undefined;
+}
+
 /**
  * Register the behavior runtime + every committed palette block definition into Blockly. Idempotent.
  * Rule-variant blocks use built-in Blockly field/input types; the structural blocks reference the
- * runtime's custom field + mutators, so the runtime is registered first.
+ * runtime's custom field + mutators, so the runtime is registered first. Each rule block is enriched
+ * with a metadata-derived `tooltip` (FR-078) when the def does not already carry one.
  */
 export function registerTransonBlocks(): void {
   registerTransonRuntime();
@@ -21,7 +49,10 @@ export function registerTransonBlocks(): void {
   blocksRegistered = true;
   for (const def of PALETTE_BLOCKS) {
     if (!Blockly.Blocks[def.type]) {
-      Blockly.defineBlocksWithJsonArray([def as unknown as { [k: string]: unknown }]);
+      const tip = ruleTooltip(def.type);
+      const enriched =
+        tip && !(def as { tooltip?: unknown }).tooltip ? { ...def, tooltip: tip } : def;
+      Blockly.defineBlocksWithJsonArray([enriched as unknown as { [k: string]: unknown }]);
     }
   }
 }

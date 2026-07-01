@@ -53,6 +53,14 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
     }),
   );
   const [view, setView] = useState<ViewMode>('visual');
+  const [palette, setPalette] = useState<{ showAdvanced: boolean; search: string }>({
+    showAdvanced: false,
+    search: '',
+  });
+  const onPaletteView = (next: { showAdvanced: boolean; search: string }): void => {
+    setPalette(next);
+    controllerRef.current?.setPaletteView(next);
+  };
 
   useEffect(() => {
     const c = createEditorController(canvasRef.current!, props);
@@ -107,7 +115,16 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
         data-readonly={readOnly ? '' : undefined}
         style={shellStyle}
       >
-        <Toolbar state={state} controller={controller} view={view} onView={setView} readOnly={readOnly} />
+        <Toolbar
+          state={state}
+          controller={controller}
+          view={view}
+          onView={setView}
+          readOnly={readOnly}
+          showAdvanced={palette.showAdvanced}
+          search={palette.search}
+          onPaletteView={onPaletteView}
+        />
         <div className="transon-body transon-compact">
           {canvas}
           {view !== 'visual' ? (
@@ -132,7 +149,14 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
       data-readonly={readOnly ? '' : undefined}
       style={shellStyle}
     >
-      <Toolbar state={state} controller={controller} readOnly={readOnly} />
+      <Toolbar
+        state={state}
+        controller={controller}
+        readOnly={readOnly}
+        showAdvanced={palette.showAdvanced}
+        search={palette.search}
+        onPaletteView={onPaletteView}
+      />
       <div className="transon-body transon-sandbox">
         <div className="transon-canvas-col">{canvas}</div>
         <div className="transon-side-col">

@@ -21,6 +21,25 @@ export function isEngineReady(engine: EngineProvider | undefined): boolean {
 }
 
 /**
+ * Query the host engine + metadata schema versions and fold them into the session for diagnostics
+ * (FR-080, AC-023). No-op until the engine is ready; failures leave the versions null. The committed
+ * metadata-schema version the editor was built against is a separate constant (`metadataVersion` in
+ * editor-core); a mismatch with the host's is surfaced by the UI (NFR-040/AD-012).
+ */
+export async function loadEngineVersions(
+  store: EditorStore,
+  engine: EngineProvider | undefined,
+): Promise<void> {
+  if (!isEngineReady(engine)) return;
+  try {
+    const v = await engine!.version();
+    store.setState({ engine_version: v.engine ?? null, metadata_version: v.metadata ?? null });
+  } catch {
+    /* diagnostics only — leave the versions null on failure */
+  }
+}
+
+/**
  * Reflect the current engine runtime status into the store and gate the engine-backed verdicts.
  * When the engine is not ready, validation/execution show `disabled`; when it becomes ready they
  * reset to `idle` so the next user action can run. Authoring/JSON-text actions are never gated here.

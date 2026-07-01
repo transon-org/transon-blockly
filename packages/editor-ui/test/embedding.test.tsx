@@ -89,19 +89,20 @@ describe('configurable categories reach the mount (FR-109)', () => {
     return items.map((i) => i.getName?.()).filter((n): n is string => typeof n === 'string');
   }
 
-  it('injects the full category set by default, and hides configured categories', () => {
+  it('injects the configured category set, hiding configured categories', () => {
+    // 'Data Access' is a non-advanced category (attr), present in the default view.
     const c = container();
     const full = mountBlockly(c, {});
     try {
-      expect(categoryNames(full.workspace)).toContain('Variables');
+      expect(categoryNames(full.workspace)).toContain('Data Access');
     } finally {
       full.dispose();
     }
     const c2 = container();
-    const filtered = mountBlockly(c2, { categories: { hidden: ['Variables'] } });
+    const filtered = mountBlockly(c2, { categories: { hidden: ['Data Access'] } });
     try {
       const cats = categoryNames(filtered.workspace);
-      expect(cats).not.toContain('Variables');
+      expect(cats).not.toContain('Data Access');
       expect(cats.length).toBeGreaterThan(0);
     } finally {
       filtered.dispose();

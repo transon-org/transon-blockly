@@ -7,12 +7,13 @@ import { encode } from '@transon/editor-core';
 import type { Json, ValidationResult, ExecutionResult } from '@transon/editor-core';
 import { createEditorStore, type EditorStore } from './store.js';
 import { DEFAULT_MARKER, type EditorMode } from './types.js';
-import { applyEngineStatus } from './engine-status.js';
+import { applyEngineStatus, loadEngineVersions } from './engine-status.js';
 import { runForward, applyForward, debounce, isEmptyWorkspace } from './forward.js';
 import { validateTemplate } from './validate.js';
 import { executeTemplate } from './execute.js';
 import { tryReverse } from './reverse.js';
 import { mountBlockly, type TransonMount } from '../blockly/mount.js';
+import type { ToolboxView } from '../blockly/toolbox.js';
 import { highlightErrors, clearHighlights } from '../blockly/highlight.js';
 import type { TransonEditorHost, ExampleCase } from './host.js';
 
@@ -62,6 +63,8 @@ export interface EditorController {
    *  invalid/out-of-surface edit is reported and the workspace is left unchanged. Debounced. */
   setTemplateText(text: string): void;
   setMode(mode: EditorMode): void;
+  /** Update the palette progressive-disclosure view — advanced toggle + search (§12.6). */
+  setPaletteView(view: ToolboxView): void;
   /** Validate the current template through the host engine (§6.4). */
   validate(): Promise<void>;
   /** Execute the current template against the sample input (§6.4). */
@@ -138,6 +141,8 @@ export function createEditorController(
     applyEngineStatus(store, engine);
     const now = store.getState().engine_runtime_status;
     if (now === 'ready' && before !== 'ready') void project();
+    // Load engine + metadata versions once ready (FR-080 diagnostics); idempotent, load once.
+    if (now === 'ready' && store.getState().engine_version === null) void loadEngineVersions(store, engine);
     if (engine && (engine.status === 'idle' || engine.status === 'loading')) {
       statusTimer = setTimeout(refreshStatus, 200);
     }
@@ -263,6 +268,9 @@ export function createEditorController(
     },
     setMode(mode) {
       store.setState({ editor_mode: mode });
+    },
+    setPaletteView(view) {
+      mount.setToolboxView(view);
     },
     async validate() {
       const result = await validateTemplate(store, engine, marker);

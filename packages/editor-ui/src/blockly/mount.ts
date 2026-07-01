@@ -10,7 +10,12 @@ import * as Blockly from 'blockly/core';
 import * as En from 'blockly/msg/en';
 import type { Json } from '@transon/editor-core';
 import { registerTransonBlocks, getTransonToolbox, loadCodecOutput } from '@transon/editor-blockly';
-import { filterToolbox, type ToolboxCategoryConfig } from './toolbox.js';
+import {
+  filterToolbox,
+  progressiveToolbox,
+  type ToolboxCategoryConfig,
+  type ToolboxView,
+} from './toolbox.js';
 
 /** Scoped root class applied to the host container (AD-018: light DOM, scoped CSS prefix). */
 export const TRANSON_ROOT_CLASS = 'transon-editor';
@@ -31,6 +36,8 @@ export interface TransonMountOptions {
   readOnly?: boolean;
   /** Hide/reorder the §12.4 toolbox categories (FR-109). */
   categories?: ToolboxCategoryConfig;
+  /** Initial progressive-disclosure view — advanced toggle + search (§12.6). */
+  view?: ToolboxView;
   /** Fired on a meaningful (non-UI, non-programmatic) workspace edit, with the serialized envelope. */
   onWorkspaceChange?(workspace: Json): void;
 }
@@ -44,6 +51,8 @@ export interface TransonMount {
   loadDocument(block: Json): void;
   /** Clear the canvas (New). */
   clear(): void;
+  /** Update the palette view — advanced-blocks toggle + search (§12.6). Re-projects the toolbox. */
+  setToolboxView(view: ToolboxView): void;
   dispose(): void;
 }
 
@@ -57,9 +66,12 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
   ensureBlocklyReady();
   container.classList.add(TRANSON_ROOT_CLASS);
 
-  const toolbox = filterToolbox(getTransonToolbox(), opts.categories);
+  // Base toolbox = the committed §12.4 toolbox with the embedder's category config applied (FR-109);
+  // the progressive-disclosure view (advanced/search, §12.6) is layered on top and can change later.
+  const baseToolbox = filterToolbox(getTransonToolbox(), opts.categories);
+  let view: ToolboxView = opts.view ?? {};
   const workspace = Blockly.inject(container, {
-    toolbox: toolbox as Blockly.utils.toolbox.ToolboxDefinition,
+    toolbox: progressiveToolbox(baseToolbox, view) as Blockly.utils.toolbox.ToolboxDefinition,
     renderer: 'zelos',
     readOnly: opts.readOnly ?? false,
     trashcan: true,
@@ -96,6 +108,12 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
     },
     clear() {
       programmatic(() => workspace.clear());
+    },
+    setToolboxView(next) {
+      view = next;
+      workspace.updateToolbox(
+        progressiveToolbox(baseToolbox, view) as Blockly.utils.toolbox.ToolboxDefinition,
+      );
     },
     dispose() {
       workspace.removeChangeListener(listener);

@@ -3,14 +3,18 @@
 // unknown names rather than silently dropping them.
 import { describe, it, expect, vi } from 'vitest';
 import { getTransonToolbox } from '@transon/editor-blockly';
-import { filterToolbox } from '../src/blockly/toolbox.js';
+import { filterToolbox, progressiveToolbox } from '../src/blockly/toolbox.js';
 
 interface CatToolbox {
   kind: string;
-  contents: Array<{ kind: string; name?: string }>;
+  contents: Array<{ kind: string; name?: string; contents?: Array<{ kind: string; type?: string }> }>;
 }
 const names = (tb: unknown): string[] =>
   (tb as CatToolbox).contents.map((c) => c.name!).filter(Boolean);
+const blockTypes = (tb: unknown): string[] =>
+  (tb as CatToolbox).contents.flatMap((c) =>
+    (c.contents ?? []).filter((b) => b.kind === 'block').map((b) => b.type!),
+  );
 
 describe('filterToolbox (FR-109)', () => {
   it('returns the toolbox unchanged when no config is given', () => {
@@ -52,5 +56,44 @@ describe('filterToolbox (FR-109)', () => {
     expect(onUnknown).toHaveBeenCalledTimes(1);
     expect(onUnknown).toHaveBeenCalledWith(expect.arrayContaining(['Nope', 'AlsoNope']));
     expect(onUnknown.mock.calls[0]![0]).not.toContain('Custom'); // known → not reported
+  });
+});
+
+// §12.6 progressive disclosure — advanced blocks hidden by default (data-driven from PRESENTATION).
+const ADVANCED_TYPES = [
+  'transon_rule_parent__base',
+  'transon_rule_set__base',
+  'transon_rule_get__base',
+  'transon_rule_include__base',
+];
+
+describe('progressiveToolbox (§12.6)', () => {
+  it('hides advanced blocks by default and drops fully-advanced categories', () => {
+    const tb = progressiveToolbox(getTransonToolbox(), {});
+    const types = blockTypes(tb);
+    for (const t of ADVANCED_TYPES) expect(types).not.toContain(t);
+    // non-advanced blocks stay
+    expect(types).toContain('transon_rule_attr__name');
+    // 'Variables' holds only set/get (both advanced) → emptied → dropped
+    expect(names(tb)).not.toContain('Variables');
+    // 'Input / Context' keeps its non-advanced blocks though `parent` is hidden
+    expect(names(tb)).toContain('Input / Context');
+    expect(types).toContain('transon_rule_this__base');
+  });
+
+  it('shows advanced blocks when showAdvanced is true (nothing hidden)', () => {
+    const tb = progressiveToolbox(getTransonToolbox(), { showAdvanced: true });
+    const types = blockTypes(tb);
+    for (const t of ADVANCED_TYPES) expect(types).toContain(t);
+    expect(names(tb)).toContain('Variables');
+    expect(tb).toBe(getTransonToolbox()); // no work → returns the original
+  });
+
+  it('filters blocks by a search term (and drops emptied categories)', () => {
+    const tb = progressiveToolbox(getTransonToolbox(), { showAdvanced: true, search: 'attr' });
+    const types = blockTypes(tb);
+    expect(types.every((t) => t.includes('attr'))).toBe(true);
+    expect(types).toContain('transon_rule_attr__name');
+    expect(types).not.toContain('transon_rule_this__base');
   });
 });

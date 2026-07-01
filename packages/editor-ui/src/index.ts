@@ -47,9 +47,9 @@ export type { EditorController, EditorControllerOptions } from './session/contro
 export { mountBlockly, ensureBlocklyReady, TRANSON_ROOT_CLASS } from './blockly/mount.js';
 export type { TransonMount, TransonMountOptions } from './blockly/mount.js';
 
-// ---- runtime toolbox category config (M5 D1, FR-109) ----
-export { filterToolbox } from './blockly/toolbox.js';
-export type { ToolboxCategoryConfig } from './blockly/toolbox.js';
+// ---- runtime toolbox config (M5 D1 FR-109 + D4 §12.6 progressive disclosure) ----
+export { filterToolbox, progressiveToolbox } from './blockly/toolbox.js';
+export type { ToolboxCategoryConfig, ToolboxView } from './blockly/toolbox.js';
 
 // ---- error → block highlighting (D4) ----
 export { buildPathIndex, highlightErrors, clearHighlights } from './blockly/highlight.js';

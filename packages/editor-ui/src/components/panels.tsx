@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, JSX } from 'react';
-import { stableStringify } from '@transon/editor-core';
+import { stableStringify, metadataVersion } from '@transon/editor-core';
 import type { EditorSession } from '../session/types.js';
 import type { EditorController } from '../session/controller.js';
 import type { ExampleCase } from '../session/host.js';
@@ -224,8 +224,14 @@ export function FilesPanel({ state }: { state: EditorSession }): JSX.Element | n
   );
 }
 
-/** Engine runtime status + sync state (NFR-028, AC-023, §18). */
+/**
+ * Engine runtime status + sync state + diagnostics (NFR-028, AC-023, FR-080, §18). Surfaces the host
+ * engine + metadata schema versions once known; a metadata-version mismatch against the version the
+ * editor was built with is flagged (NFR-040, AD-012).
+ */
 export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
+  const metaMismatch =
+    state.metadata_version !== null && state.metadata_version !== metadataVersion;
   return (
     <footer className="transon-statusbar" data-testid="status-bar">
       <span data-testid="engine-status" data-status={state.engine_runtime_status}>
@@ -234,7 +240,15 @@ export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
       <span data-testid="sync-status" data-sync={state.json_sync_status}>
         JSON: {state.json_sync_status}
       </span>
-      {state.engine_version ? <span data-testid="engine-version">v{state.engine_version}</span> : null}
+      {state.engine_version ? (
+        <span data-testid="engine-version">engine {state.engine_version}</span>
+      ) : null}
+      {state.metadata_version ? (
+        <span data-testid="metadata-version" data-mismatch={metaMismatch ? '' : undefined}>
+          metadata {state.metadata_version}
+          {metaMismatch ? ` (built for ${metadataVersion})` : ''}
+        </span>
+      ) : null}
     </footer>
   );
 }
@@ -242,19 +256,27 @@ export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
 export type ViewMode = 'visual' | 'json' | 'split';
 
 /** Toolbar actions (§12.3). D2 wires New + Toggle View; Validate/Run are gated on engine-ready.
- *  Read-only (FR-107) disables the authoring actions (New) while keeping Validate/Run/View. */
+ *  Read-only (FR-107) disables the authoring actions (New) while keeping Validate/Run/View. D4 adds
+ *  the progressive-disclosure controls: advanced-blocks toggle + palette search (§12.6). */
 export function Toolbar({
   state,
   controller,
   view,
   onView,
   readOnly = false,
+  showAdvanced = false,
+  search = '',
+  onPaletteView,
 }: {
   state: EditorSession;
   controller: EditorController | null;
   view?: ViewMode;
   onView?(v: ViewMode): void;
   readOnly?: boolean;
+  showAdvanced?: boolean;
+  search?: string;
+  /** §12.6 palette view change (advanced toggle / search). */
+  onPaletteView?(next: { showAdvanced: boolean; search: string }): void;
 }): JSX.Element {
   const ready = state.engine_runtime_status === 'ready';
   const hasTemplate = state.template_json != null;
@@ -331,6 +353,29 @@ export function Toolbar({
           <option value="json">JSON</option>
           <option value="split">Split</option>
         </select>
+      ) : null}
+      {/* Progressive disclosure (§12.6, OQ-009): advanced-blocks toggle + palette search. */}
+      {onPaletteView ? (
+        <>
+          <input
+            type="search"
+            className="transon-palette-search"
+            data-testid="palette-search"
+            aria-label="Search palette"
+            placeholder="Search blocks…"
+            value={search}
+            onChange={(e) => onPaletteView({ showAdvanced, search: e.target.value })}
+          />
+          <label className="transon-advanced-toggle">
+            <input
+              type="checkbox"
+              data-testid="toggle-advanced"
+              checked={showAdvanced}
+              onChange={(e) => onPaletteView({ showAdvanced: e.target.checked, search })}
+            />
+            Advanced blocks
+          </label>
+        </>
       ) : null}
     </div>
   );
