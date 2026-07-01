@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "reference-host",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@transon/reference-host", "dev", "--port", "5173", "--strictPort"],
+      "port": 5173
+    }
+  ]
+}

@@ -217,10 +217,13 @@ as fixed skeleton scaffolding around metadata-projected arms, not as TypeScript.
 encoder for the gate); the direct edit is still gated by the surface check before it reaches the
 workspace (§6, `SPEC.md` §7.15).
 
-### AD-017 — Blockly Zelos renderer (Scratch-like), configurable
+### AD-017 — Blockly renderer, configurable
 **Decision.** Default to the Zelos renderer to match `SPEC.md` §1 ("similar to Scratch") and the
 low-code audience; expose renderer/theme via the theming hook (FR-108).
 **Rationale.** Matches the intended look and audience while staying configurable.
+**Updated (AD-033).** The default renderer is now **thrasos** (conventional puzzle-tab connections),
+not Zelos: UAT showed the Zelos "Scratch pill" look was unwanted and structurally un-tunable for the
+data/developer audience. AD-017's *configurable renderer/theme* principle stands; only the default moved.
 
 ### AD-018 — Light DOM + scoped CSS (shadow not viable)
 **Decision.** Render in light DOM with a scoped CSS class prefix (e.g. a `transon-editor` root) to
@@ -396,6 +399,30 @@ read structurally on decode, so there is a single derivation in either direction
 codec output target is pinned to Blockly's workspace serialization, so a Blockly serialization change
 is a regeneration concern; enforced by the FR-124 shape validator, the FR-126 headless-load and
 repo-scan gates. **SPEC link.** `SPEC.md` FR-124, FR-126, FR-127, §5.4, §21.15.
+
+---
+
+### AD-033 — Conventional renderer (thrasos) + external puzzle inputs + committed theme
+**Decision.** Render with the **thrasos** built-in renderer (conventional puzzle-tab connections),
+updating AD-017's Zelos default. Every projected rule block is a **value/output block**; all value
+parameters are **external inputs** (`inputsInline: false`) that connect from the side via puzzle
+sockets. The block body carries only **fields** (dropdowns for constant params, FR-058) and the
+**mutator +/- controls** — every sub-expression plugs in externally, never inline-embedded. Ship a
+committed `Blockly.Theme` (system font + workspace/flyout surface aligned to the chrome tokens) with
+**no** `blockStyles`/`categoryStyles`, so block/category colours stay data-driven (FR-127, §21.12);
+it is the SVG-canvas counterpart to the chrome CSS vars (FR-128).
+**Rationale.** The Zelos "Scratch" look (rounded pills, corner radius ≈ half the block height,
+inline full-block fields) proved unlike conventional Blockly and could **not** be tuned into it —
+Zelos does not use `CORNER_RADIUS` for its outlines (browser-verified: 20–48px pills despite a 3px
+constant). thrasos gives the tight puzzle-connection look the audience expects. External inputs make
+composition explicit ("connect from the side") and fit the functional value model: a value block
+plugs into a value input; Transon has no imperative statements, so there is no statement
+stacking or statement-input "brackets".
+**Trade-off.** External inputs make deeply nested templates grow on-canvas — accepted for clarity.
+Renderer stays configurable (AD-017); geras is a drop-in alternative. Font/surface/layout are pure UI
+(§21.12): the `inputsInline` flag is a block-definition display default, so the codec, workspace JSON,
+and round-trip are unchanged (only `palette.json` regenerates).
+**SPEC link.** `SPEC.md` FR-129, AC-040, §13.10; AD-017 (renderer), FR-127 (data-driven colours), FR-128 (chrome CSS vars).
 
 ---
 

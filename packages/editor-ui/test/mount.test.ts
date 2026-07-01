@@ -3,7 +3,7 @@ import * as Blockly from 'blockly/core';
 import { toWorkspaceState } from '@transon/editor-blockly';
 import { mountBlockly, TRANSON_ROOT_CLASS } from '../src/blockly/mount.js';
 
-// D2.1 — the interactive Zelos mount (FR-001, AD-017 Zelos, AD-018 light DOM). Verifies the rendered
+// D2.1 — the interactive mount (FR-001, AD-017/AD-033 thrasos renderer, AD-018 light DOM). Verifies the rendered
 // workspace injects into a light-DOM container, the change listener fires only on real edits, and
 // the workspace↔document bridge (serialize / loadDocument / clear) works. Codec correctness is
 // proven against the real engine elsewhere; here we pre-bake a codec block with the headless engine.
@@ -19,14 +19,14 @@ function makeContainer(): HTMLElement {
 }
 
 describe('Blockly mount (FR-001, AD-017, AD-018)', () => {
-  it('injects a Zelos workspace into a light-DOM container (no shadow root)', () => {
+  it('injects a thrasos workspace into a light-DOM container (no shadow root)', () => {
     const c = makeContainer();
     const mount = mountBlockly(c);
     try {
       expect(c.classList.contains(TRANSON_ROOT_CLASS)).toBe(true); // scoped prefix (AD-018)
       expect(c.shadowRoot).toBeNull(); // light DOM, never shadow (AD-018)
       expect(c.querySelector('svg')).toBeTruthy(); // rendered SVG canvas
-      expect(mount.workspace.getRenderer().getClassName()).toMatch(/zelos/i); // AD-017
+      expect(mount.workspace.getRenderer().getClassName()).toMatch(/thrasos/i); // AD-017/AD-033
       expect(mount.workspace.getToolbox()).toBeTruthy(); // §12.4 categories present
     } finally {
       mount.dispose();

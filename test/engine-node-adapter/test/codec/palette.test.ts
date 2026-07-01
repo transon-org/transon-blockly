@@ -26,6 +26,9 @@ interface BlockDef {
   output: Json;
   colour: number | string;
   mutator?: string;
+  inputsInline?: boolean;
+  message1?: string;
+  args1?: ArgDef[];
 }
 
 let engine: EngineProvider;
@@ -52,13 +55,17 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
   });
 
   it('every rule-variant block has consistent message↔args and an advisory output (FR-125, §13.1)', () => {
+    // placeholders %1..%N in each message exactly match that message's args (per-message numbering).
+    const consistent = (msg: string | undefined, args: ArgDef[] | undefined, label: string): void => {
+      const a = args ?? [];
+      const nums = ((msg ?? '').match(/%(\d+)/g) ?? []).map((p) => Number(p.slice(1)));
+      expect(placeholderCount(msg ?? ''), `${label} message↔args`).toBe(a.length);
+      expect(nums).toEqual(a.map((_, i) => i + 1));
+    };
     for (const b of blocks) {
       if (!isRuleBlockType(b.type)) continue;
-      const args = b.args0 ?? [];
-      // message0 placeholders are exactly %1..%N matching args0 (consistent message↔args, FR-125).
-      expect(placeholderCount(b.message0), `${b.type} message↔args`).toBe(args.length);
-      const nums = (b.message0.match(/%(\d+)/g) ?? []).map((p) => Number(p.slice(1)));
-      expect(nums).toEqual(args.map((_, i) => i + 1));
+      consistent(b.message0, b.args0, `${b.type} msg0`);
+      if (b.message1 !== undefined) consistent(b.message1, b.args1, `${b.type} msg1`);
       expect(b.output, `${b.type} output is advisory (null)`).toBeNull();
     }
   });
@@ -71,6 +78,34 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
         expect(b.message0.startsWith(`${title} (${rule.name})`), `${b.type} label`).toBe(true);
       }
     }
+  });
+
+  it('projects rule blocks with external puzzle inputs (FR-129, §13.10, AD-033)', () => {
+    for (const b of blocks) {
+      if (!isRuleBlockType(b.type)) continue;
+      expect(b.inputsInline, `${b.type} should be external`).toBe(false);
+    }
+  });
+
+  it('multi-input blocks put the title on its own first row (FR-129, §13.10)', () => {
+    const countValueInputs = (b: BlockDef): number =>
+      [...(b.args0 ?? []), ...(b.args1 ?? [])].filter((a) => a.type === 'input_value').length;
+    for (const b of blocks) {
+      if (!isRuleBlockType(b.type)) continue;
+      if (countValueInputs(b) >= 2) {
+        // title alone on row 1 (a leading dummy input), named inputs on message1's rows.
+        expect((b.args0 ?? []).map((a) => a.type), `${b.type} row-1 dummy`).toEqual(['input_dummy']);
+        expect(b.message1, `${b.type} has a 2nd row`).toBeTruthy();
+        expect(countValueInputs({ type: b.type, message0: '', output: null, colour: 0, args1: b.args1 }))
+          .toBeGreaterThanOrEqual(2);
+      } else {
+        // ≤1 input: single row, no 2nd message.
+        expect(b.message1, `${b.type} single row`).toBeUndefined();
+      }
+    }
+    // sanity: join(items/sep/default) is the archetype; map(item) stays single-row.
+    expect(byType.get(ruleBlockType('join', 'base'))!.message1).toBeTruthy();
+    expect(byType.get(ruleBlockType('map', 'item'))!.message1).toBeUndefined();
   });
 
   it('colour is the rule category colour (NFR-048)', () => {
@@ -87,7 +122,8 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
       const kindOf = new Map((rule.params as Array<{ name: string; kind?: string; options?: string[] }>).map((p) => [p.name, p]));
       for (const v of rule.variants as Array<{ id: string; params: Array<{ name: string }> }>) {
         const b = byType.get(ruleBlockType(rule.name, v.id))!;
-        const args = new Map((b.args0 ?? []).map((a) => [a.name, a]));
+        // widgets live in args0 (single-row) or args1 (title-on-own-row, §13.10) — merge both.
+        const args = new Map([...(b.args0 ?? []), ...(b.args1 ?? [])].map((a) => [a.name, a]));
         for (const vp of v.params) {
           const meta = kindOf.get(vp.name)!;
           const arg = args.get(vp.name)!;

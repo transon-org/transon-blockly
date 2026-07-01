@@ -8,14 +8,16 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `1cf0be6` — editor: M5 review — depth-cap CodecError is a runtime limit, not "unsupported" |
-| Branch | `m5-react-embedding` |
+| Repo HEAD | `5422caf` — editor: fix flat demo — add missing shell layout CSS (§12.1, NFR-025) |
+| Branch | `fix-editor-layout-css` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
 
+
+_**Post-M5 UI polish — demo layout CSS + conventional block rendering (branch `fix-editor-layout-css`, squashed into `5422caf`).** (1) Demo/shell **layout CSS** so the sandbox isn't flat + a sized Blockly canvas (§12.1, NFR-025); top-level `Makefile` (`demo`/`test`/`cloc`/`gates`). (2) **Blocks:** the **thrasos** renderer (conventional puzzle connections) + a committed `Blockly.Theme` (system font, chrome-aligned surface; block/category colours stay data-driven, FR-127); value/output blocks with **external puzzle inputs**; **title on its own row** when a block has ≥2 value inputs (FR-129, AC-040, §13.10; **AD-033** updates AD-017, Zelos→thrasos). Codec untouched — only `palette.json`/`G_palette.json` regenerated, round-trip green. editor-ui 101, editor-core 14, adapter 1405; typecheck + all gates green; browser-verified. **Next:** UAT #4 (operator dropdown), #1/#2 (collection/struct inputs)._
 _**M5 COMPLETE (`/run-milestone M5`) — ROADMAP ☑, `round-trip-reviewer`-signed-off, all DoD gates green;
 NOT pushed.** Branch `m5-react-embedding` (off `m4-editor-ui`). The complete consumer-facing surface:
 React entry, examples, embedding, progressive disclosure, self-hosting, accessibility. **SPEC-first
@@ -358,7 +360,9 @@ living read of it.
    branch/PR per milestone): `m0-editor-scaffolding` (M0), `m1-codec-skeleton` (M1), `m2-full-catalog`
    (M2, off M1), `m3-editor-blockly` (M3, off M2), `m4-editor-ui` (M4, off M3), `m5-react-embedding`
    (M5, off M4). Reference the covered FR/AC IDs. If they should merge to `main` in order, rebase each
-   after the prior lands.
+   after the prior lands. **Note:** `m5-react-embedding` has **uncommitted post-M5 changes in the working
+   tree** (demo/editor layout CSS fix + a new `Makefile` — see **Last action**); commit them onto the M5
+   branch before/with the push.
 2. **M5 follow-ups (non-blocking polish, optional).** (a) Commit the accessibility BROWSER layer as a CI
    job — a `@playwright/test` + `@axe-core/playwright` e2e against the built `examples/reference-host`
    (contrast, keyboard nav, visible focus, real Pyodide load, browser self-hosting demo). It was run LIVE

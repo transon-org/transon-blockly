@@ -58,8 +58,8 @@ Several requirements are conditioned on metadata or engine behavior:
 This project defines a visual, drag-and-drop editor for authoring **Transon templates** using
 **Google Blockly**.
 
-The editor lets users assemble Transon templates from interlocking visual blocks, similar to
-Scratch, while preserving Transon's core model:
+The editor lets users assemble Transon templates from interlocking visual blocks, in the style of
+visual block editors (Scratch, Blockly), while preserving Transon's core model:
 
 ```text
 JSON input
@@ -559,6 +559,16 @@ itself (FR-121, AC-036).
   overridden by theme props in v1, preserving the single-source presentation contract. Theming a
   block's colour is future work (would require a presentation-data or projection change, not a
   theme prop).
+- **FR-129** The editor shall render blocks with a conventional **puzzle-connection** renderer
+  (thrasos by default, AD-033; renderer configurable per AD-017) and a committed **block-surface
+  theme** — a system font and workspace/flyout **surface** colours aligned with the chrome tokens
+  (FR-128). Every projected rule block is a **value/output block**, and all value parameters are
+  **external inputs** that connect from the side via puzzle sockets (§13.10); the block body holds
+  only **fields** (dropdowns for constant params) and the **mutator +/- controls** — no
+  inline-embedded values. The theme sets **presentation surface only**: block and category **colours
+  stay data-driven** from the presentation projection (FR-127); it declares **no** `blockStyles` or
+  `categoryStyles` (§21.12 UI≠semantics). It is the SVG-canvas counterpart to the chrome CSS vars
+  (FR-128), which theme the surrounding React panels rather than the Blockly SVG.
 
 ### 7.15 Bidirectional JSON Editing
 
@@ -1166,7 +1176,15 @@ edited via the mutator round-trips identically to the same block authored via JS
 Every rule block is projected from metadata by `G_palette` (AD-026); the projection allows the
 metadata-declared parameters and disallows undeclared parameters unless explicitly enabled for
 debugging. Richer per-rule UX comes from richer metadata plus the finite behavior runtime (AD-031),
-never from a separately authored "specialized" block.
+never from a separately authored "specialized" block. The projected block is a **value/output block**
+with **external inputs** (`inputsInline: false`, FR-129): every value parameter connects from the
+side via a puzzle socket, and the block body holds only fields (dropdowns for constant params) and
+mutator +/- controls — no inline-embedded values. This is a display-only default in the block
+definition and does not affect the codec or round-trip (§21.12). When a variant has **two or more
+value inputs**, the block **title takes its own first row** and the named inputs start on the second
+row (readability); a variant with ≤1 value input keeps the title and input on one flowing row.
+Structural collection blocks (`transon_array`, `transon_object_literal`) follow the same model:
+external value inputs plus the +/- mutator.
 
 ### 13.11 Invalid / Unsupported Block
 
@@ -1686,6 +1704,13 @@ Version 1 is acceptable when all criteria below are met.
   keyboard-reachable with visible focus states; error state and expected-vs-actual match state are
   conveyed without relying on colour alone; and major panels carry screen-reader labels (binds
   NFR-045 and §19.5 to a checkable DoD).
+- **AC-040 — Conventional renderer + external puzzle inputs.** The mounted workspace uses the
+  **thrasos** renderer (puzzle-tab connections) and the committed Transon theme (system font,
+  chrome-aligned surface); every projected rule-variant block is a value/output block with
+  **external inputs** (`inputsInline: false`, §13.10) — sub-expressions connect from the side and the
+  body holds only fields + mutator controls. Block/category colours stay data-driven (FR-127) and the
+  codec artifacts are unchanged. Verified deterministically (renderer + theme + external-input wiring)
+  and visually in a real browser (FR-129, AD-033).
 
 ---
 

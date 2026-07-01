@@ -17,6 +17,7 @@ import {
   type ToolboxView,
 } from './toolbox.js';
 import { ensureTransonStyles } from '../styles.js';
+import { TRANSON_THEME, TRANSON_RENDERER } from './theme.js';
 
 /** Scoped root class applied to the host container (AD-018: light DOM, scoped CSS prefix). */
 export const TRANSON_ROOT_CLASS = 'transon-editor';
@@ -74,7 +75,8 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
   let view: ToolboxView = opts.view ?? {};
   const workspace = Blockly.inject(container, {
     toolbox: progressiveToolbox(baseToolbox, view) as Blockly.utils.toolbox.ToolboxDefinition,
-    renderer: 'zelos',
+    renderer: TRANSON_RENDERER, // thrasos — conventional puzzle connections (AD-017/AD-033, FR-129)
+    theme: TRANSON_THEME, // block-surface theme: font + surface; colours stay data-driven (FR-127)
     readOnly: opts.readOnly ?? false,
     trashcan: true,
   });

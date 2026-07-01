@@ -64,6 +64,11 @@
     {
       "args0": [
         {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
+        {
           "name": "name",
           "type": "input_value"
         },
@@ -74,12 +79,18 @@
       ],
       "colour": 330,
       "inputsInline": false,
-      "message0": "Get variable (get) name %1 default %2",
+      "message0": "Get variable (get) %1",
+      "message1": " name %1 default %2",
       "output": null,
       "type": "transon_rule_get__base"
     },
     {
       "args0": [
+        {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
         {
           "name": "name",
           "type": "input_value"
@@ -91,12 +102,18 @@
       ],
       "colour": 285,
       "inputsInline": false,
-      "message0": "Get attribute (attr) name %1 default %2",
+      "message0": "Get attribute (attr) %1",
+      "message1": " name %1 default %2",
       "output": null,
       "type": "transon_rule_attr__name"
     },
     {
       "args0": [
+        {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
         {
           "name": "names",
           "type": "input_value"
@@ -108,12 +125,18 @@
       ],
       "colour": 285,
       "inputsInline": false,
-      "message0": "Get attribute (attr) names %1 default %2",
+      "message0": "Get attribute (attr) %1",
+      "message1": " names %1 default %2",
       "output": null,
       "type": "transon_rule_attr__names"
     },
     {
       "args0": [
+        {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
         {
           "name": "key",
           "type": "input_value"
@@ -125,7 +148,8 @@
       ],
       "colour": 255,
       "inputsInline": false,
-      "message0": "Build object (object) key %1 value %2",
+      "message0": "Build object (object) %1",
+      "message1": " key %1 value %2",
       "output": null,
       "type": "transon_rule_object__key+value"
     },
@@ -171,6 +195,11 @@
     {
       "args0": [
         {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
+        {
           "name": "key",
           "type": "input_value"
         },
@@ -181,7 +210,8 @@
       ],
       "colour": 120,
       "inputsInline": false,
-      "message0": "Map (map) key %1 value %2",
+      "message0": "Map (map) %1",
+      "message1": " key %1 value %2",
       "output": null,
       "type": "transon_rule_map__key+value"
     },
@@ -214,6 +244,11 @@
     {
       "args0": [
         {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
+        {
           "name": "name",
           "type": "input_value"
         },
@@ -224,12 +259,18 @@
       ],
       "colour": 0,
       "inputsInline": false,
-      "message0": "Write file (file) name %1 content %2",
+      "message0": "Write file (file) %1",
+      "message1": " name %1 content %2",
       "output": null,
       "type": "transon_rule_file__base"
     },
     {
       "args0": [
+        {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
         {
           "name": "items",
           "type": "input_value"
@@ -245,7 +286,8 @@
       ],
       "colour": 165,
       "inputsInline": false,
-      "message0": "Join (join) items %1 sep %2 default %3",
+      "message0": "Join (join) %1",
+      "message1": " items %1 sep %2 default %3",
       "output": null,
       "type": "transon_rule_join__base"
     },
@@ -755,6 +797,11 @@
     {
       "args0": [
         {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
+        {
           "name": "pattern",
           "type": "input_value"
         },
@@ -769,12 +816,18 @@
       ],
       "colour": 90,
       "inputsInline": false,
-      "message0": "Format string (format) pattern %1 value %2 default %3",
+      "message0": "Format string (format) %1",
+      "message1": " pattern %1 value %2 default %3",
       "output": null,
       "type": "transon_rule_format__base"
     },
     {
       "args0": [
+        {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
         {
           "name": "name",
           "type": "input_value"
@@ -786,12 +839,18 @@
       ],
       "colour": 195,
       "inputsInline": false,
-      "message0": "Include template (include) name %1 default %2",
+      "message0": "Include template (include) %1",
+      "message1": " name %1 default %2",
       "output": null,
       "type": "transon_rule_include__base"
     },
     {
       "args0": [
+        {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
         {
           "name": "key",
           "type": "input_value"
@@ -807,12 +866,18 @@
       ],
       "colour": 60,
       "inputsInline": false,
-      "message0": "Switch (switch) key %1 cases %2 default %3",
+      "message0": "Switch (switch) %1",
+      "message1": " key %1 cases %2 default %3",
       "output": null,
       "type": "transon_rule_switch__base"
     },
     {
       "args0": [
+        {
+          "type": "input_dummy"
+        }
+      ],
+      "args1": [
         {
           "name": "cases",
           "type": "input_value"
@@ -824,7 +889,8 @@
       ],
       "colour": 60,
       "inputsInline": false,
-      "message0": "Condition (cond) cases %1 default %2",
+      "message0": "Condition (cond) %1",
+      "message1": " cases %1 default %2",
       "output": null,
       "type": "transon_rule_cond__base"
     },

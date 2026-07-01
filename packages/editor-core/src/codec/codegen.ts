@@ -511,11 +511,9 @@ const pAt = (name: string): Json => ({ '@': 'attr', name });
 const P_PCT_INDEX: Json = { '@': 'format', pattern: '%{}', value: { '@': 'expr', op: 'add', values: [{ '@': 'index' }, 1] } };
 // per-param message segment: " <paramName> %<n>"
 const P_PARAM_SEG: Json = { '@': 'join', sep: '', items: [' ', pAt('name'), ' ', P_PCT_INDEX] };
-// message0 = "<title> (<rule>)" + one " <param> %n" per param, in order.
-const P_MESSAGE0: Json = { '@': 'join', sep: '', items: [
-  P_TITLE, ' (', P_NAME, ')',
-  { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG }] } },
-] };
+// "<title> (<rule>)" label + the " <param> %n" segments (one per param) — shared by both layouts.
+const P_LABEL: Json = { '@': 'join', sep: '', items: [P_TITLE, ' (', P_NAME, ')'] };
+const P_PARAM_SEGS: Json = { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG }] } };
 // @-time predicates on a param: constant? has a resolved enum domain (`options`)?
 const P_IS_CONSTANT: Json = { '@': 'expr', op: '==', values: [pAt('kind'), 'constant'] };
 const P_HAS_OPTIONS: Json = { '@': 'expr', op: '!=', values: [
@@ -530,14 +528,37 @@ const P_ARG: Json = { '@': 'cond', cases: [
   { when: P_IS_CONSTANT,
     then: { type: 'field_input', name: pAt('name') } },
 ], default: { type: 'input_value', name: pAt('name') } };
-// one Zelos block definition per variant.
-const P_VARIANT_DEF: Json = {
-  type: { '@': 'join', sep: '', items: ['transon_rule_', P_NAME, '__', pAt('id')] },
-  message0: P_MESSAGE0,
-  args0: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_ARG }] },
-  output: null,
-  colour: P_COLOUR,
-  inputsInline: false,
+// one widget per param (FR-118), in param order — shared as args0 (compact) or args1 (title-own-row).
+const P_ARGS: Json = { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_ARG }] };
+const P_TYPE: Json = { '@': 'join', sep: '', items: ['transon_rule_', P_NAME, '__', pAt('id')] };
+// One block definition per variant. External inputs (FR-129, §13.10, AD-033): every value parameter
+// connects from the SIDE via a puzzle socket (thrasos); the block body holds only fields + mutator
+// controls, never inline-embedded values. When the variant has ≥2 value inputs (`multiInput`, a flag
+// the driver computes — Transon has no length function) the title takes its own first row (a leading
+// dummy input) and the named inputs start on the second row; otherwise the title and inputs share the
+// flow. Display-only; round-trip-neutral (§21.12) — codec unchanged.
+const P_VARIANT_DEF: Json = { '@': 'cond',
+  cases: [{
+    when: pAt('multiInput'),
+    then: {
+      type: P_TYPE,
+      message0: { '@': 'join', sep: '', items: [P_LABEL, ' %1'] },
+      args0: [{ type: 'input_dummy' }],
+      message1: P_PARAM_SEGS,
+      args1: P_ARGS,
+      output: null,
+      colour: P_COLOUR,
+      inputsInline: false,
+    },
+  }],
+  default: {
+    type: P_TYPE,
+    message0: { '@': 'join', sep: '', items: [P_LABEL, P_PARAM_SEGS] },
+    args0: P_ARGS,
+    output: null,
+    colour: P_COLOUR,
+    inputsInline: false,
+  },
 };
 const G_PALETTE: Json = { '@': 'chain', funcs: [
   { '@': 'set', name: 'pentry' },
@@ -709,13 +730,16 @@ function enrichForPalette(entry: unknown, presentation: Presentation): Json {
     name: e.name,
     title: pres.title,
     colour: presentation.categoryColour[pres.category] ?? 0,
-    variants: e.variants.map((v) => ({
-      id: v.id,
-      params: v.params.map((p) => {
+    variants: e.variants.map((v) => {
+      const params = v.params.map((p) => {
         const options = optMap.get(p.name);
         return { name: p.name, required: p.required, kind: kindMap.get(p.name) ?? 'dynamic', ...(options ? { options } : {}) };
-      }),
-    })),
+      });
+      // ≥2 value inputs ⇒ the title takes its own first row (FR-129, §13.10). Computed here in plain
+      // TS (Transon has no length function) so the G_palette projection just branches on the flag.
+      const multiInput = params.filter((p) => p.kind !== 'constant').length >= 2;
+      return { id: v.id, params, multiInput };
+    }),
   } as unknown as Json;
 }
 
