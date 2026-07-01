@@ -376,9 +376,11 @@ and the projection codecs across the boundary.
 self-hosting demonstration.
 
 - Scope: **FR-077 … FR-082** (docs/editor metadata, diagnostics), **FR-096 … FR-101** (import/export
-  UX), **FR-102 … FR-110** (component embedding), **FR-058** (constant-choice dropdowns from resolved
-  enums), **FR-121** (self-hosting); **NFR-045**, **§19.5**; **AC-018 … AC-022**, **AC-026**,
-  **AC-036**; **AD-019**.
+  UX), **FR-102 … FR-110** + **FR-128** (component embedding + chrome-only theming contract),
+  **FR-058** (constant-choice dropdowns from resolved enums), **FR-121** (self-hosting); **NFR-045**,
+  **§19.5**; **AC-018 … AC-022**, **AC-026**, **AC-036**, **AC-039** (accessibility baseline); **AD-019**.
+  (FR-128 + AC-039 added SPEC-first at M5 start: FR-108 theming and NFR-045 a11y were `should`-level
+  with no normative contract/DoD — ratified with the recommended minimal designs.)
 - Deliverables: `@transon/editor-react` (`<TransonEditor>` with React as a peer); example loading from
   the corpus with expected-vs-actual output; embedding callbacks (`onChange`/`onValidate`/`onExecute`);
   read-only/theming/marker configuration; progressive disclosure (`SPEC.md` §12.6); the self-hosting
@@ -396,7 +398,7 @@ self-hosting demonstration.
 | M2 | Full catalog: per-rule `include` fragments, all rules round-trip | FR-040…058, 120, 124, §15.6/§15.8, AC-028/029/030/034/035, AD-032 | ☑ |
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☑ |
 | M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-001/012…017/023…025/031…033/038; NFR-028/046; AD-017/018/019/020/024/025/030/031 | ☑ |
-| M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110, 058, 121, NFR-045, AC-036 | ☐ |
+| M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110/128, 058, 121, NFR-045, AC-018…022/026/036/039, AD-019 | ◐ |
 
 ## Readiness assessment
 

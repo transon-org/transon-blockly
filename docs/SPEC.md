@@ -552,6 +552,13 @@ itself (FR-121, AC-036).
 - **FR-108** The component should support theming hooks.
 - **FR-109** The component should support configurable rule categories.
 - **FR-110** The component should support a configurable marker key.
+- **FR-128** Theming hooks (FR-108) are exposed as scoped CSS custom properties (`--transon-*`)
+  applied to the editor's light-DOM root (AD-018); they theme editor **chrome only** — panels,
+  toolbar, typography, and surrounding layout. Block and category colours remain **data-driven**
+  from the committed presentation data (FR-127, `metadata-contract.md` §2.9) and are **not**
+  overridden by theme props in v1, preserving the single-source presentation contract. Theming a
+  block's colour is future work (would require a presentation-data or projection change, not a
+  theme prop).
 
 ### 7.15 Bidirectional JSON Editing
 
@@ -1674,6 +1681,11 @@ Version 1 is acceptable when all criteria below are met.
   block and key/value fields of a `transon_object_literal` block directly on the canvas via the
   behavior-runtime mutator UI (§13.13); the result round-trips identically to the same structure
   authored via the JSON panel (AD-031, NFR-046, FR-124/126).
+- **AC-039 — Accessibility baseline.** The editor passes the §19.5 accessibility suite: the sandbox
+  shell has no critical axe violations for contrast or ARIA; the toolbar and panels are
+  keyboard-reachable with visible focus states; error state and expected-vs-actual match state are
+  conveyed without relying on colour alone; and major panels carry screen-reader labels (binds
+  NFR-045 and §19.5 to a checkable DoD).
 
 ---
 
