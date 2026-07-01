@@ -179,6 +179,13 @@ fixes the *form* of the editor-owned presentation that §2.7/§2.8 already assig
 engine export stays Blockly-agnostic and emits none of it. A completeness check (FR-127) requires
 every metadata rule to have a presentation-data entry.
 
+The same file may declare **dropdown-menu curation** for constant parameters (`SPEC.md` FR-130):
+per rule/parameter, an ordered list of featured entries — canonical token + display label + the
+alias tokens the entry covers. Curation is **display-only**: the validity domain stays the engine's
+resolved `options` (§2.6), every metadata token remains accepted and round-trips verbatim, and the
+FR-127 completeness gate additionally checks curated tokens against the metadata domain (valid,
+non-duplicated, and jointly covering it).
+
 ---
 
 ## 3. Engine-owned projection-ready export (AD-012, AD-026)

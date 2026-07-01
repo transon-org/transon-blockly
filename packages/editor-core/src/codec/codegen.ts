@@ -492,16 +492,20 @@ const G_TOOLBOX: Json = {
 //
 // Like G_toolbox, the palette is a STATIC artifact (block definitions the editor registers into
 // Blockly, not executed over user data), so G_palette runs single-stage under the meta marker `@`.
-// generatePalette enriches each rule entry with the variant params' `kind`/`options` (FR-118) and
-// the rule's presentation title + category colour (from presentation.json — no TS literals,
-// FR-127), then this projection emits, per variant, a Blockly (Zelos) block definition. The
-// FR-118 widget decision is made here in the projection via `@:cond` (never baked into metadata):
-//   - dynamic param    → `input_value` (a value input)               (§13.5)
-//   - constant+options → `field_dropdown` from the resolved enum      (§13.6, FR-058)
-//   - constant         → `field_input` (verbatim scalar field)        (§13.6)
+// generatePalette enriches each rule entry with the variant params' `kind`/`options` (FR-118), a
+// curated `menu` for constant+options params (FR-130, from presentation.json — no TS literals,
+// FR-127), and the rule's presentation title + category colour, then this projection emits, per
+// variant, a Blockly (Zelos) block definition. The FR-118 widget decision is made here in the
+// projection via `@:cond` (never baked into metadata):
+//   - dynamic param    → `input_value` (a value input)                          (§13.5)
+//   - constant+options → `field_transon_dropdown` (curated or identity menu,
+//                         full metadata domain accepted verbatim)      (§13.6, FR-058, FR-130)
+//   - constant         → `field_input` (verbatim scalar field)                  (§13.6)
 // Label = "<title> (<rule>)" (OQ-008, §12.5); colour = the rule's category colour (NFR-048).
 //
-// `this` of the projection is the enriched entry { name, title, colour, variants:[{id, params}] }.
+// `this` of the projection is the enriched entry { name, title, colour, variants:[{id, params}] };
+// each constant+options param already carries `menu` (curated `[[label,value],...]` pairs or the
+// identity menu), computed in `enrichForPalette` (TS, not this projection).
 const pGet = (name: string): Json => ({ '@': 'chain', funcs: [{ '@': 'get', name: 'pentry' }, { '@': 'attr', name }] });
 const P_NAME = pGet('name');
 const P_TITLE = pGet('title');
@@ -519,12 +523,13 @@ const P_IS_CONSTANT: Json = { '@': 'expr', op: '==', values: [pAt('kind'), 'cons
 const P_HAS_OPTIONS: Json = { '@': 'expr', op: '!=', values: [
   { '@': 'join', sep: ',', default: '@noopt', items: { '@': 'attr', name: 'options', default: [] } }, '@noopt',
 ] };
-// dropdown options: [[opt, opt], ...] from the resolved enum (FR-058).
-const P_DROPDOWN_OPTIONS: Json = { '@': 'chain', funcs: [pAt('options'), { '@': 'map', item: [{ '@': 'this' }, { '@': 'this' }] }] };
 // one args0 entry per param — the FR-118 widget decision (lazy @:cond, only one branch taken).
+// FR-130: constant+options always uses the custom field — `menu` (from enrichForPalette) is the
+// curated pairs when presentation declares them, else the identity menu; `accept` is the FULL
+// metadata options domain, so every metadata-valid token stays accepted regardless of curation.
 const P_ARG: Json = { '@': 'cond', cases: [
   { when: { '@': 'expr', op: 'and', values: [P_IS_CONSTANT, P_HAS_OPTIONS] },
-    then: { type: 'field_dropdown', name: pAt('name'), options: P_DROPDOWN_OPTIONS } },
+    then: { type: 'field_transon_dropdown', name: pAt('name'), options: pAt('menu'), accept: pAt('options') } },
   { when: P_IS_CONSTANT,
     then: { type: 'field_input', name: pAt('name') } },
 ], default: { type: 'input_value', name: pAt('name') } };
@@ -715,11 +720,43 @@ export async function generateToolbox(
   return runGen(engine, gToolbox as unknown as Json, { categories } as unknown as Json);
 }
 
-// ---- enrich a rule entry for the palette projection (FR-118, FR-058) ----
+// FR-130: curated `[[label, value], ...]` pairs for a constant+options param, from
+// presentation.dropdownMenus[rule][param] when declared, else the identity menu (one pair per
+// option, `[opt, opt]` — behaves exactly like a plain field_dropdown). VALIDATES the curation
+// against the param's metadata options domain — every entry's value/aliases must be a real
+// option, and no token may be claimed by two entries — so a malformed presentation.json fails
+// loudly at generation time rather than silently dropping/duplicating a token (fail-loud, mirrors
+// the `palette: rule '<x>' has no presentation entry` style).
+function menuFor(ruleName: string, paramName: string, options: string[], presentation: Presentation): Array<[string, string]> {
+  const curated = presentation.dropdownMenus[ruleName]?.[paramName];
+  if (!curated) return options.map((o): [string, string] => [o, o]);
+  const domain = new Set(options);
+  const seen = new Set<string>();
+  for (const entry of curated) {
+    for (const token of [entry.value, ...(entry.aliases ?? [])]) {
+      if (!domain.has(token)) {
+        throw new Error(
+          `palette: dropdownMenus.${ruleName}.${paramName} entry '${entry.value}' claims token ` +
+          `'${token}' not in the metadata options domain (FR-130)`,
+        );
+      }
+      if (seen.has(token)) {
+        throw new Error(
+          `palette: dropdownMenus.${ruleName}.${paramName} token '${token}' appears in two entries (FR-130)`,
+        );
+      }
+      seen.add(token);
+    }
+  }
+  return curated.map((entry): [string, string] => [entry.label, entry.value]);
+}
+
+// ---- enrich a rule entry for the palette projection (FR-118, FR-058, FR-130) ----
 // Join the variant params' `kind` + resolved enum `options` from the rule-level params (the
-// metadata carries `kind`/`options` only at rule level, like `enrichEntry` for the codec), and
-// attach the rule's presentation title + category colour (from presentation.json — not TS). A
-// new rule with complete metadata + a presentation entry folds in with no code change (AC-037).
+// metadata carries `kind`/`options` only at rule level, like `enrichEntry` for the codec), attach
+// the curated/identity dropdown `menu` (FR-130), and attach the rule's presentation title +
+// category colour (from presentation.json — not TS). A new rule with complete metadata + a
+// presentation entry folds in with no code change (AC-037).
 function enrichForPalette(entry: unknown, presentation: Presentation): Json {
   const e = entry as CatalogRuleEntry;
   const kindMap = new Map(e.params.map((p) => [p.name, p.kind ?? 'dynamic']));
@@ -733,7 +770,13 @@ function enrichForPalette(entry: unknown, presentation: Presentation): Json {
     variants: e.variants.map((v) => {
       const params = v.params.map((p) => {
         const options = optMap.get(p.name);
-        return { name: p.name, required: p.required, kind: kindMap.get(p.name) ?? 'dynamic', ...(options ? { options } : {}) };
+        const menu = options ? menuFor(e.name, p.name, options, presentation) : undefined;
+        return {
+          name: p.name,
+          required: p.required,
+          kind: kindMap.get(p.name) ?? 'dynamic',
+          ...(options ? { options, menu } : {}),
+        };
       });
       // ≥2 value inputs ⇒ the title takes its own first row (FR-129, §13.10). Computed here in plain
       // TS (Transon has no length function) so the G_palette projection just branches on the flag.

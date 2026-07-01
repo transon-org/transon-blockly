@@ -67,6 +67,7 @@ describe('AC-037 — a new rule is projected from data with no editor code chang
     // is identical, proving a new rule adds NO behavior code.
     expect([...BEHAVIOR_PRIMITIVES]).toEqual([
       'field_transon_scalar',
+      'field_transon_dropdown',
       'transon_array_mutator',
       'transon_object_mutator',
       'transon_unsupported_mutator',

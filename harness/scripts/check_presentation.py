@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""FR-127 / NFR-048 gate: editor-owned presentation is *data*, not TS literals — and complete.
+"""FR-127 / NFR-048 / FR-130 gate: editor-owned presentation is *data*, not TS literals — and complete.
 
 The editor-owned presentation (per-rule ``title``/``category``/``advanced`` + the toolbox
-category **order** + the category→**colour** map) lives in **exactly one** committed
-projection-data file — ``packages/editor-core/src/codec/presentation.json``
+category **order** + the category→**colour** map, plus curated dropdown menus, FR-130) lives in
+**exactly one** committed projection-data file — ``packages/editor-core/src/codec/presentation.json``
 (``metadata-contract.md`` §2.9) — consumed by the ``G_palette``/``G_toolbox`` projections
 (AD-026). The engine export is Blockly-agnostic and emits none of it (§2.8). This gate makes
-that contract binding with two checks (``traceability.md``):
+that contract binding with three checks (``traceability.md``):
 
 1. **Source-scan (FR-127, NFR-048).** No SPEC §12.4 category name appears as a TypeScript
    **string literal** under ``packages/*/src``. The category set/order/colours and per-rule
@@ -19,13 +19,20 @@ that contract binding with two checks (``traceability.md``):
    and ``categoryOrder`` / ``categoryColour`` agree. A missing rule would silently drop a
    projected block/category → fail loudly.
 
+3. **Dropdown-menu curation (FR-130).** When ``dropdownMenus`` declares a curated menu for a
+   rule/param, every entry needs a non-empty ``value`` + ``label``; every curated ``value`` and
+   ``aliases`` token must belong to that parameter's metadata ``options`` domain; no token may
+   appear in two entries; and the union of curated values+aliases must equal the FULL options
+   set (an uncovered metadata token would silently become unreachable from the menu). A new
+   engine token that no curated entry claims fails loudly rather than silently vanishing.
+
 Pure stdlib, Python 3.9+, no project imports. Run::
 
-  python harness/scripts/check_presentation.py            # scan + completeness
+  python harness/scripts/check_presentation.py            # scan + completeness (+ curation)
   python harness/scripts/check_presentation.py --selftest  # prove it catches violations
 
 Exit 0 when clean, 1 otherwise. Also importable: ``scan(root, categories)`` and
-``completeness(presentation, rule_names)`` return the list of problems.
+``completeness(presentation, rule_names, rule_param_options=None)`` return the list of problems.
 """
 from __future__ import annotations
 
@@ -79,8 +86,58 @@ def scan(root: Path, categories: List[str]) -> List[str]:
     return problems
 
 
-def completeness(presentation: dict, rule_names: List[str]) -> List[str]:
-    """Every metadata rule has an entry; categories are declared + coloured; order==colour keys."""
+def _curation_problems(rule: str, param: str, menu: List[dict], options: List[str]) -> List[str]:
+    """FR-130: validate one rule/param's curated menu against its metadata options domain."""
+    problems: List[str] = []
+    domain = set(options)
+    seen: Dict[str, str] = {}
+    covered: set = set()
+    for entry in menu:
+        value = entry.get("value")
+        label = entry.get("label")
+        if not value:
+            problems.append(f"dropdownMenus.{rule}.{param} has an entry with no value (FR-130)")
+        if not label:
+            problems.append(f"dropdownMenus.{rule}.{param} entry '{value}' has no label (FR-130)")
+        tokens = [value] + list(entry.get("aliases") or [])
+        for tok in tokens:
+            if not tok:
+                continue
+            if tok not in domain:
+                problems.append(
+                    f"dropdownMenus.{rule}.{param} entry '{value}' claims token '{tok}' not in the "
+                    f"metadata options domain (FR-130)"
+                )
+                continue
+            if tok in seen:
+                problems.append(
+                    f"dropdownMenus.{rule}.{param} token '{tok}' appears in two entries "
+                    f"('{seen[tok]}' and '{value}', FR-130)"
+                )
+            else:
+                seen[tok] = value
+            covered.add(tok)
+    missing = sorted(domain - covered)
+    if missing:
+        problems.append(
+            f"dropdownMenus.{rule}.{param} does not cover metadata tokens {missing} — a new/uncurated "
+            f"engine token would silently vanish from the menu (FR-130)"
+        )
+    return problems
+
+
+def completeness(
+    presentation: dict,
+    rule_names: List[str],
+    rule_param_options: "Dict[str, Dict[str, List[str]]] | None" = None,
+) -> List[str]:
+    """Every metadata rule has an entry; categories are declared + coloured; order==colour keys.
+
+    ``rule_param_options`` (FR-130), when given, is ``{rule: {param: [options...]}}`` built from
+    the metadata snapshot's resolved enum domains; every ``presentation["dropdownMenus"]`` entry
+    is validated against it. ``None`` (the default) skips the curation checks entirely, so
+    existing completeness-only callers/tests are unaffected.
+    """
     problems: List[str] = []
     rules: Dict[str, dict] = presentation.get("rules", {})
     order: List[str] = presentation.get("categoryOrder", [])
@@ -108,7 +165,35 @@ def completeness(presentation: dict, rule_names: List[str]) -> List[str]:
     structural: Dict[str, object] = presentation.get("structuralBlocks", {})
     for cat in set(structural) - order_set:
         problems.append(f"structuralBlocks category '{cat}' is not in categoryOrder (FR-127)")
+
+    if rule_param_options is not None:
+        dropdown_menus: Dict[str, Dict[str, list]] = presentation.get("dropdownMenus", {})
+        for rule, params in dropdown_menus.items():
+            if rule not in rule_param_options:
+                problems.append(f"dropdownMenus rule '{rule}' is not in the metadata catalog (FR-130)")
+                continue
+            for param, menu in params.items():
+                options = rule_param_options[rule].get(param)
+                if not options:
+                    problems.append(
+                        f"dropdownMenus.{rule}.{param} has no metadata options domain (FR-130)"
+                    )
+                    continue
+                problems.extend(_curation_problems(rule, param, menu, options))
     return problems
+
+
+def _rule_param_options(snapshot: dict) -> Dict[str, Dict[str, List[str]]]:
+    """Build ``{rule: {param: [options...]}}`` from the pinned metadata snapshot (FR-130)."""
+    result: Dict[str, Dict[str, List[str]]] = {}
+    for rule in snapshot["catalog"]["rules"]:
+        params = {}
+        for p in rule.get("params", []):
+            opts = p.get("options")
+            if opts:
+                params[p["name"]] = opts
+        result[rule["name"]] = params
+    return result
 
 
 def check() -> List[str]:
@@ -116,7 +201,8 @@ def check() -> List[str]:
     snapshot = _load_json(SNAPSHOT)
     rule_names = [r["name"] for r in snapshot["catalog"]["rules"]]
     categories = presentation.get("categoryOrder", [])
-    return scan(REPO, categories) + completeness(presentation, rule_names)
+    rule_param_options = _rule_param_options(snapshot)
+    return scan(REPO, categories) + completeness(presentation, rule_names, rule_param_options)
 
 
 def _selftest() -> int:
@@ -146,6 +232,46 @@ def _selftest() -> int:
     problems = completeness(pres, ["map", "filter"])
     assert any("filter" in p for p in problems), f"completeness missed the missing rule: {problems}"
     assert any("Custom" in p for p in problems), f"completeness missed the uncoloured category: {problems}"
+
+    # (3) FR-130 dropdown-menu curation: a passing case and a failing case (unknown token +
+    # uncovered token), gated only when a rule_param_options map is supplied.
+    pres_curated = {
+        "categoryOrder": ["Computation"],
+        "categoryColour": {"Computation": 30},
+        "rules": {"expr": {"title": "Expression", "category": "Computation", "advanced": False}},
+        "dropdownMenus": {
+            "expr": {"op": [
+                {"value": "<", "label": "< (lt)", "aliases": ["lt"]},
+                {"value": "==", "label": "== (eq)", "aliases": ["eq"]},
+            ]},
+        },
+    }
+    options = {"expr": {"op": ["<", "lt", "==", "eq"]}}
+    ok_problems = completeness(pres_curated, ["expr"], options)
+    curation_problems = [p for p in ok_problems if "dropdownMenus" in p]
+    assert not curation_problems, f"a complete, valid curation should not fail: {curation_problems}"
+
+    pres_bad = {
+        "categoryOrder": ["Computation"],
+        "categoryColour": {"Computation": 30},
+        "rules": {"expr": {"title": "Expression", "category": "Computation", "advanced": False}},
+        "dropdownMenus": {
+            "expr": {"op": [
+                # 'bogus' is not in the metadata options domain; 'eq'/'==' is left uncovered.
+                {"value": "<", "label": "< (lt)", "aliases": ["lt", "bogus"]},
+            ]},
+        },
+    }
+    bad_problems = completeness(pres_bad, ["expr"], options)
+    assert any("bogus" in p for p in bad_problems), f"curation missed the unknown token: {bad_problems}"
+    assert any("==" in p or "eq" in p for p in bad_problems), f"curation missed the uncovered token: {bad_problems}"
+
+    # rule_param_options=None (default) skips curation checks entirely — existing callers unaffected.
+    skip_problems = completeness(pres_bad, ["expr"])
+    assert not any("dropdownMenus" in p for p in skip_problems), (
+        f"completeness without rule_param_options should skip curation checks: {skip_problems}"
+    )
+
     print("check_presentation selftest: OK")
     return 0
 

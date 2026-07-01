@@ -18,7 +18,7 @@ import {
 } from '@transon/editor-core';
 import { createNodeEngineProvider } from '../../src/index.js';
 
-interface ArgDef { type: string; name?: string; options?: Array<[string, string]> }
+interface ArgDef { type: string; name?: string; options?: Array<[string, string]>; accept?: string[] }
 interface BlockDef {
   type: string;
   message0: string;
@@ -117,7 +117,7 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
     }
   });
 
-  it('dispatches the FR-118 widget: dynamic→input, constant+options→dropdown (FR-058)', () => {
+  it('dispatches the FR-118 widget: dynamic→input, constant+options→field_transon_dropdown (FR-058, FR-130)', () => {
     for (const rule of editorMetadata.catalog.rules) {
       const kindOf = new Map((rule.params as Array<{ name: string; kind?: string; options?: string[] }>).map((p) => [p.name, p]));
       for (const v of rule.variants as Array<{ id: string; params: Array<{ name: string }> }>) {
@@ -126,10 +126,20 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
         const args = new Map([...(b.args0 ?? []), ...(b.args1 ?? [])].map((a) => [a.name, a]));
         for (const vp of v.params) {
           const meta = kindOf.get(vp.name)!;
-          const arg = args.get(vp.name)!;
+          const arg = args.get(vp.name)! as ArgDef & { accept?: string[] };
           if (meta.kind === 'constant' && meta.options) {
-            expect(arg.type, `${b.type}.${vp.name}`).toBe('field_dropdown');
-            expect(arg.options).toEqual(meta.options.map((o) => [o, o]));
+            expect(arg.type, `${b.type}.${vp.name}`).toBe('field_transon_dropdown');
+            expect(arg.accept, `${b.type}.${vp.name} accept`).toEqual(meta.options);
+            const curated = PRESENTATION.dropdownMenus[rule.name]?.[vp.name];
+            if (curated) {
+              expect(arg.options, `${b.type}.${vp.name} curated menu`).toEqual(
+                curated.map((e) => [e.label, e.value]),
+              );
+              expect((arg.options ?? []).length, `${b.type}.${vp.name} curated < full domain`)
+                .toBeLessThan(meta.options.length);
+            } else {
+              expect(arg.options, `${b.type}.${vp.name} identity menu`).toEqual(meta.options.map((o) => [o, o]));
+            }
           } else if (meta.kind === 'constant') {
             expect(arg.type, `${b.type}.${vp.name}`).toBe('field_input');
           } else {
@@ -138,6 +148,30 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
         }
       }
     }
+  });
+
+  it('FR-130: expr.op gets the curated menu; call.name (uncurated) gets the identity menu', () => {
+    const exprBase = byType.get(ruleBlockType('expr', 'base'))!;
+    const opArg = [...(exprBase.args0 ?? []), ...(exprBase.args1 ?? [])].find((a) => a.name === 'op') as
+      | (ArgDef & { accept?: string[] })
+      | undefined;
+    expect(opArg?.type).toBe('field_transon_dropdown');
+    const exprMeta = editorMetadata.catalog.rules.find((r) => r.name === 'expr')!;
+    const opMeta = (exprMeta.params as Array<{ name: string; options?: string[] }>).find((p) => p.name === 'op')!;
+    expect(opArg?.accept).toEqual(opMeta.options);
+    const curated = PRESENTATION.dropdownMenus.expr!.op!;
+    expect(opArg?.options).toEqual(curated.map((e) => [e.label, e.value]));
+    expect((opArg?.options ?? []).length).toBeLessThan((opMeta.options ?? []).length);
+
+    const callBase = byType.get(ruleBlockType('call', 'base'))!;
+    const nameArg = [...(callBase.args0 ?? []), ...(callBase.args1 ?? [])].find((a) => a.name === 'name') as
+      | (ArgDef & { accept?: string[] })
+      | undefined;
+    expect(nameArg?.type).toBe('field_transon_dropdown');
+    const callMeta = editorMetadata.catalog.rules.find((r) => r.name === 'call')!;
+    const nameMeta = (callMeta.params as Array<{ name: string; options?: string[] }>).find((p) => p.name === 'name')!;
+    expect(nameArg?.accept).toEqual(nameMeta.options);
+    expect(nameArg?.options).toEqual((nameMeta.options ?? []).map((o) => [o, o]));
   });
 
   it('the literal-object block is distinct from the object rule block (FR-016, FR-123)', () => {

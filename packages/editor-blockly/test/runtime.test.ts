@@ -10,19 +10,23 @@ import * as Blockly from 'blockly/core';
 import { BEHAVIOR_PRIMITIVES, registerTransonRuntime } from '../src/index.js';
 
 describe('NFR-046 — finite, rule-agnostic behavior runtime (AD-031)', () => {
-  it('declares exactly the fixed set of interaction primitives (1 field + 3 mutators)', () => {
+  it('declares exactly the fixed set of interaction primitives (2 fields + 3 mutators)', () => {
     expect([...BEHAVIOR_PRIMITIVES]).toEqual([
       'field_transon_scalar',
+      'field_transon_dropdown',
       'transon_array_mutator',
       'transon_object_mutator',
       'transon_unsupported_mutator',
     ]);
   });
 
-  it('registers exactly those primitives into Blockly (field + mutators)', () => {
+  it('registers exactly those primitives into Blockly (fields + mutators)', () => {
     registerTransonRuntime();
-    // The custom field is in the field registry…
+    // The custom fields are in the field registry…
     expect(Blockly.fieldRegistry.fromJson({ type: 'field_transon_scalar', value: null })).toBeTruthy();
+    expect(
+      Blockly.fieldRegistry.fromJson({ type: 'field_transon_dropdown', options: [['A', 'a']] }),
+    ).toBeTruthy();
     // …and each mutator extension is registered (re-registering throws "already registered").
     for (const mutator of ['transon_array_mutator', 'transon_object_mutator', 'transon_unsupported_mutator']) {
       expect(() => Blockly.Extensions.registerMutator(mutator, {}), `${mutator} already registered`).toThrow();

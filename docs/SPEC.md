@@ -425,6 +425,18 @@ itself (FR-121, AC-036).
   missing.
 - **FR-058** Dropdowns may be used for small constant choices (operator name, function name,
   enum-like parameters).
+- **FR-130** A constant-parameter dropdown (FR-058) may present a **curated menu** declared in the
+  editor-owned presentation data (metadata-contract §2.9): each entry names the **canonical token**
+  it inserts, a display **label**, and the metadata **alias tokens** it covers (e.g. one `==` entry
+  covering `eq`), so equivalent spellings collapse into one menu item. The menu shows only curated
+  entries in curated order, but the field shall keep **accepting every metadata-valid token** on
+  import/load, **display** a non-menu token verbatim, and **preserve it verbatim** through workspace
+  serialization and export — curation is display-only and never rewrites the template (AD-004,
+  §21.12). Curation shall be **complete**: every curated/alias token must belong to the parameter's
+  metadata `options` domain, no token may appear in two entries, and every metadata option must stay
+  reachable (featured or aliased) — gated alongside FR-127 so a new engine token fails loudly rather
+  than silently vanishing from the menu. An uncurated constant parameter keeps the full metadata
+  domain as its menu (FR-058).
 
 ### 7.8 Literal Object and Marker Escaping
 
@@ -1134,7 +1146,9 @@ Dynamic parameters accept templates; a template block can connect into a dynamic
 ### 13.6 Constant Parameters
 
 Constant parameters accept literal values or dropdowns; e.g. `op` is selected from known
-operators:
+operators. The dropdown menu may be curated by presentation data (FR-130) — display-only: alias
+spellings collapse into one canonical menu entry, while every metadata-valid token stays accepted
+and round-trips verbatim:
 
 ```json
 { "$": "expr", "op": "add", "value": 1 }

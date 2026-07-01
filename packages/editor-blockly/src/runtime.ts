@@ -2,14 +2,18 @@
 //
 // This is the ONLY first-party Blockly *code* in the editor surface. Block *structure* is
 // projected from metadata (G_palette/G_toolbox, AD-026); only the behavior JSON cannot express —
-// an editable scalar field and the dynamic-arity / raw-preserving structural blocks — lives here. It
-// is keyed by the fixed STRUCTURAL block vocabulary (transon_array / transon_object_literal /
-// transon_unsupported) and the custom field, NEVER by rule name: a new rule rides entirely on
-// metadata + projections and adds NOTHING here (NFR-046, enforced by check_behavior_runtime_size).
+// an editable scalar field, a generic curated dropdown field, and the dynamic-arity /
+// raw-preserving structural blocks — lives here. It is keyed by the fixed STRUCTURAL block
+// vocabulary (transon_array / transon_object_literal / transon_unsupported) and the two custom
+// fields, NEVER by rule name: a new rule rides entirely on metadata + projections and adds
+// NOTHING here (NFR-046, enforced by check_behavior_runtime_size).
 //
-// Two behaviors beyond M3's headless state hooks (M4):
+// Three behaviors beyond M3's headless state hooks (M4/M5):
 //  - FR-015: the scalar field is *editable* (a text editor that parses to a typed JSON scalar, so
 //    type fidelity — 42 vs "42" vs true vs null — survives the codec).
+//  - FR-130 / §13.6: the generic dropdown field accepts every metadata-valid token (not just the
+//    curated menu entries) — an alias token loads, displays verbatim, and round-trips verbatim
+//    without ever being rewritten to its canonical spelling (display-only curation, AD-004).
 //  - AC-038 / §13.13: each dynamic-arity block exposes on-canvas +/- buttons (the mutator UI) to
 //    add/remove items (array) or key/value fields (object) WITHOUT dropping to the JSON panel. The
 //    mutator only changes how many inputs a block exposes; the codec serialization is unchanged
@@ -77,6 +81,67 @@ class FieldTransonScalar extends Blockly.FieldTextInput {
 
   override getText(): string {
     return FieldTransonScalar.display(this.typed_);
+  }
+}
+
+/**
+ * Generic curated-dropdown field (FR-130, §13.6): a `Blockly.FieldDropdown` whose menu may show
+ * only a CURATED subset of labelled entries (display) while accepting every metadata-valid token
+ * (an "accept set" = the menu's own values ∪ an explicit `accept` list). Rule-agnostic: it never
+ * compares against a rule/param name — the menu/accept lists are supplied per block instance by
+ * the projected block definition (G_palette), driven by presentation data, not by this class.
+ *
+ * Curation is display-only (AD-004, §21.12): a token in `accept` but not in the menu (an "alias")
+ * must LOAD without throwing, DISPLAY its raw token verbatim (never blank), and round-trip
+ * verbatim through workspace serialization — it is never rewritten to a curated/canonical
+ * spelling. `Blockly.FieldDropdown`'s default validator (`doClassValidation_`) rejects any value
+ * not literally present in the menu array, and its `getText_` returns null for a value with no
+ * matching menu entry — both are overridden minimally below to honor the accept set.
+ */
+class FieldTransonDropdown extends Blockly.FieldDropdown {
+  // Not initialized until AFTER `super()` returns — `Blockly.FieldDropdown`'s own constructor
+  // calls `setOptions()` → `setValue()` → `doClassValidation_()` synchronously as part of
+  // `super(menu)` (it selects the first menu option as the initial value), i.e. BEFORE this
+  // subclass's constructor body runs. `doClassValidation_` below tolerates that pre-init window
+  // (undefined `accept_`) by simply deferring to `super.doClassValidation_`, which already
+  // accepts the first menu option being set on itself.
+  private accept_: Set<string> | undefined;
+
+  constructor(menu: Blockly.MenuOption[], accept?: string[]) {
+    super(menu);
+    this.accept_ = new Set([...menu.map((m) => m[1]), ...(accept ?? [])]);
+  }
+
+  static override fromJson(options: Record<string, unknown>): FieldTransonDropdown {
+    return new FieldTransonDropdown(
+      options['options'] as Blockly.MenuOption[],
+      options['accept'] as string[] | undefined,
+    );
+  }
+
+  // A token in the accept set (menu value OR alias) is valid verbatim — even when it has no menu
+  // entry. Anything else defers to FieldDropdown's own validation (rejects unknown tokens). The
+  // two overload signatures mirror `Blockly.FieldDropdown.doClassValidation_` exactly (required
+  // by TS's override-compatibility check against the base class's overloaded method).
+  protected override doClassValidation_(newValue: string): string | null | undefined;
+  protected override doClassValidation_(newValue?: string): string | null;
+  protected override doClassValidation_(newValue?: string): string | null | undefined {
+    if (newValue !== undefined && newValue !== null && this.accept_?.has(newValue)) return newValue;
+    return super.doClassValidation_(newValue);
+  }
+
+  // FieldDropdown tracks the displayed text via a `selectedOption` cache that its own
+  // `doValueUpdate_` only refreshes when the new value matches a MENU entry — so for an alias
+  // value (accepted but absent from the menu) `selectedOption` is left stale (whatever was
+  // selected before, e.g. the constructor's first-option default), and the inherited `getText_`
+  // would silently show that stale curated label instead of the alias. Show the raw value
+  // whenever it has no menu entry at all — truthful and never blank (§13.6, FR-130) — and defer
+  // to the inherited (curated-label) behavior only when the value genuinely IS a menu option.
+  protected override getText_(): string | null {
+    const value = this.getValue();
+    const isMenuValue = value !== null && this.getOptions(true).some((opt) => opt[1] === value);
+    if (isMenuValue) return super.getText_();
+    return value === null ? null : String(value);
   }
 }
 
@@ -222,14 +287,15 @@ function ignoreDuplicate(fn: () => void): void {
 }
 
 /**
- * Register the finite behavior runtime (the editable scalar field + the three structural mutators,
- * each with its on-canvas +/- controls via the mutator helper fn). Idempotent. Must run before
- * block definitions that reference them are loaded.
+ * Register the finite behavior runtime (the editable scalar field + the generic curated dropdown
+ * field + the three structural mutators, each with its on-canvas +/- controls via the mutator
+ * helper fn). Idempotent. Must run before block definitions that reference them are loaded.
  */
 export function registerTransonRuntime(): void {
   if (registered) return;
   registered = true;
   ignoreDuplicate(() => Blockly.fieldRegistry.register('field_transon_scalar', FieldTransonScalar));
+  ignoreDuplicate(() => Blockly.fieldRegistry.register('field_transon_dropdown', FieldTransonDropdown));
   ignoreDuplicate(() => Blockly.Extensions.registerMutator('transon_array_mutator', ARRAY_MUTATOR, arrayHelper));
   ignoreDuplicate(() => Blockly.Extensions.registerMutator('transon_object_mutator', OBJECT_MUTATOR, objectHelper));
   ignoreDuplicate(() => Blockly.Extensions.registerMutator('transon_unsupported_mutator', UNSUPPORTED_MUTATOR));
@@ -238,6 +304,7 @@ export function registerTransonRuntime(): void {
 /** The fixed set of interaction primitives this runtime registers (NFR-046 size invariant). */
 export const BEHAVIOR_PRIMITIVES = [
   'field_transon_scalar',
+  'field_transon_dropdown',
   'transon_array_mutator',
   'transon_object_mutator',
   'transon_unsupported_mutator',

@@ -75,3 +75,84 @@ describe('presentation projection-data (FR-127, NFR-048, §2.9)', () => {
     }
   });
 });
+
+// FR-130 — curated dropdown menus for constant parameters. Every declared curation is validated
+// against the parameter's metadata `options` domain (never a hand-written token list): pairwise
+// disjoint, jointly covers the full domain, and the curated menu is strictly shorter (the UAT
+// point — one entry per symbol/word-alias pair collapses two tokens into one menu item).
+describe('dropdown-menu curation (FR-130, metadata-contract §2.9)', () => {
+  const optionsOf = (rule: string, param: string): string[] => {
+    const r = editorMetadata.catalog.rules.find((e) => e.name === rule);
+    const p = (r?.params as Array<{ name: string; options?: string[] }> | undefined)?.find(
+      (x) => x.name === param,
+    );
+    return p?.options ?? [];
+  };
+
+  it('declares a curated menu for expr.op', () => {
+    expect(PRESENTATION.dropdownMenus.expr?.op).toBeTruthy();
+  });
+
+  it('every declared rule/param exists in the metadata and is a constant param with options', () => {
+    for (const [rule, params] of Object.entries(PRESENTATION.dropdownMenus)) {
+      const entry = editorMetadata.catalog.rules.find((r) => r.name === rule);
+      expect(entry, `dropdownMenus rule '${rule}' not in metadata`).toBeTruthy();
+      for (const paramName of Object.keys(params)) {
+        const options = optionsOf(rule, paramName);
+        expect(options.length, `${rule}.${paramName} has no metadata options domain`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('every curated value/alias belongs to the options domain, and no token appears twice', () => {
+    for (const [rule, params] of Object.entries(PRESENTATION.dropdownMenus)) {
+      for (const [paramName, menu] of Object.entries(params)) {
+        const domain = new Set(optionsOf(rule, paramName));
+        const seen = new Set<string>();
+        for (const entry of menu) {
+          expect(entry.value, `${rule}.${paramName} entry value non-empty`).toBeTruthy();
+          expect(entry.label, `${rule}.${paramName} entry '${entry.value}' label non-empty`).toBeTruthy();
+          const tokens = [entry.value, ...(entry.aliases ?? [])];
+          for (const t of tokens) {
+            expect(domain.has(t), `${rule}.${paramName} token '${t}' not in metadata options`).toBe(true);
+            expect(seen.has(t), `${rule}.${paramName} token '${t}' appears in two entries`).toBe(false);
+            seen.add(t);
+          }
+        }
+      }
+    }
+  });
+
+  it('the curated menu jointly covers the full metadata options domain', () => {
+    for (const [rule, params] of Object.entries(PRESENTATION.dropdownMenus)) {
+      for (const [paramName, menu] of Object.entries(params)) {
+        const domain = optionsOf(rule, paramName);
+        const covered = new Set(menu.flatMap((e) => [e.value, ...(e.aliases ?? [])]));
+        const missing = domain.filter((t) => !covered.has(t));
+        expect(missing, `${rule}.${paramName} uncovered metadata tokens`).toEqual([]);
+      }
+    }
+  });
+
+  it('the curated menu is strictly shorter than the full domain (the UAT collapse point)', () => {
+    for (const [rule, params] of Object.entries(PRESENTATION.dropdownMenus)) {
+      for (const [paramName, menu] of Object.entries(params)) {
+        const domain = optionsOf(rule, paramName);
+        expect(menu.length, `${rule}.${paramName} menu should curate (be shorter than domain)`).toBeLessThan(
+          domain.length,
+        );
+      }
+    }
+  });
+
+  it('expr.op curates the 28-token domain into 14 symbol-first entries', () => {
+    const domain = optionsOf('expr', 'op');
+    expect(domain.length).toBe(28);
+    const menu = PRESENTATION.dropdownMenus.expr!.op!;
+    expect(menu.length).toBe(14);
+    // canonical spelling = symbol (matches the metadata's symbol-first pair order)
+    for (const entry of menu) {
+      expect(/^[^a-zA-Z]/.test(entry.value), `${entry.value} should be a symbol token`).toBe(true);
+    }
+  });
+});

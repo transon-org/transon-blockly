@@ -1,5 +1,5 @@
 {
-  "$doc": "Editor-owned presentation projection-data (metadata-contract.md §2.9, SPEC FR-127/NFR-048). The SINGLE committed source for per-rule title/category/advanced + the toolbox category order + the category->colour map, consumed by the G_palette/G_toolbox projections (AD-026). The engine export stays Blockly-agnostic and emits NONE of this (§2.8); the editor joins it by rule name. NOT TypeScript and NOT inline template literals (FR-127 source-scan). Values are editor design defaults: category = SPEC §12.4 mapping; advanced = SPEC §12.6 list (set/get/parent/zip/file/include); titles = friendly labels shown as 'Title (rule)' (OQ-008, §12.5); categoryOrder = §12.4 table order; categoryColour = distinct Zelos hues (0-360). Adjust freely — this file is the decision.",
+  "$doc": "Editor-owned presentation projection-data (metadata-contract.md §2.9, SPEC FR-127/NFR-048). The SINGLE committed source for per-rule title/category/advanced + the toolbox category order + the category->colour map, consumed by the G_palette/G_toolbox projections (AD-026). The engine export stays Blockly-agnostic and emits NONE of this (§2.8); the editor joins it by rule name. NOT TypeScript and NOT inline template literals (FR-127 source-scan). Values are editor design defaults: category = SPEC §12.4 mapping; advanced = SPEC §12.6 list (set/get/parent/zip/file/include); titles = friendly labels shown as 'Title (rule)' (OQ-008, §12.5); categoryOrder = §12.4 table order; categoryColour = distinct Zelos hues (0-360). Adjust freely — this file is the decision. `dropdownMenus` (SPEC FR-130) curates a constant parameter's dropdown menu: per rule/param, an ordered list of {value, label, aliases} entries — display-only, every metadata option must stay accepted and round-trip verbatim.",
   "categoryOrder": [
     "Input / Context",
     "Variables",
@@ -64,5 +64,25 @@
     "include": { "title": "Include template", "category": "Includes", "advanced": true },
     "switch": { "title": "Switch", "category": "Control Flow", "advanced": false },
     "cond": { "title": "Condition", "category": "Control Flow", "advanced": false }
+  },
+  "dropdownMenus": {
+    "expr": {
+      "op": [
+        { "value": "<",  "label": "< (lt)",  "aliases": ["lt"] },
+        { "value": "<=", "label": "<= (le)", "aliases": ["le"] },
+        { "value": "==", "label": "== (eq)", "aliases": ["eq"] },
+        { "value": "!=", "label": "!= (ne)", "aliases": ["ne"] },
+        { "value": ">=", "label": ">= (ge)", "aliases": ["ge"] },
+        { "value": ">",  "label": "> (gt)",  "aliases": ["gt"] },
+        { "value": "+",  "label": "+ (add)", "aliases": ["add"] },
+        { "value": "-",  "label": "- (sub)", "aliases": ["sub"] },
+        { "value": "*",  "label": "* (mul)", "aliases": ["mul"] },
+        { "value": "/",  "label": "/ (div)", "aliases": ["div"] },
+        { "value": "%",  "label": "% (mod)", "aliases": ["mod"] },
+        { "value": "&&", "label": "&& (and)", "aliases": ["and"] },
+        { "value": "||", "label": "|| (or)", "aliases": ["or"] },
+        { "value": "!",  "label": "! (not)", "aliases": ["not"] }
+      ]
+    }
   }
 }

@@ -173,6 +173,14 @@ export const M1_CORPUS: CorpusEntry[] = [
     template: { $: 'expr', op: '+', values: [{ $: 'this' }, 1] },
     input: 4,
   },
+  // ---- FR-130: an alias op token (not the curated menu's canonical spelling) round-trips
+  // byte/semantic-identical — display-only curation never rewrites the stored token (AD-004).
+  { name: 'expr-value-alias-op-lt', template: { $: 'expr', op: 'lt', value: 1 }, input: 0 },
+  {
+    name: 'expr-values-alias-op-and',
+    template: { $: 'expr', op: 'and', values: [{ $: 'this' }, true] },
+    input: true,
+  },
 
   // ---- call (three variants: base, value, values) ----
   // FR-052/053/054: every call variant; name stays as a value input (D2)

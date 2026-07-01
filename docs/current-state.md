@@ -8,14 +8,16 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `5422caf` — editor: fix flat demo — add missing shell layout CSS (§12.1, NFR-025) |
-| Branch | `fix-editor-layout-css` |
+| Repo HEAD | `627900f` — retro: harness/roadmap effectiveness reviews, session retrospectives, project stats |
+| Branch | `main` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
 
+
+_**UAT #4 DONE — FR-130 curated dropdown menus (branch `fr-130-curated-operator-dropdown`), `round-trip-reviewer`-signed-off SAFE TO MERGE (47 adversarial probes, zero findings).** The `expr.op` dropdown listed all 28 metadata tokens (each operator twice: symbol + word alias) — now a **14-entry curated menu** (`< (lt)`, `== (eq)`, …; canonical = symbol), **display-only**: every metadata token stays accepted, displays verbatim, round-trips verbatim (AD-004/§21.12; proven per-alias byte-identical through the full codec AND the Blockly resave path). **SPEC-first:** FR-130 (§7.7 after FR-058) + §13.6 note + metadata-contract §2.9. **Pieces:** `presentation.json dropdownMenus` (+ typed loader); `enrichForPalette` builds validated `menu` pairs (`menuFor` throws on unknown/duplicate token); `G_palette` `P_ARG` emits generic `field_transon_dropdown` (curated menu + full-domain `accept`) for all constant+options params; 5th rule-agnostic runtime primitive (FieldDropdown subclass — alias-accepting validator, raw-token `getText_` for non-menu values, verbatim saveState; NFR-046: 5/8 ceiling, honest `BEHAVIOR_PRIMITIVES`); `check_presentation.py` gained curation validity/disjoint/**coverage** checks (+selftest; coverage is gate+test-enforced, deliberately NOT in `menuFor` — reviewer design note: bypassing the gate could only cause a display regression, never data loss); regen: only `G_palette.json`+`palette.json` drifted. Tests 1564→**1588**; all gates green; browser-verified (14-entry menu, alias `lt` displayed + exported verbatim). **Next:** UAT #1/#2 (collection/struct inputs — needs the shape-hint decision: engine metadata vs interim presentation data)._
 
 _**Post-M5 UI polish — demo layout CSS + conventional block rendering (branch `fix-editor-layout-css`, squashed into `5422caf`).** (1) Demo/shell **layout CSS** so the sandbox isn't flat + a sized Blockly canvas (§12.1, NFR-025); top-level `Makefile` (`demo`/`test`/`cloc`/`gates`). (2) **Blocks:** the **thrasos** renderer (conventional puzzle connections) + a committed `Blockly.Theme` (system font, chrome-aligned surface; block/category colours stay data-driven, FR-127); value/output blocks with **external puzzle inputs**; **title on its own row** when a block has ≥2 value inputs (FR-129, AC-040, §13.10; **AD-033** updates AD-017, Zelos→thrasos). Codec untouched — only `palette.json`/`G_palette.json` regenerated, round-trip green. editor-ui 101, editor-core 14, adapter 1405; typecheck + all gates green; browser-verified. **Next:** UAT #4 (operator dropdown), #1/#2 (collection/struct inputs)._
 _**M5 COMPLETE (`/run-milestone M5`) — ROADMAP ☑, `round-trip-reviewer`-signed-off, all DoD gates green;

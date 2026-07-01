@@ -17,6 +17,18 @@ export interface RulePresentation {
   advanced: boolean;
 }
 
+/**
+ * A curated dropdown-menu entry for a constant parameter (SPEC FR-130): the **canonical token**
+ * it inserts (`value`), a display **label**, and the metadata **alias tokens** it also covers.
+ * Curation is display-only — every value/alias must belong to the parameter's metadata `options`
+ * domain and every metadata token round-trips verbatim (AD-004, §21.12).
+ */
+export interface DropdownMenuEntry {
+  value: string;
+  label: string;
+  aliases?: string[];
+}
+
 /** The committed presentation-data shape consumed by `G_palette`/`G_toolbox` (§2.9). */
 export interface Presentation {
   /** Toolbox category order (SPEC §12.4 set, editor-owned order). */
@@ -36,6 +48,11 @@ export interface Presentation {
   unsupportedColour: number | string;
   /** Per-rule title/category/advanced, keyed by rule name. Completeness-gated (FR-127). */
   rules: Record<string, RulePresentation>;
+  /**
+   * Curated dropdown menus for constant parameters (FR-130), keyed by rule name then param name.
+   * A rule/param absent here keeps the full metadata `options` domain as its menu (FR-058).
+   */
+  dropdownMenus: Record<string, Record<string, DropdownMenuEntry[]>>;
 }
 
 const raw = presentation as unknown as Presentation & { $doc?: string };
@@ -48,4 +65,5 @@ export const PRESENTATION: Presentation = {
   structuralTitles: raw.structuralTitles,
   unsupportedColour: raw.unsupportedColour,
   rules: raw.rules,
+  dropdownMenus: raw.dropdownMenus ?? {},
 };

@@ -42,31 +42,19 @@
                           "cases": [
                             {
                               "then": {
+                                "accept": {
+                                  "@": "attr",
+                                  "name": "options"
+                                },
                                 "name": {
                                   "@": "attr",
                                   "name": "name"
                                 },
                                 "options": {
-                                  "@": "chain",
-                                  "funcs": [
-                                    {
-                                      "@": "attr",
-                                      "name": "options"
-                                    },
-                                    {
-                                      "@": "map",
-                                      "item": [
-                                        {
-                                          "@": "this"
-                                        },
-                                        {
-                                          "@": "this"
-                                        }
-                                      ]
-                                    }
-                                  ]
+                                  "@": "attr",
+                                  "name": "menu"
                                 },
-                                "type": "field_dropdown"
+                                "type": "field_transon_dropdown"
                               },
                               "when": {
                                 "@": "expr",
@@ -280,31 +268,19 @@
                       "cases": [
                         {
                           "then": {
+                            "accept": {
+                              "@": "attr",
+                              "name": "options"
+                            },
                             "name": {
                               "@": "attr",
                               "name": "name"
                             },
                             "options": {
-                              "@": "chain",
-                              "funcs": [
-                                {
-                                  "@": "attr",
-                                  "name": "options"
-                                },
-                                {
-                                  "@": "map",
-                                  "item": [
-                                    {
-                                      "@": "this"
-                                    },
-                                    {
-                                      "@": "this"
-                                    }
-                                  ]
-                                }
-                              ]
+                              "@": "attr",
+                              "name": "menu"
                             },
-                            "type": "field_dropdown"
+                            "type": "field_transon_dropdown"
                           },
                           "when": {
                             "@": "expr",
