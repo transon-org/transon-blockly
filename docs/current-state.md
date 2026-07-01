@@ -8,14 +8,16 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `627900f` — retro: harness/roadmap effectiveness reviews, session retrospectives, project stats |
-| Branch | `main` |
+| Repo HEAD | `e7a263c` — editor: FR-130 — curated operator dropdown (28→14), round-trip verbatim |
+| Branch | `fr-130-curated-operator-dropdown` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
 
+
+_**UAT follow-up DONE — FR-131 (branch `fr-131-json-edit-focus`): an accepted mid-typing JSON edit no longer rewrites the focused panel text.** UAT reported the editor "interfering with typing" in the Template JSON panel: a keystroke pause let the 150 ms debounced reverse sync ACCEPT the text, re-project, flip to `in_sync` — and `JsonPanel`'s reflect-effect replaced the textarea with the canonical pretty-print mid-edit (reformat + cursor jump). **SPEC-first:** FR-131 (§7.15 after FR-113) + §12.7 note — while the editor retains focus, an accepted edit syncs the workspace but preserves the user's exact text; canonical form appears on blur or a non-edit-origin change; read-only always mirrors (FR-107). **Fix:** `JsonPanel` tracks `editing` (focus/blur) and guards the reflect-effect (`in_sync && !editing`) — `packages/editor-ui/src/components/panels.tsx`; tests `packages/editor-ui/test/json-edit-preserve.test.tsx` (5, red-first); editor-ui 106 green, gates green, browser-verified (typed one-liner survives the accept verbatim; blur canonicalizes; caveat learned: background-tab `focus()` defers focus events — drive `focusin` when probing). Codec/round-trip untouched (panel-only)._
 
 _**UAT #4 DONE — FR-130 curated dropdown menus (branch `fr-130-curated-operator-dropdown`), `round-trip-reviewer`-signed-off SAFE TO MERGE (47 adversarial probes, zero findings).** The `expr.op` dropdown listed all 28 metadata tokens (each operator twice: symbol + word alias) — now a **14-entry curated menu** (`< (lt)`, `== (eq)`, …; canonical = symbol), **display-only**: every metadata token stays accepted, displays verbatim, round-trips verbatim (AD-004/§21.12; proven per-alias byte-identical through the full codec AND the Blockly resave path). **SPEC-first:** FR-130 (§7.7 after FR-058) + §13.6 note + metadata-contract §2.9. **Pieces:** `presentation.json dropdownMenus` (+ typed loader); `enrichForPalette` builds validated `menu` pairs (`menuFor` throws on unknown/duplicate token); `G_palette` `P_ARG` emits generic `field_transon_dropdown` (curated menu + full-domain `accept`) for all constant+options params; 5th rule-agnostic runtime primitive (FieldDropdown subclass — alias-accepting validator, raw-token `getText_` for non-menu values, verbatim saveState; NFR-046: 5/8 ceiling, honest `BEHAVIOR_PRIMITIVES`); `check_presentation.py` gained curation validity/disjoint/**coverage** checks (+selftest; coverage is gate+test-enforced, deliberately NOT in `menuFor` — reviewer design note: bypassing the gate could only cause a display regression, never data loss); regen: only `G_palette.json`+`palette.json` drifted. Tests 1564→**1588**; all gates green; browser-verified (14-entry menu, alias `lt` displayed + exported verbatim). **Next:** UAT #1/#2 (collection/struct inputs — needs the shape-hint decision: engine metadata vs interim presentation data)._
 

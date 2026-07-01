@@ -34,13 +34,20 @@ export function JsonPanel({
   const gated = state.generation_status === 'unavailable';
   const generated = pretty(state.template_json);
   const [text, setText] = useState(generated);
+  // The user is actively editing (textarea focused, FR-131). While true, even an ACCEPTED edit
+  // must not rewrite the text — the accept flips the session to in_sync with freshly generated
+  // JSON, and reflecting it mid-typing reformats the text under the user's cursor.
+  const [editing, setEditing] = useState(false);
 
-  // Reflect a fresh generation into the editor only while in sync (don't clobber an in-progress or
-  // rejected edit — §7.15 preserves the user's text until accepted/reverted). Read-only always
-  // mirrors the generated JSON (there is no user edit to preserve).
+  // Reflect a fresh generation into the editor only while in sync AND not actively edited
+  // (FR-131): an accepted mid-typing edit keeps the user's exact text; the canonical form appears
+  // when editing ends (blur — `editing` leaves the deps re-running this effect) or on a change
+  // from another source (canvas/New/Import, which move focus away). A rejected edit stays
+  // preserved until accepted or reverted (§7.15, FR-113). Read-only always mirrors the generated
+  // JSON (there is no user edit to preserve).
   useEffect(() => {
-    if (readOnly || state.json_sync_status === 'in_sync') setText(generated);
-  }, [generated, state.json_sync_status, readOnly]);
+    if (readOnly || (state.json_sync_status === 'in_sync' && !editing)) setText(generated);
+  }, [generated, state.json_sync_status, readOnly, editing]);
 
   return (
     <section
@@ -64,6 +71,8 @@ export function JsonPanel({
           value={text}
           spellCheck={false}
           readOnly={readOnly}
+          onFocus={() => setEditing(true)}
+          onBlur={() => setEditing(false)}
           onChange={
             readOnly
               ? undefined

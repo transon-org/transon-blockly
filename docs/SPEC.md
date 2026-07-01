@@ -597,6 +597,13 @@ AD-024).
 - **FR-113** While a direct JSON edit is unparsed or rejected, the editor shall not silently
   alter, partially apply, or discard the user's workspace; it preserves the last valid workspace
   and marks the JSON as out of sync until a valid in-surface edit is accepted or reverted.
+- **FR-131** While the user is **actively editing** the JSON panel (its text editor retains
+  focus), an **accepted** edit syncs to the workspace (FR-111) **without rewriting the panel
+  text**: the user's exact text — including its formatting — is preserved so typing is never
+  interrupted by a reformat or cursor jump. The panel reflects the canonical generated JSON only
+  when editing ends (the editor loses focus) or when the document changes from another source
+  (canvas edit, New / Import / Load-Example — which move focus away); a read-only panel (FR-107)
+  always mirrors the generated JSON.
 
 ### 7.16 Template-Driven Projection Surface
 
@@ -1073,10 +1080,11 @@ of §12.5 — a clearer palette is preferred over hidden mode dropdowns (NFR-012
 
 ### 12.7 Generated JSON Panel
 
-Updates when blocks change; shows formatted JSON; shows an invalid-generation state when the
-workspace is incomplete; allows copying; and supports direct (bidirectional) editing per §7.15 —
-edits sync back to blocks only when valid and in-surface (§15.7), otherwise the panel shows the
-error and is marked out of sync (FR-111…FR-113).
+Updates when blocks change — but never while the user is actively typing in it (FR-131); shows
+formatted JSON; shows an invalid-generation state when the workspace is incomplete; allows
+copying; and supports direct (bidirectional) editing per §7.15 — edits sync back to blocks only
+when valid and in-surface (§15.7), otherwise the panel shows the error and is marked out of sync
+(FR-111…FR-113).
 
 ### 12.8 Sample Input Panel
 
