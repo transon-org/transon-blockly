@@ -3,7 +3,7 @@
 // 015/024/025). Engine-gated (§10.4). On failure, prior successful output is preserved but marked
 // stale (§17.8). The include resolver crosses the same port (AD-010, §16.6).
 
-import type { EngineProvider, Json } from '@transon/editor-core';
+import type { EngineProvider, ExecutionResult, Json } from '@transon/editor-core';
 import type { EditorStore } from './store.js';
 import { isEngineReady } from './engine-status.js';
 import { engineErrorCode, type EditorError } from './errors.js';
@@ -21,15 +21,17 @@ export interface ExecuteOptions {
  * Execute the current `template_json` against `sample_input_json`. No-op when gated or when there is
  * no template. Surfaces `runtime_transformation` / `include_loader` on failure (keeping prior output
  * marked stale, §17.8), and the produced output + captured file writes on success (§16.5, AC-024).
+ * Returns the raw engine `ExecutionResult` so the caller can thread it into the `onExecute` embedding
+ * callback (ARCHITECTURE §5.3, FR-106), or `null` when gated / nothing to execute.
  */
 export async function executeTemplate(
   store: EditorStore,
   engine: EngineProvider | undefined,
   marker: string,
   opts: ExecuteOptions = {},
-): Promise<void> {
+): Promise<ExecutionResult | null> {
   const { template_json, sample_input_json } = store.getState();
-  if (!isEngineReady(engine) || template_json == null) return;
+  if (!isEngineReady(engine) || template_json == null) return null;
   store.setState({ execution_status: 'pending' });
   const res = await engine!.transform(template_json, sample_input_json ?? null, {
     marker,
@@ -43,7 +45,7 @@ export async function executeTemplate(
       files_written: res.filesWritten ?? null,
       errors: [],
     });
-    return;
+    return res;
   }
   const error: EditorError = {
     code: engineErrorCode(res.error_type, res.error_message, 'transform'),
@@ -58,4 +60,5 @@ export async function executeTemplate(
     execution_status: prev.execution_output_json != null ? 'stale' : 'error',
     errors: [error],
   });
+  return res;
 }

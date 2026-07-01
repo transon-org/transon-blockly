@@ -4,7 +4,7 @@
 // data-flow logic lives here, not in React.
 
 import { encode } from '@transon/editor-core';
-import type { Json } from '@transon/editor-core';
+import type { Json, ValidationResult, ExecutionResult } from '@transon/editor-core';
 import { createEditorStore, type EditorStore } from './store.js';
 import { DEFAULT_MARKER, type EditorMode } from './types.js';
 import { applyEngineStatus } from './engine-status.js';
@@ -22,9 +22,12 @@ export interface EditorControllerOptions {
   template?: Json;
   input?: Json;
   readOnly?: boolean;
+  /** Fired with the current generated template after each projection (FR-104). */
   onChange?(template: Json | null): void;
-  onValidate?(): void;
-  onExecute?(): void;
+  /** Fired with the engine's `ValidationResult` after Validate (ARCHITECTURE §5.3, FR-011/105). */
+  onValidate?(result: ValidationResult): void;
+  /** Fired with the engine's `ExecutionResult` after Run (ARCHITECTURE §5.3, FR-011/106). */
+  onExecute?(result: ExecutionResult): void;
   /** Forward-projection debounce (ms). Default 150. */
   debounceMs?: number;
 }
@@ -185,9 +188,9 @@ export function createEditorController(
       store.setState({ editor_mode: mode });
     },
     async validate() {
-      await validateTemplate(store, engine, marker);
+      const result = await validateTemplate(store, engine, marker);
       highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
-      opts.onValidate?.();
+      if (result) opts.onValidate?.(result);
     },
     async run() {
       // §16.4 json_input: a bad sample input blocks execution (don't run on stale/last-valid input).
@@ -198,12 +201,12 @@ export function createEditorController(
         });
         return;
       }
-      await executeTemplate(store, engine, marker, {
+      const result = await executeTemplate(store, engine, marker, {
         includeLoader: host.includeLoader,
         includes: host.includes,
       });
       highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
-      opts.onExecute?.();
+      if (result) opts.onExecute?.(result);
     },
     dispose() {
       disposed = true;

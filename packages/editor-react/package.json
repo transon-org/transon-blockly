@@ -1,0 +1,51 @@
+{
+  "name": "@transon/editor-react",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Native React surface for the Transon Visual Editor: <TransonEditor {...options} ref={handle} /> with React as a PEER dependency (AD-019). Bundles the internal UI (@transon/editor-ui) + Blockly runtime; ships no engine (AD-008) and no React (the host app supplies its single React instance).",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "dependencies": {
+    "blockly": "13.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.2",
+    "@transon/editor-blockly": "workspace:*",
+    "@transon/editor-core": "workspace:*",
+    "@transon/editor-ui": "workspace:*",
+    "@types/node": "22.18.9",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "5.2.0",
+    "jsdom": "27.4.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vite-plugin-dts": "4.5.4",
+    "vitest": "2.1.9"
+  }
+}
