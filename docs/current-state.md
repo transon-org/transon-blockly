@@ -8,14 +8,16 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `e7a263c` — editor: FR-130 — curated operator dropdown (28→14), round-trip verbatim |
-| Branch | `fr-130-curated-operator-dropdown` |
+| Repo HEAD | `a41e00d` — editor: FR-131 — accepted JSON edits never rewrite the focused panel text |
+| Branch | `fr-131-json-edit-focus` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
 
+
+_**UAT #1/#2 brainstorm DONE — collection/struct inputs: shape hints will come from the ENGINE export (decision made; no files changed yet).** Analysis of `../transon` found the structural facts **already declared and validated internally but dropped at the export boundary**: `ParamSpec.container` (`ContainerType.TEMPLATE|MAPPING|LIST|ARMS`, `transformers.py`) with `chain.funcs=LIST`, `object.fields=MAPPING`, `switch.cases=MAPPING`, `cond.cases=ARMS` via `arm(_variants=[{'when','then'}], …)` — a full sub-schema incl. per-slot docs; `map.items`/`join.items`/`expr.values` are deliberately TEMPLATE (dynamic-capable → must stay a single socket). `metadata.py _catalog_params` exports only `name`/`kind`/`options`. **Agreed plan:** (1) engine PR — additive export of `container` (omit when TEMPLATE) + serialized `arm` schema (`required`/`variants`/`params`, same shapes as rule params) + arm-slot docs; `METADATA_VERSION` 2.0→**2.1**; tests + `docs/proposals/editor-metadata-export.md` update. (2) editor — re-pin snapshot, `metadata-contract.md` §2, new FRs (append-only); mechanical container→shape mapping: `list`→repeating numbered value inputs (+/−), `arms`→repeating labeled when/then groups (`controls_if`-style), `mapping`→key-field+value rows; ~2 new rule-agnostic runtime primitives (NFR-046 baseline 5→~7, deliberate gated bump); `G_encode`/`G_decode` grow a third @-time container branch (numbered inputs + `extraState` counts) — **round-trip-critical** → extend corpus FIRST (empty `cases`; foreign arm key→unsupported not silent repair; nested cond-in-chain; §11.4 escape interplay with `object.fields`; dynamic `map.items` stays socketed), then `round-trip-reviewer`. **Spike order:** `chain` (list) + `cond` (arms) end-to-end before generalizing. **Rejected:** editor-side `paramShapes` presentation stopgap (parallel semantic catalog, golden rule #5); statement/prev-next connections (fights the expression language); typed connection checks (transon is dynamically typed). **Open Qs:** does `cond` spawn with 1 arm pre-attached?; `switch` case-key scalar typing (reuse `FieldTransonScalar`?); write the contract's minor-version policy into `metadata-contract.md` with the 2.1 bump._
 
 _**UAT follow-up DONE — FR-131 (branch `fr-131-json-edit-focus`): an accepted mid-typing JSON edit no longer rewrites the focused panel text.** UAT reported the editor "interfering with typing" in the Template JSON panel: a keystroke pause let the 150 ms debounced reverse sync ACCEPT the text, re-project, flip to `in_sync` — and `JsonPanel`'s reflect-effect replaced the textarea with the canonical pretty-print mid-edit (reformat + cursor jump). **SPEC-first:** FR-131 (§7.15 after FR-113) + §12.7 note — while the editor retains focus, an accepted edit syncs the workspace but preserves the user's exact text; canonical form appears on blur or a non-edit-origin change; read-only always mirrors (FR-107). **Fix:** `JsonPanel` tracks `editing` (focus/blur) and guards the reflect-effect (`in_sync && !editing`) — `packages/editor-ui/src/components/panels.tsx`; tests `packages/editor-ui/test/json-edit-preserve.test.tsx` (5, red-first); editor-ui 106 green, gates green, browser-verified (typed one-liner survives the accept verbatim; blur canonicalizes; caveat learned: background-tab `focus()` defers focus events — drive `focusin` when probing). Codec/round-trip untouched (panel-only)._
 
@@ -364,16 +366,24 @@ living read of it.
    branch/PR per milestone): `m0-editor-scaffolding` (M0), `m1-codec-skeleton` (M1), `m2-full-catalog`
    (M2, off M1), `m3-editor-blockly` (M3, off M2), `m4-editor-ui` (M4, off M3), `m5-react-embedding`
    (M5, off M4). Reference the covered FR/AC IDs. If they should merge to `main` in order, rebase each
-   after the prior lands. **Note:** `m5-react-embedding` has **uncommitted post-M5 changes in the working
-   tree** (demo/editor layout CSS fix + a new `Makefile` — see **Last action**); commit them onto the M5
-   branch before/with the push.
-2. **M5 follow-ups (non-blocking polish, optional).** (a) Commit the accessibility BROWSER layer as a CI
+   after the prior lands. **Note:** the post-M5 UAT branches stack linearly on M5 and should ride the
+   same push train: `fix-editor-layout-css` (`b231d6f`) → `fr-130-curated-operator-dropdown`
+   (`e7a263c`) → `fr-131-json-edit-focus` (`a41e00d`).
+2. **UAT #1/#2 — structured params (collection/struct inputs), engine-first.** The shape-hint
+   decision is RESOLVED (see Last action): the engine already declares `ParamSpec.container` +
+   `ArmSpec` internally; the interim editor-side `paramShapes` idea is rejected. Sequence:
+   (a) engine PR in `../transon` — export `container`/`arm` in `get_editor_metadata()`,
+   `METADATA_VERSION` 2.0→2.1, additive; (b) editor: snapshot re-pin + `metadata-contract.md` §2 +
+   new FRs; (c) spike `chain` (list) + `cond` (arms) end-to-end (palette, ~2 new runtime
+   primitives with a gated NFR-046 bump, codec container branch, corpus extension) before
+   generalizing to `switch`/`object.fields`; `round-trip-reviewer` gates the codec change.
+3. **M5 follow-ups (non-blocking polish, optional).** (a) Commit the accessibility BROWSER layer as a CI
    job — a `@playwright/test` + `@axe-core/playwright` e2e against the built `examples/reference-host`
    (contrast, keyboard nav, visible focus, real Pyodide load, browser self-hosting demo). It was run LIVE
    via the Playwright MCP and passed (axe 0 violations incl. contrast; Pyodide `ready`), but is not yet a
    committed gate. (b) Structured error→block highlighting still falls back to the root block because real
    engine errors carry only a text location trail — a structured template-path would need an engine change.
-3. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
+4. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
    `update_memory.py --check --require-engine` on, once the engine is pip-installable in CI.
 
 **Regen flow** (only if a codec generator changes — M5 did NOT): write generators →
