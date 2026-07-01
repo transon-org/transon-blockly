@@ -8,7 +8,7 @@ import type { Json, ValidationResult, ExecutionResult } from '@transon/editor-co
 import { createEditorStore, type EditorStore } from './store.js';
 import { DEFAULT_MARKER, type EditorMode } from './types.js';
 import { applyEngineStatus } from './engine-status.js';
-import { runForward, applyForward, debounce } from './forward.js';
+import { runForward, applyForward, debounce, isEmptyWorkspace } from './forward.js';
 import { validateTemplate } from './validate.js';
 import { executeTemplate } from './execute.js';
 import { tryReverse } from './reverse.js';
@@ -28,6 +28,9 @@ export interface EditorControllerOptions {
   onValidate?(result: ValidationResult): void;
   /** Fired with the engine's `ExecutionResult` after Run (ARCHITECTURE §5.3, FR-011/106). */
   onExecute?(result: ExecutionResult): void;
+  /** Called before an action would REPLACE a non-empty workspace (New / Import). Return `false` to
+   *  abort (FR-101). Defaults to `window.confirm`; a host can supply a custom confirmation. */
+  confirmReplace?(): boolean;
   /** Forward-projection debounce (ms). Default 150. */
   debounceMs?: number;
 }
@@ -38,8 +41,18 @@ export interface EditorController {
   getTemplate(): Json | null;
   /** Load a document into the canvas (New / Import / Load-Example reverse path). Engine-gated. */
   setTemplate(doc: Json): Promise<void>;
-  /** Clear the canvas (New). */
+  /** Clear the canvas (New). Warns before discarding a non-empty workspace (FR-101). */
   newWorkspace(): void;
+  /** Import a Transon JSON string (paste/file, FR-096/007): warns before replacing a non-empty
+   *  workspace (FR-101), then loads via the strict §7.15 gate (invalid/out-of-surface → error,
+   *  workspace unchanged). */
+  importText(text: string): Promise<void>;
+  /** Copy the generated canonical template to the clipboard (FR-097/008). Resolves `false` when
+   *  there is nothing to copy or the clipboard is unavailable. */
+  copyTemplate(): Promise<boolean>;
+  /** Download the generated canonical template as a JSON file (FR-098/008, §11.6 canonical-only).
+   *  Returns `false` when there is nothing to download. */
+  downloadTemplate(filename?: string): boolean;
   /** Load a documentation example: its template onto the canvas, its sample input, and its expected
    *  output for actual-vs-expected display (FR-009/099, AC-018/019). Engine-gated. */
   loadExample(example: ExampleCase): Promise<void>;
@@ -102,6 +115,17 @@ export function createEditorController(
   };
   const debouncedReverse = debounce((text: string) => void applyReverse(text), opts.debounceMs ?? 150);
 
+  // FR-101: warn before an action replaces a non-empty workspace. An empty workspace has nothing to
+  // lose (no prompt). Defaults to window.confirm; a host can override via opts.confirmReplace.
+  const guardReplace = (): boolean => {
+    if (isEmptyWorkspace(store.getState().workspace)) return true;
+    if (opts.confirmReplace) return opts.confirmReplace();
+    if (typeof globalThis.confirm === 'function') {
+      return globalThis.confirm('Discard unsaved changes to the current template?');
+    }
+    return true;
+  };
+
   // Eager engine init + status polling (Q2: the reference Pyodide host loads on mount). The port has
   // no status event, so poll while idle/loading; re-project when it *becomes* `ready` so generation
   // appears, and reflect the status into the gating each tick (NFR-028/AC-023/§10.4).
@@ -147,6 +171,7 @@ export function createEditorController(
     getTemplate: () => store.getState().template_json,
     setTemplate: (doc) => loadDocumentSafely(doc),
     newWorkspace() {
+      if (!guardReplace()) return; // FR-101: keep the current workspace if the user cancels
       mount.clear();
       store.setState({
         workspace: mount.serialize(),
@@ -162,6 +187,37 @@ export function createEditorController(
         expected_output_json: null,
       });
       opts.onChange?.(null);
+    },
+    async importText(text) {
+      if (!guardReplace()) return; // FR-101
+      await applyReverse(text); // strict §7.15 gate (parse→encode→surface→round-trip)
+    },
+    async copyTemplate() {
+      const template = store.getState().template_json;
+      if (template == null) return false;
+      const text = JSON.stringify(template, null, 2);
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        return false; // clipboard blocked/unavailable — the caller may fall back to Download
+      }
+    },
+    downloadTemplate(filename = 'template.transon.json') {
+      const template = store.getState().template_json;
+      if (template == null) return false;
+      // Export the canonical Transon JSON only — no workspace/UI-state bundle (§11.6, OQ-002).
+      const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      return true;
     },
     async loadExample(example) {
       // Record the example's input + expected output first, then load its template (engine-gated).

@@ -3,7 +3,7 @@
 // assert behavior (presence, content, actions), not pixels (NFR-045 baseline; M5 polishes a11y).
 
 import { useEffect, useState } from 'react';
-import type { JSX } from 'react';
+import type { ChangeEvent, JSX } from 'react';
 import { stableStringify } from '@transon/editor-core';
 import type { EditorSession } from '../session/types.js';
 import type { EditorController } from '../session/controller.js';
@@ -257,6 +257,15 @@ export function Toolbar({
   readOnly?: boolean;
 }): JSX.Element {
   const ready = state.engine_runtime_status === 'ready';
+  const hasTemplate = state.template_json != null;
+
+  async function onImportFile(e: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-importing the same file
+    if (!file) return;
+    await controller?.importText(await file.text());
+  }
+
   return (
     <div className="transon-toolbar" data-testid="toolbar" role="toolbar" aria-label="Editor actions">
       <button
@@ -266,6 +275,34 @@ export function Toolbar({
         onClick={() => controller?.newWorkspace()}
       >
         New
+      </button>
+      {/* Import a Transon JSON file (FR-096/007) — routed through the strict §7.15 gate. */}
+      <label className="transon-import-label">
+        Import
+        <input
+          type="file"
+          className="transon-import-input"
+          data-testid="btn-import"
+          accept="application/json,.json"
+          disabled={readOnly}
+          onChange={(e) => void onImportFile(e)}
+        />
+      </label>
+      <button
+        type="button"
+        data-testid="btn-copy"
+        disabled={!hasTemplate}
+        onClick={() => void controller?.copyTemplate()}
+      >
+        Copy
+      </button>
+      <button
+        type="button"
+        data-testid="btn-download"
+        disabled={!hasTemplate}
+        onClick={() => controller?.downloadTemplate()}
+      >
+        Download
       </button>
       <button
         type="button"
