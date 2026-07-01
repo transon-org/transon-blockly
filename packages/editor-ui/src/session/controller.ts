@@ -14,7 +14,7 @@ import { executeTemplate } from './execute.js';
 import { tryReverse } from './reverse.js';
 import { mountBlockly, type TransonMount } from '../blockly/mount.js';
 import { highlightErrors, clearHighlights } from '../blockly/highlight.js';
-import type { TransonEditorHost } from './host.js';
+import type { TransonEditorHost, ExampleCase } from './host.js';
 
 export interface EditorControllerOptions {
   host: TransonEditorHost;
@@ -40,6 +40,9 @@ export interface EditorController {
   setTemplate(doc: Json): Promise<void>;
   /** Clear the canvas (New). */
   newWorkspace(): void;
+  /** Load a documentation example: its template onto the canvas, its sample input, and its expected
+   *  output for actual-vs-expected display (FR-009/099, AC-018/019). Engine-gated. */
+  loadExample(example: ExampleCase): Promise<void>;
   /** Set the sample input from raw panel text; surfaces `json_input` on invalid JSON (§16.4). */
   setInputText(text: string): void;
   /** Strict bidirectional JSON edit (§7.15): a valid in-surface edit syncs to the workspace; an
@@ -155,8 +158,24 @@ export function createEditorController(
         execution_status: store.getState().engine_runtime_status === 'ready' ? 'idle' : 'disabled',
         errors: [],
         json_sync_status: 'in_sync',
+        selected_example: null,
+        expected_output_json: null,
       });
       opts.onChange?.(null);
+    },
+    async loadExample(example) {
+      // Record the example's input + expected output first, then load its template (engine-gated).
+      // A fresh execution is required to compare actual vs expected (§12.9), so clear prior output.
+      store.setState({
+        selected_example: example.name,
+        sample_input_json: example.data ?? null,
+        expected_output_json: example.result ?? null,
+        execution_output_json: null,
+        execution_status: store.getState().engine_runtime_status === 'ready' ? 'idle' : 'disabled',
+        errors: [],
+      });
+      inputInvalid = false;
+      await loadDocumentSafely(example.template);
     },
     setInputText(text) {
       if (text.trim() === '') {

@@ -35,6 +35,9 @@ export type { ExecuteOptions } from './session/execute.js';
 export { tryReverse } from './session/reverse.js';
 export type { ReverseOutcome } from './session/reverse.js';
 
+// ---- example corpus (M5 D2, FR-079) ----
+export { buildExampleCorpus } from './session/examples.js';
+
 // ---- host boundary + controller (D2) ----
 export type { TransonEditorHost, ExampleCase, TransonTheme } from './session/host.js';
 export { createEditorController } from './session/controller.js';

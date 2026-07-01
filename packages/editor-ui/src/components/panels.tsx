@@ -4,8 +4,10 @@
 
 import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
+import { stableStringify } from '@transon/editor-core';
 import type { EditorSession } from '../session/types.js';
 import type { EditorController } from '../session/controller.js';
+import type { ExampleCase } from '../session/host.js';
 import { ERROR_CATEGORY } from '../session/errors.js';
 
 function pretty(value: unknown): string {
@@ -97,18 +99,94 @@ export function InputPanel({
   );
 }
 
-/** Transformation output + errors (§12.9). */
+/**
+ * Transformation output + errors (§12.9), with actual-vs-expected for a loaded example (AC-019). When
+ * an example with an expected `result` is loaded, the expected output is shown alongside the actual
+ * and — after a successful run — a text match/differ label (not colour-only, NFR-045).
+ */
 export function OutputPanel({ state }: { state: EditorSession }): JSX.Element {
+  const hasExpected = state.expected_output_json !== null && state.selected_example !== null;
+  const ran = state.execution_status === 'success';
+  const matches =
+    hasExpected && ran
+      ? stableStringify(state.execution_output_json) === stableStringify(state.expected_output_json)
+      : null;
+
   return (
     <section className="transon-panel transon-output-panel" data-testid="output-panel" aria-label="Output and errors">
       <header className="transon-panel-title">
         Output / Errors{state.execution_status === 'stale' ? ' (stale)' : ''}
       </header>
+      {matches !== null ? (
+        <p
+          className="transon-match"
+          data-testid="match-indicator"
+          data-match={matches ? 'match' : 'differ'}
+        >
+          {matches ? '✓ Output matches expected' : '✗ Output differs from expected'}
+        </p>
+      ) : null}
       {state.errors.length > 0 ? (
         <ErrorList state={state} />
       ) : (
         <pre className="transon-code" data-testid="output-content">{pretty(state.execution_output_json)}</pre>
       )}
+      {hasExpected ? (
+        <div className="transon-expected" data-testid="expected-output">
+          <header className="transon-panel-subtitle">Expected</header>
+          <pre className="transon-code" data-testid="expected-content">
+            {pretty(state.expected_output_json)}
+          </pre>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+/**
+ * Examples picker (§12.8, FR-009/099, AC-018). Loads a documentation example's template + sample
+ * input + expected output. Hidden when no corpus is available. "Reset Example" reloads the selected
+ * example, reverting local edits (§12.3).
+ */
+export function ExamplesPanel({
+  examples,
+  selected,
+  onSelect,
+  onReset,
+}: {
+  examples: ExampleCase[];
+  selected: string | null;
+  onSelect(example: ExampleCase): void;
+  onReset(): void;
+}): JSX.Element | null {
+  if (!examples.length) return null;
+  return (
+    <section className="transon-panel transon-examples-panel" data-testid="examples-panel" aria-label="Examples">
+      <header className="transon-panel-title">Examples</header>
+      <select
+        className="transon-example-select"
+        data-testid="example-select"
+        aria-label="Load example"
+        value={selected ?? ''}
+        onChange={(e) => {
+          const ex = examples.find((x) => x.name === e.target.value);
+          if (ex) onSelect(ex);
+        }}
+      >
+        <option value="" disabled>
+          Choose an example…
+        </option>
+        {examples.map((ex) => (
+          <option key={ex.name} value={ex.name}>
+            {ex.name}
+          </option>
+        ))}
+      </select>
+      {selected ? (
+        <button type="button" data-testid="btn-reset-example" onClick={onReset}>
+          Reset Example
+        </button>
+      ) : null}
     </section>
   );
 }

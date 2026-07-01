@@ -58,6 +58,9 @@ export interface EditorSession {
   block_map: JsonPathBlockMap | null;
   /** Captured `file` writes from the last execution (§16.5, §12.11, AC-024). */
   files_written: Record<string, Json> | null;
+  /** Expected output of the loaded example, for actual-vs-expected display (§12.9, AC-019). Null
+   *  unless an example with a `result` is loaded. */
+  expected_output_json: Json | null;
 }
 
 /** The default marker key (SPEC §11.2). */
@@ -83,6 +86,7 @@ export function emptySession(overrides: Partial<EditorSession> = {}): EditorSess
     generation_status: 'empty',
     block_map: null,
     files_written: null,
+    expected_output_json: null,
     ...overrides,
   };
 }

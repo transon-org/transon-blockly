@@ -4,7 +4,7 @@
 // React stays thin: all data flow lives in the controller; this only renders state + dispatches
 // actions.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, JSX } from 'react';
 import {
   createEditorController,
@@ -12,12 +12,14 @@ import {
   type EditorControllerOptions,
 } from '../session/controller.js';
 import type { TransonTheme } from '../session/host.js';
+import { buildExampleCorpus } from '../session/examples.js';
 import { emptySession, type EditorSession } from '../session/types.js';
 import {
   JsonPanel,
   InputPanel,
   OutputPanel,
   FilesPanel,
+  ExamplesPanel,
   StatusBar,
   Toolbar,
   type ViewMode,
@@ -72,6 +74,18 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
   const readOnly = props.readOnly ?? false;
   const shellStyle = themeStyle(props.host.theme);
 
+  // The effective example corpus: an embedder-supplied set overrides the built-in metadata corpus
+  // (FR-079/009). Built once (the snapshot is static; host.examples is a stable prop).
+  const examples = useMemo(
+    () => props.host.examples ?? buildExampleCorpus(),
+    [props.host.examples],
+  );
+  const loadExample = (ex: (typeof examples)[number]): void => void controller?.loadExample(ex);
+  const resetExample = (): void => {
+    const current = examples.find((e) => e.name === state.selected_example);
+    if (current) void controller?.loadExample(current);
+  };
+
   // The Blockly container is ALWAYS mounted (the controller's workspace is bound to this exact DOM
   // node); view switches toggle visibility via CSS so the instance is never orphaned.
   const canvasHidden = mode === 'compact' && view === 'json';
@@ -122,8 +136,20 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
       <div className="transon-body transon-sandbox">
         <div className="transon-canvas-col">{canvas}</div>
         <div className="transon-side-col">
+          <ExamplesPanel
+            examples={examples}
+            selected={state.selected_example}
+            onSelect={loadExample}
+            onReset={resetExample}
+          />
           <JsonPanel state={state} onEdit={(t) => controller?.setTemplateText(t)} readOnly={readOnly} />
-          <InputPanel state={state} onInput={(t) => controller?.setInputText(t)} />
+          {/* Re-key on the loaded example so the (uncontrolled) input textarea reflects the example's
+              sample input, while staying free-form for manual edits (§12.8, FR-099). */}
+          <InputPanel
+            key={state.selected_example ?? 'manual'}
+            state={state}
+            onInput={(t) => controller?.setInputText(t)}
+          />
           <OutputPanel state={state} />
           <FilesPanel state={state} />
         </div>
