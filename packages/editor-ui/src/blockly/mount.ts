@@ -16,6 +16,7 @@ import {
   type ToolboxCategoryConfig,
   type ToolboxView,
 } from './toolbox.js';
+import { ensureTransonStyles } from '../styles.js';
 
 /** Scoped root class applied to the host container (AD-018: light DOM, scoped CSS prefix). */
 export const TRANSON_ROOT_CLASS = 'transon-editor';
@@ -64,6 +65,7 @@ export interface TransonMount {
  */
 export function mountBlockly(container: HTMLElement, opts: TransonMountOptions = {}): TransonMount {
   ensureBlocklyReady();
+  ensureTransonStyles(); // scoped light-DOM stylesheet (AD-018, NFR-045 contrast + focus)
   container.classList.add(TRANSON_ROOT_CLASS);
 
   // Base toolbox = the committed §12.4 toolbox with the embedder's category config applied (FR-109);

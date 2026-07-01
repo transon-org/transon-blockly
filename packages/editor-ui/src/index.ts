@@ -54,6 +54,9 @@ export type { ToolboxCategoryConfig, ToolboxView } from './blockly/toolbox.js';
 // ---- error → block highlighting (D4) ----
 export { buildPathIndex, highlightErrors, clearHighlights } from './blockly/highlight.js';
 
+// ---- scoped light-DOM stylesheet (M5 D6, AD-018, NFR-045) ----
+export { ensureTransonStyles, TRANSON_CSS, TRANSON_STYLE_ID } from './styles.js';
+
 // ---- React shell (D2) ----
 export { TransonEditor } from './components/TransonEditor.js';
 export type { TransonEditorProps } from './components/TransonEditor.js';

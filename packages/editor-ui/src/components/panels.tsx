@@ -60,6 +60,7 @@ export function JsonPanel({
         <textarea
           className="transon-code transon-code-input"
           data-testid="json-content"
+          aria-label="Generated template JSON"
           value={text}
           spellCheck={false}
           readOnly={readOnly}
@@ -91,6 +92,7 @@ export function InputPanel({
       <textarea
         className="transon-code-input"
         data-testid="input-content"
+        aria-label="Sample input JSON"
         defaultValue={pretty(state.sample_input_json)}
         onChange={(e) => onInput?.(e.target.value)}
         spellCheck={false}
@@ -233,7 +235,13 @@ export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
   const metaMismatch =
     state.metadata_version !== null && state.metadata_version !== metadataVersion;
   return (
-    <footer className="transon-statusbar" data-testid="status-bar">
+    <div
+      className="transon-statusbar"
+      data-testid="status-bar"
+      role="status"
+      aria-live="polite"
+      aria-label="Editor status"
+    >
       <span data-testid="engine-status" data-status={state.engine_runtime_status}>
         Engine: {state.engine_runtime_status}
       </span>
@@ -249,7 +257,7 @@ export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
           {metaMismatch ? ` (built for ${metadataVersion})` : ''}
         </span>
       ) : null}
-    </footer>
+    </div>
   );
 }
 

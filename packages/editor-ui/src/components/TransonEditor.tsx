@@ -101,6 +101,8 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
     <div
       className="transon-canvas"
       data-testid="transon-canvas"
+      role="region"
+      aria-label="Block editor canvas"
       ref={canvasRef}
       style={canvasHidden ? { display: 'none' } : undefined}
     />
