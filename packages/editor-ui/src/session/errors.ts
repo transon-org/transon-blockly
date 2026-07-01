@@ -69,9 +69,17 @@ export function engineErrorCode(
  * to the taxonomy. A surface failure during the reverse §7.15 path is `import_unsupported`; other
  * codec failures during the forward projection are `editor_internal` (the codec is generated and
  * should not fail on in-surface input — a failure there is an editor/codec defect, not user error).
+ *
+ * The host-stack recursion ceiling (§6.5: a template too deeply nested for the codec, e.g. the
+ * editor's own `G_encode`/`G_decode` generators) raises an engine `TransformationError` — that is a
+ * codec/runtime LIMIT, not an out-of-surface (§15.7) violation, so it is mapped to
+ * `runtime_transformation`, never `import_unsupported`. Otherwise a legitimately deep template would
+ * be mislabelled "Unsupported template".
  */
 export function codecErrorCode(err: CodecError, phase: 'forward' | 'reverse'): ErrorCode {
   const t = (err.errorType ?? '').toLowerCase();
-  if (t.includes('include')) return 'include_loader';
+  const m = (err.message ?? '').toLowerCase();
+  if (t.includes('include') || m.includes('include not resolvable')) return 'include_loader';
+  if (m.includes('depth limit')) return 'runtime_transformation';
   return phase === 'reverse' ? 'import_unsupported' : 'editor_internal';
 }

@@ -60,6 +60,11 @@ describe('the deepest generators fail cleanly at the recursion ceiling (§6.5), 
       const outcome = await tryReverse(engine, JSON.stringify(template), '$');
       // A CodecError from the depth cap is caught by the gate → rejected, workspace unchanged.
       expect(outcome.status).toBe('rejected');
+      if (outcome.status === 'rejected') {
+        // Labelled as a codec/runtime LIMIT (§6.5), NOT an out-of-surface (§15.7) violation.
+        expect(outcome.error.code).toBe('runtime_transformation');
+        expect(outcome.error.message.toLowerCase()).toContain('depth limit');
+      }
     });
   }
 });
