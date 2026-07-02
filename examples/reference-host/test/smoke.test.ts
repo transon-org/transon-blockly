@@ -8,6 +8,6 @@ describe('reference-host scaffold', () => {
   });
 
   it('pins the engine version to the metadata snapshot (AD-025)', () => {
-    expect(PINNED_ENGINE_VERSION).toBe('0.1.3');
+    expect(PINNED_ENGINE_VERSION).toBe('0.1.6');
   });
 });
