@@ -8,14 +8,15 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `a41e00d` — editor: FR-131 — accepted JSON edits never rewrite the focused panel text |
-| Branch | `fr-131-json-edit-focus` |
+| Repo HEAD | `cf0b4f2` — docs: handoff — record UAT #1/#2 brainstorm decision (engine-first shape hints) |
+| Branch | `main` |
 | Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
 
+_**UAT #1/#2 step (a) DONE — R-28 RFC placed in `../transon` (UNCOMMITTED; user reviews + manages implementation; editor work waits).** Wrote `../transon/docs/proposals/editor-metadata-structural-params.md` + the R-28 ROADMAP entry (checklist row `accepted` + Theme F section, decision provenance 2026-07-02) — both left uncommitted in that repo's working tree for the maintainer. RFC = the agreed engine-first export: `_catalog_params` emits `container: "list"|"mapping"|"arms"` (omitted for the default `template`) + a serialized `arm` schema for ARMS params (recursive serializer, same shape as rule params); optional arm-slot docstrings in the docs payload; `METADATA_VERSION` 2.0→**2.1** additive; tests extend `tests/test_metadata.py`. **One correction vs the brainstorm note below:** `arm(...)` collapses `_variants` at declaration time — `ArmSpec` stores only `required` + `params`, so the export emits exactly that (NO `variants` key; extending `ArmSpec` is flagged in the RFC as separate future work). **Editor repo untouched** (no snapshot re-pin — that happens only after the engine change ships). **Resume trigger:** when R-28 lands in `../transon`, continue at Next steps 2(b)._
 
 _**UAT #1/#2 brainstorm DONE — collection/struct inputs: shape hints will come from the ENGINE export (decision made; no files changed yet).** Analysis of `../transon` found the structural facts **already declared and validated internally but dropped at the export boundary**: `ParamSpec.container` (`ContainerType.TEMPLATE|MAPPING|LIST|ARMS`, `transformers.py`) with `chain.funcs=LIST`, `object.fields=MAPPING`, `switch.cases=MAPPING`, `cond.cases=ARMS` via `arm(_variants=[{'when','then'}], …)` — a full sub-schema incl. per-slot docs; `map.items`/`join.items`/`expr.values` are deliberately TEMPLATE (dynamic-capable → must stay a single socket). `metadata.py _catalog_params` exports only `name`/`kind`/`options`. **Agreed plan:** (1) engine PR — additive export of `container` (omit when TEMPLATE) + serialized `arm` schema (`required`/`variants`/`params`, same shapes as rule params) + arm-slot docs; `METADATA_VERSION` 2.0→**2.1**; tests + `docs/proposals/editor-metadata-export.md` update. (2) editor — re-pin snapshot, `metadata-contract.md` §2, new FRs (append-only); mechanical container→shape mapping: `list`→repeating numbered value inputs (+/−), `arms`→repeating labeled when/then groups (`controls_if`-style), `mapping`→key-field+value rows; ~2 new rule-agnostic runtime primitives (NFR-046 baseline 5→~7, deliberate gated bump); `G_encode`/`G_decode` grow a third @-time container branch (numbered inputs + `extraState` counts) — **round-trip-critical** → extend corpus FIRST (empty `cases`; foreign arm key→unsupported not silent repair; nested cond-in-chain; §11.4 escape interplay with `object.fields`; dynamic `map.items` stays socketed), then `round-trip-reviewer`. **Spike order:** `chain` (list) + `cond` (arms) end-to-end before generalizing. **Rejected:** editor-side `paramShapes` presentation stopgap (parallel semantic catalog, golden rule #5); statement/prev-next connections (fights the expression language); typed connection checks (transon is dynamically typed). **Open Qs:** does `cond` spawn with 1 arm pre-attached?; `switch` case-key scalar typing (reuse `FieldTransonScalar`?); write the contract's minor-version policy into `metadata-contract.md` with the 2.1 bump._
 
@@ -372,11 +373,12 @@ living read of it.
 2. **UAT #1/#2 — structured params (collection/struct inputs), engine-first.** The shape-hint
    decision is RESOLVED (see Last action): the engine already declares `ParamSpec.container` +
    `ArmSpec` internally; the interim editor-side `paramShapes` idea is rejected. Sequence:
-   (a) engine PR in `../transon` — export `container`/`arm` in `get_editor_metadata()`,
-   `METADATA_VERSION` 2.0→2.1, additive; (b) editor: snapshot re-pin + `metadata-contract.md` §2 +
-   new FRs; (c) spike `chain` (list) + `cond` (arms) end-to-end (palette, ~2 new runtime
-   primitives with a gated NFR-046 bump, codec container branch, corpus extension) before
-   generalizing to `switch`/`object.fields`; `round-trip-reviewer` gates the codec change.
+   (a) ~~engine RFC~~ **done** — R-28 RFC + ROADMAP entry placed in `../transon` (uncommitted;
+   see Last action); **implementation is user-managed — WAIT for it to land**; (b) editor:
+   snapshot re-pin + `metadata-contract.md` §2 + new FRs; (c) spike `chain` (list) + `cond`
+   (arms) end-to-end (palette, ~2 new runtime primitives with a gated NFR-046 bump, codec
+   container branch, corpus extension) before generalizing to `switch`/`object.fields`;
+   `round-trip-reviewer` gates the codec change.
 3. **M5 follow-ups (non-blocking polish, optional).** (a) Commit the accessibility BROWSER layer as a CI
    job — a `@playwright/test` + `@axe-core/playwright` e2e against the built `examples/reference-host`
    (contrast, keyboard nav, visible focus, real Pyodide load, browser self-hosting demo). It was run LIVE
@@ -392,6 +394,9 @@ artifacts) → a normal run must be byte-equal.
 
 ## Open blockers / waiting-on
 
+- **UAT #1/#2 editor work waits on engine R-28** (`../transon` — RFC + roadmap entry placed,
+  uncommitted; implementation user-managed). Editor steps 2(b)/2(c) start after it lands and the
+  snapshot is re-pinned.
 - None blocking M0 — it depends only on owner-controlled inputs (ROADMAP §"Remaining inputs").
 
 ## Do-not-relitigate (pointers, not copies)
