@@ -28,7 +28,7 @@ const mock: EngineProvider = {
     return { status: 'ok', success: true, output: null };
   },
   async version(): Promise<{ engine: string; metadata: string }> {
-    return { engine: '0.0.0', metadata: '2.0' };
+    return { engine: '0.0.0', metadata: '3.0' };
   },
   dispose() {
     /* no-op */

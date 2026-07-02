@@ -49,7 +49,7 @@ export function createFakeEngine(opts: FakeEngineOptions = {}): FakeEngine {
       return { status: 'ok', success: true, output: isBlockMap ? { children: [] } : input };
     },
     async version() {
-      return { engine: opts.engineVersion ?? 'fake-0.0.0', metadata: opts.metadataVersion ?? '2.0' };
+      return { engine: opts.engineVersion ?? 'fake-0.0.0', metadata: opts.metadataVersion ?? '3.0' };
     },
     dispose() {
       this.calls.dispose++;

@@ -331,6 +331,21 @@ itself (FR-121, AC-036).
 - **FR-008** The editor shall support manual export, copy, and download of a Transon JSON
   template.
 - **FR-009** The editor shall support loading built-in examples.
+- **FR-132** The Examples picker (FR-009) shall present the example corpus **tiered and grouped**:
+  the engine's curated tiers first — **worked examples**, then **recipes**, each in the
+  engine-emitted reference-list order ([`metadata-contract.md`](metadata-contract.md) §2.7) —
+  followed by the reference examples grouped by owning rule (from the engine-emitted
+  rule→example name references, rule-level first with parameter-level references as the
+  fallback; examples owned by no rule group last). Each entry shall be
+  **labeled** by the first sentence of its engine `doc` (falling back to the case name when the
+  doc is absent), while the unique case **name** remains the selection value and stays visible
+  (e.g. as a tooltip). Tiering, grouping, and labels are derived mechanically from the
+  engine-emitted corpus data (reference lists and docs; tier and rule membership join on the
+  **name references**, never on tag string conventions, per
+  [`metadata-contract.md`](metadata-contract.md) §2.7) — never from a hand-maintained
+  editor-side list (AD-012) — and are presentation-only: they do not alter corpus contents,
+  selection semantics (FR-009, AC-018), or a host-supplied `examples` override, which is
+  presented through the same mechanical derivation.
 - **FR-010** The editor shall be usable as an embeddable component (§7.14).
 - **FR-011** The editor shall expose events/callbacks so an embedding application can observe
   template changes, validation results, and execution results.

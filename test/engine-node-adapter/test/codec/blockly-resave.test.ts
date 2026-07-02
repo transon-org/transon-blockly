@@ -9,8 +9,9 @@
 // store) is M4; this is the codec-level decoder-consume guarantee (FR-126) only.
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
 import * as Blockly from 'blockly/core';
-import type { EngineProvider, Json, CatalogEntry } from '@transon/editor-core';
-import { encode, decode, editorMetadata } from '@transon/editor-core';
+import type { EngineProvider, Json } from '@transon/editor-core';
+import { encode, decode } from '@transon/editor-core';
+import { collectDocsExamples } from './docs-examples.js';
 import { registerTransonBlocks, toWorkspaceState } from '@transon/editor-blockly';
 import { createNodeEngineProvider } from '../../src/index.js';
 import { M1_CORPUS } from './corpus.js';
@@ -56,15 +57,10 @@ describe('FR-126 reverse path — decode after a real Blockly save', () => {
   }
 
   // Full §15.8 corpus: a Blockly save/load is transparent to the decoder (same result as a
-  // direct decode of the encoder output).
-  const corpus: { name: string; template: Json }[] = [];
-  for (const group of [editorMetadata.docs.rules, editorMetadata.docs.operators, editorMetadata.docs.functions]) {
-    for (const entry of group) {
-      for (const ex of (entry as CatalogEntry & { examples?: Array<{ name: string; template: Json }> }).examples ?? []) {
-        corpus.push({ name: `${entry.name}__${ex.name}`, template: ex.template });
-      }
-    }
-  }
+  // direct decode of the encoder output). Flat engine corpus (each case exactly once, §2.7).
+  const corpus: { name: string; template: Json }[] = collectDocsExamples().map(
+    ({ source, name, template }) => ({ name: `${source}__${name}`, template }),
+  );
   for (const c of M1_CORPUS) corpus.push({ name: `m1__${c.name}`, template: c.template });
 
   for (const { name, template } of corpus) {

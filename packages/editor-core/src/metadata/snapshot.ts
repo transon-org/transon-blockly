@@ -21,11 +21,34 @@ export interface EditorCatalog {
   functions: CatalogEntry[];
 }
 
-/** The examples/docs payload, split from the structural catalog (NFR-047). */
+/**
+ * One serialized corpus case in the flat `docs.examples` corpus
+ * (metadata-contract §2.7, v2.1 / engine metadata 3.0). Names are unique —
+ * they are the join key every `examples` reference list resolves against.
+ */
+export interface ExampleEntry {
+  name: string;
+  doc: string | null;
+  template: Json;
+  data: Json;
+  result: Json;
+  /** Engine facts (what the case demonstrates) — grouping/filter hints, not the join. */
+  tags: string[];
+}
+
+/**
+ * The examples/docs payload, split from the structural catalog (NFR-047).
+ * Normalized (metadata-contract §2.7): `examples` is the flat corpus (every case
+ * exactly once); entry-level `examples` fields and the curated tiers are ordered
+ * `name` references into it.
+ */
 export interface EditorDocs {
+  examples: ExampleEntry[];
   rules: CatalogEntry[];
   operators: CatalogEntry[];
   functions: CatalogEntry[];
+  worked_examples: string[];
+  recipes: string[];
 }
 
 /**
@@ -50,8 +73,8 @@ const raw = snapshot as unknown as {
 /**
  * The pinned editor metadata, as a typed `EditorMetadata`.
  *
- * `metadata_version` is normalized to a string token ("2.0") for the schema-version gate
- * (AD-012, metadata-contract §5). The engine/snapshot already emit the string `"2.0"`, so
+ * `metadata_version` is normalized to a string token (e.g. "3.0") for the schema-version gate
+ * (AD-012, metadata-contract §5). The engine/snapshot already emit the version as a string, so
  * `String(...)` is idempotent here; it also guards an engine that ever emits the bare number.
  */
 export const editorMetadata: EditorMetadata = {

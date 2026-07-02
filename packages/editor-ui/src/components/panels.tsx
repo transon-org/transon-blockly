@@ -155,9 +155,56 @@ export function OutputPanel({ state }: { state: EditorSession }): JSX.Element {
 }
 
 /**
+ * First sentence of an example's engine doc — the display label (FR-132). Markdown emphasis is
+ * stripped and the trailing period dropped; a doc-less case falls back to its name.
+ */
+function exampleLabel(ex: ExampleCase): string {
+  const doc = ex.doc?.replace(/\*/g, '').trim();
+  if (!doc) return ex.name;
+  const firstLine = (doc.split('\n', 1)[0] ?? doc).trim();
+  const sentence = /^(.*?[.!?])(?:\s|$)/.exec(firstLine)?.[1] ?? firstLine;
+  return sentence.replace(/\.$/, '');
+}
+
+/**
+ * Tier/group the corpus for display (FR-132): curated tiers first (the corpus arrives
+ * curated-first from `buildExampleCorpus`, which resolves `tier` from the engine
+ * `worked_examples`/`recipes` name-reference lists — never from tag conventions, contract §2.7),
+ * then reference examples grouped by owning rule (alphabetical, rule-less cases last). Mechanical
+ * over the engine-emitted case data (AD-012) — host-supplied corpora flow through the same
+ * derivation.
+ */
+function groupExamples(examples: ExampleCase[]): Array<{ label: string; entries: ExampleCase[] }> {
+  const worked: ExampleCase[] = [];
+  const recipes: ExampleCase[] = [];
+  const byRule = new Map<string, ExampleCase[]>();
+  for (const ex of examples) {
+    if (ex.tier === 'worked-example') worked.push(ex);
+    else if (ex.tier === 'recipe') recipes.push(ex);
+    else {
+      const rule = ex.rule ?? '';
+      const group = byRule.get(rule) ?? [];
+      group.push(ex);
+      byRule.set(rule, group);
+    }
+  }
+  const rules = [...byRule.keys()].filter((r) => r !== '').sort();
+  if (byRule.has('')) rules.push('');
+  return [
+    { label: 'Worked examples', entries: worked },
+    { label: 'Recipes', entries: recipes },
+    ...rules.map((rule) => ({
+      label: `Reference · ${rule === '' ? 'other' : rule}`,
+      entries: byRule.get(rule)!,
+    })),
+  ].filter((group) => group.entries.length > 0);
+}
+
+/**
  * Examples picker (§12.8, FR-009/099, AC-018). Loads a documentation example's template + sample
  * input + expected output. Hidden when no corpus is available. "Reset Example" reloads the selected
- * example, reverting local edits (§12.3).
+ * example, reverting local edits (§12.3). Presented tiered/grouped with doc-sentence labels
+ * (FR-132); the unique case name stays the selection value (and tooltip).
  */
 export function ExamplesPanel({
   examples,
@@ -187,10 +234,14 @@ export function ExamplesPanel({
         <option value="" disabled>
           Choose an example…
         </option>
-        {examples.map((ex) => (
-          <option key={ex.name} value={ex.name}>
-            {ex.name}
-          </option>
+        {groupExamples(examples).map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.entries.map((ex) => (
+              <option key={ex.name} value={ex.name} title={ex.name}>
+                {exampleLabel(ex)}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </select>
       {selected ? (

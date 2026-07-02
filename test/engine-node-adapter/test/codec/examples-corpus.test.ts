@@ -1,6 +1,7 @@
 // Engine docs/example-corpus sweep — §15.8 full coverage, AC-011, AC-035.
 //
-// Iterates ALL 147 examples from editorMetadata.docs.{rules,operators,functions}[*].examples.
+// Iterates EVERY case of the flat engine example corpus (editorMetadata.docs.examples,
+// metadata-contract §2.7 v2.1 — each distinct template exactly once, curated tiers included).
 // For each example:
 //   1. structural round-trip: decode(engine, encode(engine, template)) deep-equals template
 //      (FR-035/036, AC-011).
@@ -9,56 +10,20 @@
 //      {success, output} — even for out-of-surface templates via transon_unsupported
 //      exact-preservation (FR-055, AD-004).
 //
-// The stable test name is `{source}__{example.name}` where source is the rule/operator/function
-// name, ensuring uniqueness across sources that share example names.
+// The stable test name is `{source}__{example.name}` where source is the owning
+// rule/operator/function (from the engine-emitted reference lists) or curated tier.
 //
 // FR-035/036/039, AC-011 — structural identity.
 // AC-035, AD-011, §15.1 — execution identity by construction.
 // NFR-047 — docs payload is the examples side (separate from structural catalog).
 // §15.8 — "examples from engine metadata" category of round-trip corpus.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { EngineProvider, Json, CatalogEntry } from '@transon/editor-core';
+import type { EngineProvider, Json } from '@transon/editor-core';
 import { encode, decode, editorMetadata } from '@transon/editor-core';
 import { createNodeEngineProvider } from '../../src/index.js';
+import { collectDocsExamples, CORPUS_FLOOR } from './docs-examples.js';
 
-/** A single engine-docs example entry. */
-interface DocsExample {
-  name: string;
-  template: Json;
-  data: Json;
-  result: Json;
-  doc?: string;
-}
-
-/**
- * Collect all 147 examples from editorMetadata.docs.{rules,operators,functions}.
- * Returns [{source, example}] where source is the containing rule/op/fn name.
- */
-function collectAllExamples(): { source: string; category: string; example: DocsExample }[] {
-  const collected: { source: string; category: string; example: DocsExample }[] = [];
-
-  for (const entry of editorMetadata.docs.rules) {
-    const examples = (entry as CatalogEntry & { examples?: DocsExample[] }).examples ?? [];
-    for (const ex of examples) {
-      collected.push({ source: entry.name, category: 'rule', example: ex });
-    }
-  }
-  for (const entry of editorMetadata.docs.operators) {
-    const examples = (entry as CatalogEntry & { examples?: DocsExample[] }).examples ?? [];
-    for (const ex of examples) {
-      collected.push({ source: entry.name, category: 'op', example: ex });
-    }
-  }
-  for (const entry of editorMetadata.docs.functions) {
-    const examples = (entry as CatalogEntry & { examples?: DocsExample[] }).examples ?? [];
-    for (const ex of examples) {
-      collected.push({ source: entry.name, category: 'fn', example: ex });
-    }
-  }
-  return collected;
-}
-
-const ALL_EXAMPLES = collectAllExamples();
+const ALL_EXAMPLES = collectDocsExamples();
 
 let engine: EngineProvider;
 beforeAll(async () => {
@@ -70,17 +35,19 @@ afterAll(() => engine?.dispose());
 describe(
   `docs/example-corpus structural round-trip: decode(encode(T)) === T (§15.8, AC-011, FR-035/036)`,
   () => {
-    it(`has exactly 147 examples across all docs sources (NFR-047, §15.8)`, () => {
-      // rules: 118, operators: 17, functions: 12 = 147
-      expect(ALL_EXAMPLES).toHaveLength(147);
+    it(`covers the full flat corpus, one sweep entry per case (NFR-047, §15.8)`, () => {
+      // Anti-drift: derived from the pinned engine corpus, never hardcoded.
+      expect(ALL_EXAMPLES.length).toBe(editorMetadata.docs.examples.length);
+      // Anti-truncation ratchet — a shrunken corpus must trip, not pass vacuously.
+      expect(ALL_EXAMPLES.length).toBeGreaterThanOrEqual(CORPUS_FLOOR);
     });
 
-    for (const { source, example } of ALL_EXAMPLES) {
-      // Stable test name: {source}__{example.name} — unique across the whole corpus.
-      it(`${source}__${example.name}`, async () => {
-        const workspace = await encode(engine, example.template);
+    for (const { source, name, template } of ALL_EXAMPLES) {
+      // Stable test name: {source}__{name} — corpus names are unique (§2.7).
+      it(`${source}__${name}`, async () => {
+        const workspace = await encode(engine, template);
         const back = await decode(engine, workspace);
-        expect(back).toEqual(example.template);
+        expect(back).toEqual(template);
       });
     }
   },
@@ -89,11 +56,11 @@ describe(
 describe(
   `docs/example-corpus execution identity: transform(T) === transform(decode(encode(T))) (§15.8, AC-035, AD-011)`,
   () => {
-    for (const { source, example } of ALL_EXAMPLES) {
-      it(`${source}__${example.name}`, async () => {
-        const back = await decode(engine, await encode(engine, example.template));
-        const input: Json = example.data ?? null;
-        const original = await engine.transform(example.template, input, { marker: '$' });
+    for (const { source, name, template, data } of ALL_EXAMPLES) {
+      it(`${source}__${name}`, async () => {
+        const back = await decode(engine, await encode(engine, template));
+        const input: Json = data ?? null;
+        const original = await engine.transform(template, input, { marker: '$' });
         const roundtripped = await engine.transform(back, input, { marker: '$' });
         // Both should have the same status, success flag, and output —
         // whether the template is in-surface or was preserved via transon_unsupported.

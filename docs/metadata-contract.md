@@ -1,6 +1,16 @@
 # metadata-contract.md — Editor Metadata Contract
 
-> **Version:** 2.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-27
+> **Version:** 2.1 · **Status:** Active · **Last updated:** 2026-07-02
+
+> **v2.1 — normalized example corpus (engine `metadata_version` `3.0`; engine RFC
+> `../transon/docs/proposals/example-corpus-normalization.md`, roadmap R-31).** The examples/docs
+> payload no longer re-inlines a case under every entry its tags attach it to. `docs.examples` is
+> the **flat example corpus** — every tagged corpus case serialized exactly once as
+> `{name, doc, template, data, result, tags}` — and every other `examples` field (rule, parameter,
+> operator, function) plus the curated `docs.worked_examples` / `docs.recipes` tiers is an ordered
+> list of **`name` references** into it (§2.7). The join stays engine-owned: the editor resolves
+> names against the corpus and never re-derives membership from tag conventions. This also folds in
+> the engine's `2.2` additions (example `tags`, curated tiers) that preceded the reshape.
 
 > **v2.0 — projection-ready reshape.** The export is now **projection-ready**: it carries
 > **pre-derived variant signatures** (§2.5) and **resolved enum domains** (§2.6) so the editor's
@@ -66,9 +76,10 @@ A rule must provide:
   Python from `_required`/`_modes` and emits them as data; this is the single source consumed by the
   generators and the generated decoder (`SPEC.md` §7.7, FR-116). The raw engine `required`/`modes`
   tuples may also travel as engine-native source, but the editor reads `variants`, not the raw form.
-- `examples` — example cases (from the tagged test corpus; examples/docs payload, §2.7). Optional
-  ("where available") for built-in rules; **required from the author for custom rules** to render as
-  a safe block (OQ-004).
+- `examples` — example-case **`name` references** into the flat corpus `docs.examples` (§2.7).
+  Optional ("where available") for built-in rules; **required from the author for custom rules** to
+  render as a safe block (OQ-004; a custom-rule author may supply inline example cases, which the
+  editor folds into its corpus view).
 
 Fields divide across the split payload (§2.7): `name`, `title`, `category`, `advanced`, `params`
 (with `kind`/`options`), and `variants` are the **structural catalog**; `description` and `examples`
@@ -97,20 +108,21 @@ A parameter must provide:
   `dynamic` params. The projection derives the widget (`dropdown` when `options` present, `field`
   otherwise) from `kind` + `options` via `cond`/`switch` (FR-118), so widget choice is **not** in
   the export (§2.8).
-- `examples` — parameter-level examples where available (examples/docs payload, §2.7).
+- `examples` — parameter-level example `name` references where available (§2.7).
 
 ### 2.3 Operator metadata
 
 An operator must provide: `name`, `alternative` (alias), `kind` (`unary`/`binary`), `types`,
-`result`, `doc`, `examples` where available. Field names are engine-native — the export emits the
-keys `Transformer.get_operators()` already produces. The operator names + aliases are the
-**resolved enum domain** for `expr.op` (§2.6).
+`result`, `doc`, `examples` (`name` references, §2.7) where available. Field names are
+engine-native — the export emits the keys `Transformer.get_operators()` already produces. The
+operator names + aliases are the **resolved enum domain** for `expr.op` (§2.6).
 
 ### 2.4 Function metadata
 
-A function must provide: `name`, `input`, `output`, `doc`, `examples` where available. Field names
-are engine-native — the export emits the keys `Transformer.get_functions()` already produces. The
-function names are the **resolved enum domain** for `call.name` (§2.6).
+A function must provide: `name`, `input`, `output`, `doc`, `examples` (`name` references, §2.7)
+where available. Field names are engine-native — the export emits the keys
+`Transformer.get_functions()` already produces. The function names are the **resolved enum
+domain** for `call.name` (§2.6).
 
 ### 2.5 Pre-derived variant signatures (FR-116, AD-015, AD-026)
 
@@ -153,10 +165,23 @@ The export is delivered in two parts so projection input stays lean:
   engine export does **not** emit them (they are not engine facts); for **custom** rules the author
   supplies them (§2.1, OQ-004). They are joined into the catalog the generators see by `name`.
 - **Examples/docs payload** — consumed by tooltips/examples UI, not by the generators: rule and
-  parameter `description` and `examples` (from the tagged corpus).
+  parameter `description`s plus the **normalized example corpus** (v2.1, engine
+  `metadata_version` `3.0`):
+  - `docs.examples` — the **flat corpus**: every tagged engine test case serialized **exactly
+    once** as `{name, doc, template, data, result, tags}`. Case `name`s are unique (they double as
+    `include`-able template names); `tags` are engine facts (what a case demonstrates) usable for
+    grouping/filtering, **not** the join mechanism.
+  - Every entry-level `examples` field (§2.1–§2.4) and the curated tiers
+    `docs.worked_examples` / `docs.recipes` are ordered lists of `name` **references** into
+    `docs.examples`. The tag join (`"<rule>"`, `"<rule>:<param>"`, `"op:<alternative>"`,
+    `"func:<name>"`, tier tags) is **engine-owned**: the editor resolves names and never
+    re-derives membership from tags.
+  - Curated cases carry **only** their tier tag and never appear in the per-entry reference
+    lists; reference cases never carry a tier tag. The engine emits no display order, difficulty,
+    titles, or other presentation vocabulary — that stays editor-owned (§2.8, FR-127).
 
-The two share rule/param `name` as the join key. The custom-rule minimum (§2.1, OQ-004) still
-requires `title`/`category`/`examples`, drawn from whichever part carries them.
+The two halves share rule/param `name` as the join key. The custom-rule minimum (§2.1, OQ-004)
+still requires `title`/`category`/`examples`, drawn from whichever part carries them.
 
 ### 2.8 The line not to cross — engine stays Blockly-agnostic (AD-016 boundary preserved)
 
@@ -248,7 +273,8 @@ the current metadata (AD-030; see [`traceability.md`](traceability.md)).
   mismatches (NFR-037, NFR-038) and fail safely (NFR-039).
 - When the metadata schema changes shape, bump its version; the editor's compatibility check
   (`SPEC.md` §8.7) compares declared compatible ranges. The projection-ready reshape (v2.0) is a
-  shape change and bumps `metadata_version`.
+  shape change and bumps `metadata_version`; so is the normalized example corpus (v2.1, engine
+  `metadata_version` `2.2` → `3.0`).
 - A stable, versioned editor metadata schema is required by NFR-040.
 
 ---

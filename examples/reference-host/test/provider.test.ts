@@ -38,7 +38,7 @@ function fakePyodide(): FakePy {
       });
     },
     transon_version() {
-      return JSON.stringify({ engine: '0.1.3', metadata: '2.0' });
+      return JSON.stringify({ engine: '0.1.6', metadata: '3.0' });
     },
   };
   return {
@@ -99,6 +99,6 @@ describe('Pyodide reference host (AD-025, §5.9)', () => {
   it('version proxies engine + metadata', async () => {
     const host = createPyodideHost({ loadPyodide: async () => fakePyodide() });
     await host.init();
-    expect(await host.version()).toEqual({ engine: '0.1.3', metadata: '2.0' });
+    expect(await host.version()).toEqual({ engine: '0.1.6', metadata: '3.0' });
   });
 });

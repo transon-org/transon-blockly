@@ -21,12 +21,12 @@ describe('Node->Python EngineProvider (AD-008, AD-011)', () => {
     expect(engine.status).toBe('ready');
   });
 
-  it('version() returns the engine version and metadata "2.0"', async () => {
+  it('version() returns the engine version and the pinned metadata schema version', async () => {
     const v = await engine.version();
     expect(typeof v.engine).toBe('string');
     expect(v.engine.length).toBeGreaterThan(0);
     expect(v.engine).not.toBe('unknown');
-    expect(v.metadata).toBe('2.0');
+    expect(v.metadata).toBe('3.0');
   });
 
   it('validate() on a tiny valid template returns a well-formed §9.9 result', async () => {

@@ -1,10 +1,11 @@
 // JsonPathBlockMap — produced alongside the workspace as the codec walks (FR-091/094/122, §9.12).
 // Consuming it for highlighting is M4 (FR-092/093/095); here we prove it is produced correctly,
-// including over the full §15.8 engine-example corpus (147 templates).
+// including over the full §15.8 engine-example corpus (the flat docs.examples corpus, §2.7).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { EngineProvider, Json, JsonPathBlockMapEntry, CatalogEntry } from '@transon/editor-core';
+import type { EngineProvider, Json, JsonPathBlockMapEntry } from '@transon/editor-core';
 import { blockMap, editorMetadata } from '@transon/editor-core';
 import { createNodeEngineProvider } from '../../src/index.js';
+import { collectDocsExamples, CORPUS_FLOOR } from './docs-examples.js';
 
 let engine: EngineProvider;
 beforeAll(async () => {
@@ -25,14 +26,8 @@ function countRuleNodes(t: Json): number {
   return 0;
 }
 
-/** All 147 engine docs examples (NFR-047 split: the `docs` payload). */
-const DOCS_EXAMPLES: { source: string; name: string; template: Json }[] = [
-  ...editorMetadata.docs.rules, ...editorMetadata.docs.operators, ...editorMetadata.docs.functions,
-].flatMap((entry) =>
-  ((entry as CatalogEntry & { examples?: { name: string; template: Json }[] }).examples ?? []).map(
-    (ex) => ({ source: entry.name, name: ex.name, template: ex.template }),
-  ),
-);
+/** Every flat-corpus engine example, exactly once (NFR-047 split: the `docs` payload, §2.7). */
+const DOCS_EXAMPLES = collectDocsExamples();
 
 describe('JsonPathBlockMap production (FR-091/122, §9.12)', () => {
   it('maps a rule node and each of its parameters with paths + names', async () => {
@@ -83,10 +78,13 @@ describe('JsonPathBlockMap production (FR-091/122, §9.12)', () => {
 
 // FR-091/094/122, §9.12 — the block-map holds its invariants over the full §15.8 engine corpus,
 // not just hand-picked nodes (the prior reviewer's coverage SHOULD-FIX). These are structural
-// invariants that scale to all 147 real templates.
-describe('JsonPathBlockMap invariants over the 147 engine examples (§15.8, FR-091/094/122)', () => {
-  it('has exactly 147 example templates to walk (NFR-047)', () => {
-    expect(DOCS_EXAMPLES).toHaveLength(147);
+// invariants that scale to every real corpus template.
+describe('JsonPathBlockMap invariants over the flat engine corpus (§15.8, FR-091/094/122)', () => {
+  it('walks the full flat corpus, one entry per case (NFR-047, §2.7)', () => {
+    // Anti-drift: derived from the pinned engine corpus, never hardcoded.
+    expect(DOCS_EXAMPLES.length).toBe(editorMetadata.docs.examples.length);
+    // Anti-truncation ratchet — a shrunken corpus must trip, not pass vacuously.
+    expect(DOCS_EXAMPLES.length).toBeGreaterThanOrEqual(CORPUS_FLOOR);
   });
 
   for (const { source, name, template } of DOCS_EXAMPLES) {

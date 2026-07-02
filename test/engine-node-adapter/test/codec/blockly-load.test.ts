@@ -8,22 +8,19 @@
 // (workspace-shape.test.ts) proves the shape; this proves Blockly actually accepts it.
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
 import * as Blockly from 'blockly/core';
-import type { EngineProvider, Json, CatalogEntry } from '@transon/editor-core';
-import { encode, editorMetadata } from '@transon/editor-core';
+import type { EngineProvider, Json } from '@transon/editor-core';
+import { encode } from '@transon/editor-core';
 import { registerTransonBlocks, toWorkspaceState } from '@transon/editor-blockly';
 import { createNodeEngineProvider } from '../../src/index.js';
 import { M1_CORPUS } from './corpus.js';
-
-interface DocsExample { name: string; template: Json }
+import { collectDocsExamples } from './docs-examples.js';
 
 function collectTemplates(): { name: string; template: Json }[] {
-  const out: { name: string; template: Json }[] = [];
-  for (const group of [editorMetadata.docs.rules, editorMetadata.docs.operators, editorMetadata.docs.functions]) {
-    for (const entry of group) {
-      const examples = (entry as CatalogEntry & { examples?: DocsExample[] }).examples ?? [];
-      for (const ex of examples) out.push({ name: `${entry.name}__${ex.name}`, template: ex.template });
-    }
-  }
+  // Flat engine corpus (each case exactly once, §2.7) + the hand-written M1 corpus.
+  const out = collectDocsExamples().map(({ source, name, template }) => ({
+    name: `${source}__${name}`,
+    template,
+  }));
   for (const c of M1_CORPUS) out.push({ name: `m1__${c.name}`, template: c.template });
   return out;
 }

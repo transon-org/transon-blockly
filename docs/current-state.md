@@ -8,13 +8,21 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `cf0b4f2` — docs: handoff — record UAT #1/#2 brainstorm decision (engine-first shape hints) |
-| Branch | `main` |
-| Engine pin | transon `v0.1.3` @ `7b6c9342980d` (see [metadata-snapshot.md](metadata-snapshot.md)) |
+| Repo HEAD | `0270906` — docs: handoff — R-28 RFC placed in ../transon (structural param export); editor waits on user-managed implementation |
+| Branch | `r31-corpus-migration` |
+| Engine pin | transon `v0.1.6` @ `b64b340b9090` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**Review-gate on the R-31 + FR-132 tree DONE (2026-07-03) — 1 critical + 4 suggestions confirmed, all fixed; branch `r31-corpus-migration`; committed.** Ran the `harness/workflows/review-gate.md` adversarial pass (5 dimensions fan-out, per-finding refutation; maker ≠ checker — the slices were implemented in prior sessions) over the then-uncommitted working tree. 14 candidates → 6 refuted, 8 confirmed (deduped to 6). **Fixed:** (🔴) `groupExamples` derived curated-tier membership from tag literals (`'worked-example'`/`'recipe'`) — exactly the tag-convention join contract §2.7 v2.1 forbids; `ExampleCase` now carries `tier`, resolved in `buildExampleCorpus` from the `docs.worked_examples`/`docs.recipes` name-reference lists, and the panel groups on it (adversarial fixture: a mistagged non-curated case must stay in its rule group). (🟡) rule ownership now falls back to parameter-level `docs.rules[*].params[*].examples` references — previously all 30 "Reference · other" entries were engine-rule-owned; FR-132 text aligned (SPEC-first). (🟡) the §15.8 sweeps' corpus-size assertion was tautological (`collectDocsExamples().length === docs.examples.length` by construction) — added a `CORPUS_FLOOR = 121` anti-truncation ratchet (docs-examples.ts + the three sweeps + the editor-ui corpus test). (🟡) handoff narrative contradicted the tree on the 0.1.6 pin bump — reconciled. (🟢) stale `"2.0"` comment in `snapshot.ts` fixed. **Known accepted nit (recorded, not fixed):** multi-referenced examples group under the first referencing rule in `docs.rules` emission order, so context rules (`this`, `item`, …) absorb some operation examples — any smarter owner pick would be an editor-side heuristic (AD-012 tension); revisit only with an engine-emitted primary-owner field. All gates green (traceability, links, parity, snapshot, evals, maturity); editor-ui 116 + core 21 + adapter 1260 green._
+
+_**FR-132 DONE — tiered/grouped Examples picker with doc-sentence labels (SPEC-first; tests + gates green; browser-verified; UNCOMMITTED).** New append-only **FR-132** in `SPEC.md` §7.1 (after FR-009): picker presents curated tiers first (worked examples, then recipes, each in the engine `docs.worked_examples`/`docs.recipes` reference-list order, contract §2.7), then reference examples grouped by owning rule; entries labeled by the first sentence of the engine `doc` (fallback: case name), case name stays the selection value + tooltip; all derivation mechanical over engine corpus data (AD-012), host `examples` overrides flow through the same path. Implementation: `buildExampleCorpus` orders curated-first (`packages/editor-ui/src/session/examples.ts`); `groupExamples`/`exampleLabel` + `<optgroup>` rendering in `ExamplesPanel` (`packages/editor-ui/src/components/panels.tsx`). Tests first: `packages/editor-ui/test/examples-picker.test.tsx` (ordering vs real pinned lists, optgroup structure, labels/value/tooltip, unchanged selection semantics AC-018, host-override flow-through); traceability row added. All workspace tests + traceability/parity/snapshot gates green. **Browser-verified** in the reference host (7 worked examples, 12 recipes, per-rule reference groups render; selecting "Swap the keys and values of a dict" loads blocks + input + expected). Side finds: `.claude/launch.json` switched to `autoPort` + new `examples/reference-host/vite.config.ts` honoring `PORT` (another dev server held 5173); the reference host `PINNED_ENGINE_VERSION` was then bumped 0.1.3 → **0.1.6** in this same tree (transon 0.1.6 verified on PyPI 2026-07-03), clearing the NFR-040 mismatch flag._
+
+_**Revalidation pass DONE — R-31 consumer migration verified against released engine v0.1.6; provenance re-pin completed (2026-07-02).** Independent revalidation of the migration below, now that the engine releases are committed (`v0.1.5` R-29/R-30 example tags + curated tiers, `v0.1.6` R-31 flat corpus, metadata `3.0`): snapshot corpus integrity confirmed (121 unique names; zero dangling `name` references across rules/params/operators/functions/tiers; 7 worked-examples + 12 recipes; curated cases carry only their tier tag; no untagged cases); all 11 packages test green (incl. 1260 adapter tests); `--check`, traceability, engine-parity, and evals gates green. The one misalignment found — the sidecar caveat below (pin taken from the then-uncommitted engine tree, recorded as `v0.1.5 @ 56833618fa29`) — is now RESOLVED: re-ran `update_memory.py --snapshot` against released HEAD; provenance now `v0.1.6 @ b64b340b9090`, JSON byte-identical. Still UNCOMMITTED in this repo; the **review-gate note below still stands** (maker ≠ checker) before merge._
+
+_**Engine R-31 consumer migration DONE — normalized example corpus (engine `metadata_version` `2.2`→`3.0`; contract v2.1; all typecheck/tests/gates green; UNCOMMITTED in both repos).** The engine (`../transon`, roadmap R-31, RFC `example-corpus-normalization.md`) stopped re-inlining examples: `docs.examples` is now the **flat corpus** (every tagged case exactly once, `{name, doc, template, data, result, tags}`; 121 cases @ v0.1.5) and every other `examples` field + the curated `worked_examples`/`recipes` tiers are ordered **name references** into it. Editor-side changes: `metadata-contract.md` **v2.1** (§2.1–§2.4, §2.7, §5 — join stays engine-owned, editor never re-derives tag conventions); snapshot re-pinned (v0.1.5 @ `56833618fa29`, metadata `3.0` — **note:** the engine changes were uncommitted at pin time, so the sidecar commit hash predates them; re-run `update_memory.py --snapshot` after the engine commits land to record honest provenance); `snapshot.ts` gains `ExampleEntry` + normalized `EditorDocs` (examples/worked_examples/recipes); `buildExampleCorpus` (FR-079) is now a direct map over the flat corpus (content-hash dedupe deleted; owning `rule` resolved from `docs.rules[*].examples` references; engine tags travel; curated tiers now appear in the Examples picker — corpus 89→121 entries); the four §15.8 docs-example sweeps (`examples-corpus`, `blockmap`, `workspace-shape`, `blockly-load`/`blockly-resave`) share a new `test/codec/docs-examples.ts` collector iterating the corpus once (147 inlined→121 distinct; worked-examples/recipes templates newly round-tripped); metadata-version fakes/tests bumped `2.0`→`3.0`; traceability rows refreshed. All 11 packages typecheck+test green; all gates green. **Codec untouched** (structural catalog identical; only the docs payload reshaped). **Review note:** this slice touches the round-trip corpus surface — run the `review-gate` workflow (maker ≠ checker) before merge._
 
 _**UAT #1/#2 step (a) DONE — R-28 RFC placed in `../transon` (UNCOMMITTED; user reviews + manages implementation; editor work waits).** Wrote `../transon/docs/proposals/editor-metadata-structural-params.md` + the R-28 ROADMAP entry (checklist row `accepted` + Theme F section, decision provenance 2026-07-02) — both left uncommitted in that repo's working tree for the maintainer. RFC = the agreed engine-first export: `_catalog_params` emits `container: "list"|"mapping"|"arms"` (omitted for the default `template`) + a serialized `arm` schema for ARMS params (recursive serializer, same shape as rule params); optional arm-slot docstrings in the docs payload; `METADATA_VERSION` 2.0→**2.1** additive; tests extend `tests/test_metadata.py`. **One correction vs the brainstorm note below:** `arm(...)` collapses `_variants` at declaration time — `ArmSpec` stores only `required` + `params`, so the export emits exactly that (NO `variants` key; extending `ArmSpec` is flagged in the RFC as separate future work). **Editor repo untouched** (no snapshot re-pin — that happens only after the engine change ships). **Resume trigger:** when R-28 lands in `../transon`, continue at Next steps 2(b)._
 
@@ -363,6 +371,15 @@ living read of it.
 
 ## Next steps (ordered)
 
+0. ~~Gate + commit the R-31 consumer migration~~ **DONE (2026-07-03)** — `review-gate` run
+   (findings fixed, see Last action) and the tree committed on branch `r31-corpus-migration`
+   (R-31 + FR-132 + fixes, plus a dev-env chore commit). The engine side is already released
+   (`v0.1.5`/`v0.1.6`); provenance pinned `v0.1.6 @ b64b340b9090`. Merge/push rides the
+   Next-step-1 push train.
+0b. ~~Examples-picker slice~~ **DONE — FR-132 (see Last action).** Remaining optional follow-up
+   only: (i) context-sensitive examples (selected block → its rule's reference examples;
+   `rule`/`tier`/`tags` joins already in place) — separate FR when wanted. (~~(ii) 0.1.6 pin
+   bump~~ done in this tree — transon 0.1.6 is on PyPI.)
 1. **Push the milestone branches + open PR(s)** — **all of M0–M5 are complete and NOT pushed** (one
    branch/PR per milestone): `m0-editor-scaffolding` (M0), `m1-codec-skeleton` (M1), `m2-full-catalog`
    (M2, off M1), `m3-editor-blockly` (M3, off M2), `m4-editor-ui` (M4, off M3), `m5-react-embedding`
@@ -370,12 +387,16 @@ living read of it.
    after the prior lands. **Note:** the post-M5 UAT branches stack linearly on M5 and should ride the
    same push train: `fix-editor-layout-css` (`b231d6f`) → `fr-130-curated-operator-dropdown`
    (`e7a263c`) → `fr-131-json-edit-focus` (`a41e00d`).
-2. **UAT #1/#2 — structured params (collection/struct inputs), engine-first.** The shape-hint
+2. **UAT #1/#2 — structured params (collection/struct inputs), engine-first. ⚠ IN PROGRESS in a
+   SEPARATE session (user, 2026-07-02) — do NOT pick this up here; coordinate before touching its
+   surfaces (contract §2.2, codec container branch, runtime primitives).** The shape-hint
    decision is RESOLVED (see Last action): the engine already declares `ParamSpec.container` +
    `ArmSpec` internally; the interim editor-side `paramShapes` idea is rejected. Sequence:
-   (a) ~~engine RFC~~ **done** — R-28 RFC + ROADMAP entry placed in `../transon` (uncommitted;
-   see Last action); **implementation is user-managed — WAIT for it to land**; (b) editor:
-   snapshot re-pin + `metadata-contract.md` §2 + new FRs; (c) spike `chain` (list) + `cond`
+   (a) ~~engine RFC~~ **done**; ~~engine implementation~~ **done — R-28 SHIPPED in engine
+   `v0.1.4`** (`container` + `arm` in the catalog; the re-pinned 3.0 snapshot already carries
+   them); (b) editor — **now unblocked**: `metadata-contract.md` §2.2 does NOT yet document
+   `container`/`arm` (verified 2026-07-02) → contract update + new FRs (snapshot re-pin already
+   done by step 0); (c) spike `chain` (list) + `cond`
    (arms) end-to-end (palette, ~2 new runtime primitives with a gated NFR-046 bump, codec
    container branch, corpus extension) before generalizing to `switch`/`object.fields`;
    `round-trip-reviewer` gates the codec change.

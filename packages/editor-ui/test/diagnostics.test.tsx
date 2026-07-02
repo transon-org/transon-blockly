@@ -21,12 +21,12 @@ describe('diagnostics versions (FR-080)', () => {
   it('loads engine + metadata versions from the host once ready', async () => {
     const c = container();
     const ctl = createEditorController(c, {
-      host: { engine: createFakeEngine({ engineVersion: '9.9.9', metadataVersion: '2.0' }) },
+      host: { engine: createFakeEngine({ engineVersion: '9.9.9', metadataVersion: '3.0' }) },
       debounceMs: 0,
     });
     try {
       await waitFor(() => expect(ctl.store.getState().engine_version).toBe('9.9.9'));
-      expect(ctl.store.getState().metadata_version).toBe('2.0');
+      expect(ctl.store.getState().metadata_version).toBe('3.0');
     } finally {
       ctl.dispose();
       c.remove();
@@ -35,10 +35,10 @@ describe('diagnostics versions (FR-080)', () => {
 
   it('surfaces the versions in the StatusBar and flags a metadata-schema mismatch (NFR-040)', () => {
     // matching metadata version → no mismatch flag
-    render(<StatusBar state={emptySession({ engine_version: '1.2.3', metadata_version: '2.0' })} />);
+    render(<StatusBar state={emptySession({ engine_version: '1.2.3', metadata_version: '3.0' })} />);
     expect(screen.getByTestId('engine-version').textContent).toContain('1.2.3');
     const meta = screen.getByTestId('metadata-version');
-    expect(meta.textContent).toContain('2.0');
+    expect(meta.textContent).toContain('3.0');
     expect(meta.getAttribute('data-mismatch')).toBeNull();
   });
 

@@ -26,6 +26,12 @@ export interface ExampleCase {
   result?: Json;
   rule?: string;
   param?: string;
+  /**
+   * Curated-tier membership, resolved from the engine `docs.worked_examples`/`docs.recipes`
+   * name-reference lists (metadata-contract §2.7 — the engine-owned join; never re-derived from
+   * tag conventions). Unset for reference examples; a host corpus may set it the same way.
+   */
+  tier?: 'worked-example' | 'recipe';
 }
 
 /**

@@ -15,7 +15,7 @@ export function fakeEngine(): EngineProvider {
       return { status: 'ok', success: true, output: (isBlockMap ? { children: [] } : input) as Json };
     },
     async version() {
-      return { engine: 'fake', metadata: '2.0' };
+      return { engine: 'fake', metadata: '3.0' };
     },
     dispose() {},
   };
