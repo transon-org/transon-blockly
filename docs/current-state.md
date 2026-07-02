@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `0270906` — docs: handoff — R-28 RFC placed in ../transon (structural param export); editor waits on user-managed implementation |
+| Repo HEAD | `9864a2e` — chore(dev): reference-host dev server on a free port |
 | Branch | `r31-corpus-migration` |
 | Engine pin | transon `v0.1.6` @ `b64b340b9090` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |

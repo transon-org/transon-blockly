@@ -4,8 +4,9 @@
     {
       "name": "reference-host",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@transon/reference-host", "dev", "--port", "5173", "--strictPort"],
-      "port": 5173
+      "runtimeArgs": ["--filter", "@transon/reference-host", "dev"],
+      "port": 5173,
+      "autoPort": true
     }
   ]
 }
