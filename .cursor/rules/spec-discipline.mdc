@@ -1,0 +1,32 @@
+---
+description: SPEC-first discipline, stable IDs, engine authority, and traceability for the Transon editor. Always applies.
+alwaysApply: true
+---
+
+# Spec discipline
+
+`docs/SPEC.md` is the contract; code and spec must agree.
+
+## SPEC-first (§21.2)
+- Behavior-changing work updates `docs/SPEC.md` first. If code and spec conflict, surface it before coding.
+- For new behavior, propose the spec change, get approval, then implement.
+
+## Preserve IDs (§21.1)
+- `FR/NFR/AC/UC/AD/OQ` IDs are stable and append-only. Never renumber, delete, or reuse.
+- New requirements take the next free number; deprecate in place, do not delete.
+- Architecture decisions live in `docs/ARCHITECTURE.md` (`AD-xxx`); an AD that changes behavior must
+  also be reflected in `docs/SPEC.md`.
+
+## Traceability (§21.13, AC-027)
+- Cite the requirement ID in each test name/comment (e.g. `// FR-054`).
+- Update the matching `docs/traceability.md` row in the same change that implements a requirement.
+- Before finishing, run `python harness/scripts/check_traceability.py` and `python harness/scripts/check_engine_parity.py`.
+
+## Engine authority & semantics (NFR-004, §21.3, §21.4)
+- The Transon engine is authoritative for validation/execution; Blockly constraints improve UX but
+  never replace it. Do not invent rule behavior — consult the engine metadata/source.
+
+## Escalate security ambiguity (§21.11)
+- Changes touching engine execution, sandboxing, `file` writes, `include` loading, remote examples,
+  or user-data transmission are security-sensitive — propose a spec update and use the
+  `round-trip-review` skill.

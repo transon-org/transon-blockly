@@ -1,0 +1,359 @@
+{
+  "entry": "mapenc",
+  "fragments": {
+    "mapenc": {
+      "$": "chain",
+      "funcs": [
+        {
+          "$": "set",
+          "name": "self"
+        },
+        {
+          "$": "switch",
+          "cases": {
+            "array": {
+              "$": "object",
+              "fields": {
+                "children": {
+                  "$": "chain",
+                  "funcs": [
+                    {
+                      "$": "chain",
+                      "funcs": [
+                        {
+                          "$": "get",
+                          "name": "self"
+                        },
+                        {
+                          "$": "attr",
+                          "name": "n"
+                        }
+                      ]
+                    },
+                    {
+                      "$": "map",
+                      "item": {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "object",
+                            "fields": {
+                              "n": {
+                                "$": "this"
+                              },
+                              "seg": {
+                                "$": "index"
+                              }
+                            }
+                          },
+                          {
+                            "$": "include",
+                            "name": "mapenc"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "parameter_name": {
+                  "$": "chain",
+                  "funcs": [
+                    {
+                      "$": "get",
+                      "name": "self"
+                    },
+                    {
+                      "$": "attr",
+                      "name": "pn"
+                    }
+                  ]
+                },
+                "seg": {
+                  "$": "chain",
+                  "funcs": [
+                    {
+                      "$": "get",
+                      "name": "self"
+                    },
+                    {
+                      "$": "attr",
+                      "name": "seg"
+                    }
+                  ]
+                }
+              }
+            },
+            "object": {
+              "$": "cond",
+              "cases": [
+                {
+                  "then": {
+                    "$": "object",
+                    "fields": {
+                      "children": {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "self"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "n"
+                              }
+                            ]
+                          },
+                          {
+                            "$": "filter",
+                            "cond": {
+                              "$": "expr",
+                              "op": "!=",
+                              "values": [
+                                {
+                                  "$": "key"
+                                },
+                                "transon::document-marker"
+                              ]
+                            }
+                          },
+                          {
+                            "$": "map",
+                            "item": {
+                              "$": "chain",
+                              "funcs": [
+                                {
+                                  "$": "object",
+                                  "fields": {
+                                    "n": {
+                                      "$": "this"
+                                    },
+                                    "pn": {
+                                      "$": "key"
+                                    },
+                                    "seg": {
+                                      "$": "key"
+                                    }
+                                  }
+                                },
+                                {
+                                  "$": "include",
+                                  "name": "mapenc"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "parameter_name": {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "get",
+                            "name": "self"
+                          },
+                          {
+                            "$": "attr",
+                            "name": "pn"
+                          }
+                        ]
+                      },
+                      "rule_name": {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "self"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "n"
+                              }
+                            ]
+                          },
+                          {
+                            "$": "attr",
+                            "name": "transon::document-marker"
+                          }
+                        ]
+                      },
+                      "seg": {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "get",
+                            "name": "self"
+                          },
+                          {
+                            "$": "attr",
+                            "name": "seg"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "when": {
+                    "$": "expr",
+                    "op": "!=",
+                    "values": [
+                      {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "self"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "n"
+                              }
+                            ]
+                          },
+                          {
+                            "$": "attr",
+                            "default": "__transon_no_marker__",
+                            "name": "transon::document-marker"
+                          }
+                        ]
+                      },
+                      "__transon_no_marker__"
+                    ]
+                  }
+                }
+              ],
+              "default": {
+                "$": "object",
+                "fields": {
+                  "children": {
+                    "$": "chain",
+                    "funcs": [
+                      {
+                        "$": "chain",
+                        "funcs": [
+                          {
+                            "$": "get",
+                            "name": "self"
+                          },
+                          {
+                            "$": "attr",
+                            "name": "n"
+                          }
+                        ]
+                      },
+                      {
+                        "$": "map",
+                        "item": {
+                          "$": "chain",
+                          "funcs": [
+                            {
+                              "$": "object",
+                              "fields": {
+                                "n": {
+                                  "$": "this"
+                                },
+                                "seg": {
+                                  "$": "key"
+                                }
+                              }
+                            },
+                            {
+                              "$": "include",
+                              "name": "mapenc"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "parameter_name": {
+                    "$": "chain",
+                    "funcs": [
+                      {
+                        "$": "get",
+                        "name": "self"
+                      },
+                      {
+                        "$": "attr",
+                        "name": "pn"
+                      }
+                    ]
+                  },
+                  "seg": {
+                    "$": "chain",
+                    "funcs": [
+                      {
+                        "$": "get",
+                        "name": "self"
+                      },
+                      {
+                        "$": "attr",
+                        "name": "seg"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "$": "object",
+            "fields": {
+              "children": [],
+              "parameter_name": {
+                "$": "chain",
+                "funcs": [
+                  {
+                    "$": "get",
+                    "name": "self"
+                  },
+                  {
+                    "$": "attr",
+                    "name": "pn"
+                  }
+                ]
+              },
+              "seg": {
+                "$": "chain",
+                "funcs": [
+                  {
+                    "$": "get",
+                    "name": "self"
+                  },
+                  {
+                    "$": "attr",
+                    "name": "seg"
+                  }
+                ]
+              }
+            }
+          },
+          "key": {
+            "$": "call",
+            "name": "type",
+            "value": {
+              "$": "chain",
+              "funcs": [
+                {
+                  "$": "get",
+                  "name": "self"
+                },
+                {
+                  "$": "attr",
+                  "name": "n"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "contents": [
+    {
+      "colour": 210,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_this__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_parent__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_item__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_key__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_index__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_value__base"
+        }
+      ],
+      "kind": "category",
+      "name": "Input / Context"
+    },
+    {
+      "colour": 330,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_set__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_get__base"
+        }
+      ],
+      "kind": "category",
+      "name": "Variables"
+    },
+    {
+      "colour": 285,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_attr__name"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_attr__names"
+        }
+      ],
+      "kind": "category",
+      "name": "Data Access"
+    },
+    {
+      "colour": 255,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_object__key+value"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_object__fields"
+        },
+        {
+          "kind": "block",
+          "type": "transon_array"
+        },
+        {
+          "kind": "block",
+          "type": "transon_object_literal"
+        }
+      ],
+      "kind": "category",
+      "name": "Objects / Arrays"
+    },
+    {
+      "colour": 120,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_map__item"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_map__items"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_map__key+value"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_filter__base"
+        }
+      ],
+      "kind": "category",
+      "name": "Iteration"
+    },
+    {
+      "colour": 165,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_zip__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_join__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_chain__base"
+        }
+      ],
+      "kind": "category",
+      "name": "Composition"
+    },
+    {
+      "colour": 30,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_expr__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_expr__value"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_expr__values"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_call__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_call__value"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_call__values"
+        }
+      ],
+      "kind": "category",
+      "name": "Computation"
+    },
+    {
+      "colour": 60,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_switch__base"
+        },
+        {
+          "kind": "block",
+          "type": "transon_rule_cond__base"
+        }
+      ],
+      "kind": "category",
+      "name": "Control Flow"
+    },
+    {
+      "colour": 90,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_format__base"
+        }
+      ],
+      "kind": "category",
+      "name": "Formatting"
+    },
+    {
+      "colour": 0,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_file__base"
+        }
+      ],
+      "kind": "category",
+      "name": "Side Effects"
+    },
+    {
+      "colour": 195,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_rule_include__base"
+        }
+      ],
+      "kind": "category",
+      "name": "Includes"
+    },
+    {
+      "colour": 150,
+      "contents": [
+        {
+          "kind": "block",
+          "type": "transon_literal"
+        }
+      ],
+      "kind": "category",
+      "name": "Literals"
+    },
+    {
+      "colour": 300,
+      "contents": [],
+      "kind": "category",
+      "name": "Custom"
+    }
+  ],
+  "kind": "categoryToolbox"
+}

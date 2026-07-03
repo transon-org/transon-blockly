@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 .claude/hooks/inject-rules.py" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 .claude/hooks/stop-traceability.py" },
+          { "type": "command", "command": "python3 .claude/hooks/handoff-memory.py" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "requirement-implementer",
+        "hooks": [
+          { "type": "command", "command": "python3 .claude/hooks/advance-loop.py" }
+        ]
+      }
+    ]
+  }
+}

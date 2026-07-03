@@ -1,0 +1,81 @@
+{
+  "contents": {
+    "@": "chain",
+    "funcs": [
+      {
+        "@": "attr",
+        "name": "categories"
+      },
+      {
+        "@": "map",
+        "item": {
+          "colour": {
+            "@": "attr",
+            "name": "colour"
+          },
+          "contents": {
+            "@": "join",
+            "items": [
+              {
+                "@": "chain",
+                "funcs": [
+                  {
+                    "@": "attr",
+                    "name": "blocks"
+                  },
+                  {
+                    "@": "map",
+                    "item": {
+                      "kind": "block",
+                      "type": {
+                        "@": "join",
+                        "items": [
+                          "transon_rule_",
+                          {
+                            "@": "attr",
+                            "name": "rule"
+                          },
+                          "__",
+                          {
+                            "@": "attr",
+                            "name": "variant"
+                          }
+                        ],
+                        "sep": ""
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "@": "chain",
+                "funcs": [
+                  {
+                    "@": "attr",
+                    "name": "structuralBlockTypes"
+                  },
+                  {
+                    "@": "map",
+                    "item": {
+                      "kind": "block",
+                      "type": {
+                        "@": "this"
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "sep": ""
+          },
+          "kind": "category",
+          "name": {
+            "@": "attr",
+            "name": "name"
+          }
+        }
+      }
+    ]
+  },
+  "kind": "categoryToolbox"
+}

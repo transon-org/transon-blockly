@@ -1,6 +1,26 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 1.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-23
+> **Version:** 2.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-27
+
+> **v2.0 — template-driven projection pivot.** The editor surface (palette, toolbox, encoder,
+> decoder) is **derived as Transon-template projections of the engine's editor-metadata**, not
+> hand-written. Metadata is the single source; the projections are data (templates) executed by the
+> host engine (engine-free preserved). This adds the projection requirements **§7.16 (FR-114…FR-121)**,
+> **NFR-046/NFR-047**, **AC-034…AC-036**, and **UC-016**, and ratifies open questions **OQ-010…OQ-017**
+> ([`ROADMAP.md`](ROADMAP.md) §"Open questions"): compiler-only codec, build-time codegen + runtime
+> execution via the host, `switch` **and** `cond` dispatch, the two-pass generate-then-run model, a
+> split (structural + examples) metadata payload, toolbox projected from metadata, no `quote`/`raw`,
+> and `include` default-marker inheritance. The behavioral requirements below are unchanged in
+> *meaning*; their *realization* moves from hand-written TypeScript to projections
+> ([`ARCHITECTURE.md`](ARCHITECTURE.md) AD-026…AD-031, superseding AD-014/AD-016). IDs remain
+> append-only (§21.1).
+
+> **v1.1 — ratified decisions.** Open questions OQ-001…OQ-009 are closed
+> ([`ROADMAP.md`](ROADMAP.md) §"Open questions"). Two reverse the v1.0 drafts and are folded
+> in here: **bidirectional JSON editing is in v1** with strict in-surface gating (§7.15, §12.7,
+> FR-005, FR-111…FR-113; reverses OQ-001) and **custom rules must additionally provide
+> `title`, `category`, and `examples`** ([`metadata-contract.md`](metadata-contract.md) §2.1;
+> tightens OQ-004). IDs remain append-only (§21.1).
 
 This document is the source of truth for the **what**: product behavior, use cases, functional
 and non-functional requirements, the conceptual domain model, the UX and block models, rule
@@ -38,8 +58,8 @@ Several requirements are conditioned on metadata or engine behavior:
 This project defines a visual, drag-and-drop editor for authoring **Transon templates** using
 **Google Blockly**.
 
-The editor lets users assemble Transon templates from interlocking visual blocks, similar to
-Scratch, while preserving Transon's core model:
+The editor lets users assemble Transon templates from interlocking visual blocks, in the style of
+visual block editors (Scratch, Blockly), while preserving Transon's core model:
 
 ```text
 JSON input
@@ -92,8 +112,10 @@ Version 1 supports:
   and examples;
 - a compact editor mode focused on canvas and palette;
 - visual blocks for all built-in Transon rules;
-- metadata-driven generic blocks for custom/new rules where metadata is complete;
-- specialized block variants for important rules whose UX benefits from custom shape or labels;
+- an editor surface (palette, toolbox, encoder, decoder) **derived from engine metadata by Transon-
+  template projections** rather than a hand-written mapping layer (§7.16);
+- metadata-driven blocks for custom/new rules where metadata is complete, with no editor code change;
+- richer presentation for important rules driven by metadata + projection, not per-rule code;
 - visual blocks for JSON literals, arrays, and objects, and for nested templates;
 - import from and export to Transon JSON templates;
 - strict semantic round-trip for supported templates;
@@ -144,8 +166,8 @@ backend, or general-purpose visual programming environment.
 Understands the desired JSON transformation but may not be comfortable writing deeply nested
 Transon JSON. Creates templates visually, connects rules and values, provides sample input,
 inspects output, fixes errors, and exports the result. Needs visual rule categories, clear
-labels, specialized blocks, tooltips, examples, safe connections, immediate feedback, and
-readable generated JSON.
+labels, rule blocks projected from metadata, tooltips, examples, safe connections, immediate
+feedback, and readable generated JSON.
 
 ### 5.2 Developer Integrating Transon
 
@@ -166,8 +188,9 @@ rules/parameters, and compatibility checks against the current engine version.
 
 Adds a new Transon rule, operator, or function. Implements behavior, provides structured
 metadata and examples, and ensures the rule can be validated and documented. Needs a clear
-metadata contract, automatic editor availability for new rules without editor code changes,
-generic block fallback, and optional later specialized UX.
+metadata contract and automatic editor availability for new rules across all surfaces by metadata
+alone — no editor code or projection-template changes — with richer UX driven by richer metadata
+(AD-026, FR-120).
 
 ### 5.5 Embedding Application Developer
 
@@ -279,6 +302,14 @@ template and input data, runs it, and inspects the generated JSON.
 An embedding application opens the editor in compact mode focused on canvas, palette, and
 toolbar, and may expose template JSON separately or via a visual/JSON/split view switch.
 
+### UC-016 — Open the editor's own projection template inside the editor (self-hosting)
+
+A maintainer loads one of the editor's projection templates (e.g. the generated encoder, or a
+`G_*` generator) as an ordinary Transon template in the editor. Because the projections are
+themselves Transon templates (§7.16), they import into the supported surface and round-trip like
+any other template — a self-hosting demonstration and a regression test that the editor describes
+itself (FR-121, AC-036).
+
 ---
 
 ## 7. Functional Requirements
@@ -292,13 +323,29 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
 - **FR-003** The editor shall provide a compact embedded editor mode focused on canvas and
   palette.
 - **FR-004** The compact mode should support switching between visual, JSON, and split views.
-- **FR-005** In v1, the JSON view may be read-only generated output unless direct JSON editing
-  is explicitly approved.
+- **FR-005** The JSON view supports direct (bidirectional) editing in v1: it shows generated
+  output and accepts edits that sync back to the workspace under the strict in-surface rule of
+  §7.15.
 - **FR-006** The editor shall display validation and runtime errors.
 - **FR-007** The editor shall support manual import of a Transon JSON template.
 - **FR-008** The editor shall support manual export, copy, and download of a Transon JSON
   template.
 - **FR-009** The editor shall support loading built-in examples.
+- **FR-132** The Examples picker (FR-009) shall present the example corpus **tiered and grouped**:
+  the engine's curated tiers first — **worked examples**, then **recipes**, each in the
+  engine-emitted reference-list order ([`metadata-contract.md`](metadata-contract.md) §2.7) —
+  followed by the reference examples grouped by owning rule (from the engine-emitted
+  rule→example name references, rule-level first with parameter-level references as the
+  fallback; examples owned by no rule group last). Each entry shall be
+  **labeled** by the first sentence of its engine `doc` (falling back to the case name when the
+  doc is absent), while the unique case **name** remains the selection value and stays visible
+  (e.g. as a tooltip). Tiering, grouping, and labels are derived mechanically from the
+  engine-emitted corpus data (reference lists and docs; tier and rule membership join on the
+  **name references**, never on tag string conventions, per
+  [`metadata-contract.md`](metadata-contract.md) §2.7) — never from a hand-maintained
+  editor-side list (AD-012) — and are presentation-only: they do not alter corpus contents,
+  selection semantics (FR-009, AC-018), or a host-supplied `examples` override, which is
+  presented through the same mechanical derivation.
 - **FR-010** The editor shall be usable as an embeddable component (§7.14).
 - **FR-011** The editor shall expose events/callbacks so an embedding application can observe
   template changes, validation results, and execution results.
@@ -358,7 +405,9 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
 - **FR-040** The editor shall support all built-in Transon rules, enumerated in §14 and
   categorized in §12.4: `this`, `parent`, `item`, `index`, `key`, `value`, `set`, `get`,
   `attr`, `object`, `map`, `filter`, `zip`, `join`, `chain`, `expr`, `call`, `format`, `file`,
-  `include`.
+  `include`, `switch`, `cond`. `switch`/`cond` are first-class authored rules (§14.16) like every
+  other rule; the generated codec also uses them internally for dispatch (FR-118), which is
+  independent of their availability as authored blocks.
 - **FR-041** The editor shall support all built-in `expr` operators (§14.14).
 - **FR-042** The editor shall support all built-in `call` functions (§14.15).
 - **FR-043** The editor shall derive rule names, parameter names, and help text from engine
@@ -391,6 +440,18 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
   missing.
 - **FR-058** Dropdowns may be used for small constant choices (operator name, function name,
   enum-like parameters).
+- **FR-130** A constant-parameter dropdown (FR-058) may present a **curated menu** declared in the
+  editor-owned presentation data (metadata-contract §2.9): each entry names the **canonical token**
+  it inserts, a display **label**, and the metadata **alias tokens** it covers (e.g. one `==` entry
+  covering `eq`), so equivalent spellings collapse into one menu item. The menu shows only curated
+  entries in curated order, but the field shall keep **accepting every metadata-valid token** on
+  import/load, **display** a non-menu token verbatim, and **preserve it verbatim** through workspace
+  serialization and export — curation is display-only and never rewrites the template (AD-004,
+  §21.12). Curation shall be **complete**: every curated/alias token must belong to the parameter's
+  metadata `options` domain, no token may appear in two entries, and every metadata option must stay
+  reachable (featured or aliased) — gated alongside FR-127 so a new engine token fails loudly rather
+  than silently vanishing from the menu. An uncurated constant parameter keeps the full metadata
+  domain as its menu (FR-058).
 
 ### 7.8 Literal Object and Marker Escaping
 
@@ -402,6 +463,21 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
 - **FR-062** The editor shall include tests for literal objects containing `"$"` when the marker
   is `"$"`.
 - **FR-063** The editor shall support custom marker keys when configured.
+- **FR-123** The literal marker-key object escape (a JSON object carrying the active marker key
+  with a `fields` payload, §11.4) shall be owned by the **codec skeleton** and take **precedence**
+  over the `object` rule's `fields` variant **when, and only when, the `fields` payload itself
+  contains the active marker key** — the case a plain literal cannot express (§11.4). It matches
+  **exactly** marker + `fields` with a **marker-bearing payload**; any additional key falls through
+  to ordinary rule/surface handling (an undeclared parameter is out of surface, §15.7). A
+  `{<marker>: object, fields: X}` whose payload `X` is **marker-free** is the ordinary `object`/
+  `fields` **rule** (it builds a dict, omitting `NoContent` values) and shall be projected as the
+  rule block `transon_rule_object__fields`, not the literal-object block — so it round-trips as the
+  rule rather than collapsing to a bare literal (§15.1). The structural literal-object block type
+  shall be **named to avoid collision** with the `object` rule block (e.g. `transon_object_literal`,
+  §13.7). A `{<marker>: object, fields: X}` whose payload `X` is **not a mapping** (a scalar incl.
+  boolean, a list, or `null`) is malformed — the engine requires `fields` to be a mapping — and is
+  **out of surface**: it is emitted as `transon_unsupported` with exact preservation (§15.7, §13.11),
+  never a raw codec error.
 
 ### 7.9 Validation
 
@@ -449,13 +525,23 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
 - **FR-086** If metadata is incomplete, the editor shall render a limited generic block or
   reject the rule with an actionable error.
 - **FR-087** The editor shall not provide a UI for authoring Python rule implementations in v1.
-- **FR-088** Specialized renderers may override generic rendering; the editor shall fall back to
-  a generic metadata-generated block when metadata is sufficient (AD-014).
+- **FR-088** Richer per-rule presentation, where warranted, is expressed through the projection
+  templates and metadata (e.g. `cond`-selected widgets, FR-118), not per-rule TypeScript; the
+  default projection renders a complete block from metadata alone whenever metadata is sufficient
+  (§7.16, `ARCHITECTURE.md` AD-026/AD-031, superseding the AD-014 specialized-override model).
 - **FR-089** Generic metadata-generated blocks shall support block label, description, parameter
   inputs, required-input indicators, optional inputs, mutually exclusive variants, JSON export,
   JSON import where the shape matches one variant, and engine-backed validation/execution.
 - **FR-090** Generic metadata-generated blocks provide baseline compatibility, not necessarily
   polished low-code UX.
+- **FR-127** Catalog, presentation, category, colour, and domain enumerations consumed by the
+  projections shall originate **only** from the engine metadata export or from committed
+  **projection-template data**; no such enumeration shall be a hardcoded literal in `packages/*/src`
+  TypeScript. **Gate:** a source-scan that fails if the §12.4 category names, the category order, the
+  category→colour map, or per-rule title/category/advanced appear as TypeScript literals under
+  `packages/*/src`; plus a **completeness check** that every metadata rule has a presentation-data
+  entry (loud failure). The committed form of the editor-owned presentation data is
+  [`metadata-contract.md`](metadata-contract.md) §2.9.
 
 ### 7.12 Error Mapping
 
@@ -467,6 +553,11 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
   impossible.
 - **FR-095** Error display shall distinguish the categories in the canonical error taxonomy
   (§16.4).
+- **FR-122** The generated encoder shall emit, alongside the workspace, a `JsonPathBlockMap`
+  correlating each Transon JSON path to the block representing it — and, where a node has no block
+  of its own, the nearest enclosing block — produced **as the codec walks**, not by a separate pass.
+  Producing the map is in scope wherever the encoder is; consuming it for highlighting is
+  FR-092/FR-093/FR-095.
 
 ### 7.13 Import / Export UX
 
@@ -488,6 +579,126 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
 - **FR-108** The component should support theming hooks.
 - **FR-109** The component should support configurable rule categories.
 - **FR-110** The component should support a configurable marker key.
+- **FR-128** Theming hooks (FR-108) are exposed as scoped CSS custom properties (`--transon-*`)
+  applied to the editor's light-DOM root (AD-018); they theme editor **chrome only** — panels,
+  toolbar, typography, and surrounding layout. Block and category colours remain **data-driven**
+  from the committed presentation data (FR-127, `metadata-contract.md` §2.9) and are **not**
+  overridden by theme props in v1, preserving the single-source presentation contract. Theming a
+  block's colour is future work (would require a presentation-data or projection change, not a
+  theme prop).
+- **FR-129** The editor shall render blocks with a conventional **puzzle-connection** renderer
+  (thrasos by default, AD-033; renderer configurable per AD-017) and a committed **block-surface
+  theme** — a system font and workspace/flyout **surface** colours aligned with the chrome tokens
+  (FR-128). Every projected rule block is a **value/output block**, and all value parameters are
+  **external inputs** that connect from the side via puzzle sockets (§13.10); the block body holds
+  only **fields** (dropdowns for constant params) and the **mutator +/- controls** — no
+  inline-embedded values. The theme sets **presentation surface only**: block and category **colours
+  stay data-driven** from the presentation projection (FR-127); it declares **no** `blockStyles` or
+  `categoryStyles` (§21.12 UI≠semantics). It is the SVG-canvas counterpart to the chrome CSS vars
+  (FR-128), which theme the surrounding React panels rather than the Blockly SVG.
+
+### 7.15 Bidirectional JSON Editing
+
+Direct JSON editing was deferred in v1.0 (OQ-001) and is **approved for v1** with a strict
+in-surface contract that protects the canonical-JSON and round-trip invariants (AD-003, AD-004,
+AD-024).
+
+- **FR-111** The editor shall allow users to edit the generated Transon JSON directly and sync
+  accepted edits back to the Blockly workspace.
+- **FR-112** Direct JSON edits shall be applied to the workspace only when the edited text is
+  valid JSON **and** within the supported surface (§15.7). When either check fails, the editor
+  shall report the error (`json_template` or `import_unsupported`, §16.4) and leave the existing
+  workspace unchanged.
+- **FR-113** While a direct JSON edit is unparsed or rejected, the editor shall not silently
+  alter, partially apply, or discard the user's workspace; it preserves the last valid workspace
+  and marks the JSON as out of sync until a valid in-surface edit is accepted or reverted.
+- **FR-131** While the user is **actively editing** the JSON panel (its text editor retains
+  focus), an **accepted** edit syncs to the workspace (FR-111) **without rewriting the panel
+  text**: the user's exact text — including its formatting — is preserved so typing is never
+  interrupted by a reformat or cursor jump. The panel reflects the canonical generated JSON only
+  when editing ends (the editor loses focus) or when the document changes from another source
+  (canvas edit, New / Import / Load-Example — which move focus away); a read-only panel (FR-107)
+  always mirrors the generated JSON.
+
+### 7.16 Template-Driven Projection Surface
+
+The editor surface is derived from engine metadata by **Transon-template projections**, not by a
+hand-written mapping layer (`ARCHITECTURE.md` AD-026, superseding AD-014/AD-016). This subsection
+states the projection requirements; they realize the behavior in §7.3–§7.8 and §7.11 rather than
+replacing it. Terminology: a **document** is the user's template (the data moved); a **projection**
+is a template that does the moving (palette/toolbox/encoder/decoder); **metadata** is the engine's
+editor-metadata catalog ([`metadata-contract.md`](metadata-contract.md) §2).
+
+- **FR-114** The editor shall ship four Transon-template projections that derive the editor surface
+  from engine metadata: `G_palette` → block definitions, `G_toolbox` → category/toolbox structure,
+  `G_encode` → the encoder, `G_decode` → the decoder. The editor surface is `projection(metadata)`.
+- **FR-115** The encoder and decoder shall be **generated** from metadata (the compiler model), not
+  hand-written, and shall be derived from the **same** metadata source so that encode and decode are
+  inverse by construction (round-trip-by-construction, §15.1, AC-035). The editor ships **no**
+  interpreter codec (OQ-010 → compiler-only).
+- **FR-116** Generator templates shall be staged with a distinct **meta-level marker** (`@`) that
+  emits **object-level** (`$`) codecs: `@`-keyed dicts are evaluated during generation and `$`-keyed
+  structure is emitted verbatim (quoting via the configurable marker, `ARCHITECTURE.md` AD-027).
+  Generators shall be factored with `include` into per-rule fragments, each a pure function of the
+  context value; the engine resolves staged includes with **default-marker inheritance** from the
+  parent (OQ-014, [`metadata-contract.md`](metadata-contract.md) §6).
+- **FR-117** The generated codec shall be a fixed generic **skeleton** wrapping
+  **metadata-projected per-rule arms** (`ARCHITECTURE.md` AD-028). The skeleton owns the invariants
+  not derivable from metadata: recursion over nested nodes, literal passthrough of non-rule JSON, the
+  marker-escape rule (§11.4), ordering preservation (§13.12, §15.3), the supported-surface check
+  (§15.7), and the out-of-surface exact-preserving placeholder (§13.11). Only the per-rule dispatch
+  arms, param↔input wiring, and variant selection are projected.
+- **FR-118** The generated codec shall dispatch per node using the engine `switch`/`cond` rules
+  (`ARCHITECTURE.md` AD-029): `switch` on rule name (encode) / block type (decode), `cond` for
+  predicate dispatch such as deriving the input-widget (`input`/`dropdown`/`field`) from the metadata
+  facts (`kind` + presence of `options`). Only the selected branch is evaluated (lazy dispatch); the
+  widget decision is made in the projection, never baked into the engine export (§10.2, AD-012).
+- **FR-119** The projections shall be compiled at **build time** into **committed codec artifacts**
+  (encoder/decoder templates + palette/toolbox definitions), and those artifacts shall be executed at
+  **runtime** via the host-provided engine using the two-pass generate-then-run model (§10.4,
+  `ARCHITECTURE.md` AD-030). The editor shall bundle no engine and shall not `eval` data as a template.
+- **FR-120** A new rule (built-in or custom) with complete metadata
+  ([`metadata-contract.md`](metadata-contract.md) §2) shall appear across **every** surface —
+  palette, toolbox, encoder, decoder, validation, and execution — with **no editor code change and
+  no projection-template change**; only metadata changes. This restates and strengthens FR-082 and
+  AC-028 for the projection model.
+- **FR-121** The projection templates shall themselves be valid Transon templates within the
+  supported surface (§15.7), openable and round-trippable in the editor they configure
+  (self-hosting; UC-016, AC-036).
+- **FR-124** The generated encoder's output shall be valid **Blockly workspace-serialization JSON**
+  conforming to a fixed block vocabulary, asserted as a **checked invariant over the round-trip
+  corpus (§15.8)** — not only indirectly via round-trip identity (AC-035). The vocabulary:
+  - rule invocations as **`transon_rule_<rule>__<variant>`** blocks (`<rule>` ∈ §14; `<variant>` a
+    declared variant), with declared params placed as block **fields** (constant params) or **value
+    inputs** (dynamic params) per FR-118;
+  - the structural block types **`transon_literal`**, **`transon_array`**,
+    **`transon_object_literal`**, and **`transon_unsupported`** (the exact-preserving out-of-surface
+    placeholder, §13.11).
+
+  The block-type vocabulary and the field-vs-input rule are normative; exact serialization details
+  (extra-state for dynamic item counts / object keys, input index naming) are implementation-level.
+  The editor shall assert this shape over §15.8 so a malformed-but-loadable block cannot pass
+  silently.
+- **FR-125** The block definitions produced by `G_palette` shall be **valid, loadable** Blockly
+  definitions: every rule with complete metadata (FR-085) yields a definition that loads and
+  instantiates without error (consistent message↔args, well-formed input/field/connection types),
+  verified by an **automated headless gate**. Incomplete metadata follows FR-086.
+- **FR-126** The generated **encoder shall emit, and the decoder shall consume, Blockly
+  workspace-serialization JSON directly**: there is **no editor-defined intermediate representation**
+  between the codec and the workspace, and the editor ships **no hand-written code that translates
+  codec output into workspace JSON or back** (realizes FR-114/FR-117, §5.4,
+  [`ARCHITECTURE.md`](ARCHITECTURE.md) AD-026, AD-032). The field-vs-input disposition (FR-118) is
+  computed **once**, in the `G_encode` projection arm. The **decoder is the structural inverse**: it
+  reads the rule and variant from the `transon_rule_<rule>__<variant>` block type and reconstructs
+  params from the block's fields ∪ inputs keyed by param name; it shall **not** re-derive the
+  disposition — so it is derived exactly once, in either direction. **Gates:** (a) the FR-124
+  workspace-shape validator over the §15.8 corpus; (b) a headless gate that the encoder output loads
+  via Blockly's workspace deserialization without error; (c) a **repo-scan** asserting no module
+  under `packages/*/src` maps codec artifacts to or from a `{type, inputs, fields}` block structure.
+
+The Blockly **behavior** that JSON cannot express (field validators, custom field widgets, mutator
+UI, connection rules, change events) is handled by a finite, **rule-agnostic** runtime that does not
+grow per rule (NFR-046, `ARCHITECTURE.md` AD-031); this is the structure/behavior boundary of §13.
 
 ---
 
@@ -534,6 +745,19 @@ toolbar, and may expose template JSON separately or via a visual/JSON/split view
 - **NFR-022** The editor shall have round-trip tests for all built-in rules.
 - **NFR-023** The editor shall make it easy to add support for future Transon rules.
 - **NFR-024** New rules with complete metadata should be available without editor code changes.
+- **NFR-046** The rule-agnostic Blockly behavior runtime (`ARCHITECTURE.md` AD-031) shall remain
+  **finite and shall not grow per rule**: a new rule is supported through metadata + projections
+  alone, and only a brand-new interaction primitive may touch this runtime. Verified by a check that
+  the behavior-runtime surface does not gain per-rule branches as the catalog grows (§19,
+  [`traceability.md`](traceability.md)).
+- **NFR-047** The metadata consumed by the projections shall stay lean: the export is split into a
+  **structural catalog** (consumed by the generators) and a separate **examples/docs payload**
+  (OQ-015, [`metadata-contract.md`](metadata-contract.md) §2). Generators read only the structural
+  catalog so projection input stays small.
+- **NFR-048** The §12.4 category set, its order, and the category→colour mapping shall have
+  **exactly one** committed source consumed by all projections (palette, toolbox, colour). **Gate:**
+  the FR-127 scan plus assertions that the toolbox and colour projections contain no inline category
+  enumeration.
 
 ### 8.5 Performance
 
@@ -618,9 +842,13 @@ derived from the owning rule's `required_params` and `modes`, not stored per par
 
 ### 9.6 RuleVariantMetadata
 
-Describes one valid parameter shape for a rule: `id`, `rule_name`, `title`, `description`,
-`required_params`, `optional_params`, `visible_params`, `generated_shape`, `import_matcher`,
-`contextual_blocks`, `advanced`.
+Describes one valid parameter shape for a rule as a **pre-derived variant signature**: `id`,
+`rule_name`, `title`, `description`, `required_params`, `optional_params`, `visible_params`,
+`contextual_blocks`, `advanced`. Under the projection model these signatures (ordered visible
+params, each flagged `required`) are derived **in the engine export** and consumed directly by the
+generators ([`metadata-contract.md`](metadata-contract.md) §2.5, FR-116); the editor never derives
+them in code, and there is no separate generated-shape or import-matcher structure — the generated
+codec dispatches on the signature itself (AD-028, AD-029).
 
 ```yaml
 rule: attr
@@ -637,10 +865,12 @@ variants:
 
 ### 9.7 BlockDefinition
 
-Editor-side block definition: `block_type`, `label`, `source`, `rule_name`, `variant_id`,
-`renderer`, `inputs`, `output_type`, `category`, `advanced`, `tooltip`, `generator`,
-`import_matcher`. `source` is one of `metadata_generic`, `metadata_variant`,
-`specialized_builtin`, `specialized_custom`.
+Editor-side block descriptor **projected from metadata** by `G_palette`/`G_toolbox` (AD-026):
+`block_type`, `label`, `rule_name`, `variant_id`, `inputs`, `output_type`, `category`, `advanced`,
+`tooltip`. Every block is projected the same way — there is no `source` taxonomy and no
+generic-vs-specialized split (that was the superseded AD-014 override registry). Block *behavior*
+that JSON cannot express is supplied by the finite, rule-agnostic behavior runtime (AD-031, NFR-046),
+not by per-rule authored block modules.
 
 ### 9.8 ExampleCase
 
@@ -674,9 +904,11 @@ A documentation/playground example: `name`, `doc`, `tags`, `template`, `data`, `
 
 The metadata source is Transon itself. The required fields and the engine-owned export are
 specified in [`metadata-contract.md`](metadata-contract.md) (AD-012). The editor shall not
-independently maintain the authoritative rule catalog. The metadata normalization layer and the
-generic/specialized block-generation flows are implementation detail; see
-[`ARCHITECTURE.md`](ARCHITECTURE.md) §5.5–§5.6.
+independently maintain the authoritative rule catalog. The export is **projection-ready** (it
+carries pre-derived variant signatures and resolved enum domains, [`metadata-contract.md`](metadata-contract.md)
+§2.5–§2.6) and **split** into a structural catalog + examples/docs payload (NFR-047). The
+generators that turn this metadata into the editor surface are implementation detail; see
+[`ARCHITECTURE.md`](ARCHITECTURE.md) §5.4–§5.8.
 
 ### 10.2 Minimum Metadata Contract
 
@@ -690,7 +922,10 @@ metadata shape.
 If metadata is incomplete: built-in rules are covered by the engine-owned export (AD-012) and
 any residual gap is surfaced in diagnostics and fixed engine-side; custom rules may be rejected
 or rendered as limited generic blocks; missing metadata is visible in diagnostics and tracked as
-a Transon-library issue, never silently worked around.
+a Transon-library issue, never silently worked around. For a **custom** rule to be rendered as a
+safe (non-limited) block, its metadata must additionally provide `title`, `category`, and
+`examples` (OQ-004; [`metadata-contract.md`](metadata-contract.md) §2.1) — these are
+editor-owned for built-ins but required from custom-rule authors.
 
 ### 10.4 Runtime Host Boundary
 
@@ -702,8 +937,17 @@ single boundary. The interface (`TransonEditorHost`, `EngineProvider`) is define
 - the editor passes the generated template, sample input, marker, and an include resolver to the
   host engine, and consumes `ValidationResult` / `ExecutionResult` (the latter including
   captured `file` writes);
-- without a host engine, validation/execution are disabled while authoring, generation, and
-  import/export remain fully available;
+- the **visual ⇄ JSON projection runs the generated codec through the host engine** (AD-026,
+  AD-030): generating Transon JSON from the workspace (the decoder, §5.4), syncing edited/imported
+  JSON back into blocks (the encoder, §7.15), and producing the `JsonPathBlockMap` (§9.12) are all
+  engine-backed. Therefore, without a host engine — or before it reaches `ready` — these are
+  unavailable along with validation and execution; what remains is block **authoring** (placing and
+  connecting blocks on the canvas) and **raw JSON text** handling (copying or downloading already
+  generated text, and typing into the JSON panel without sync). The editor surfaces the engine
+  runtime status (idle/loading/ready/failed, NFR-028, AC-023) so the gated actions are explained
+  rather than silently inert. *(Earlier drafts described the superseded hand-written-codec model
+  (AD-014/AD-016), in which generation/import were engine-free; under the projection model they are
+  not.)*
 - the host engine is the authoritative validator/executor (NFR-004); the editor must not report
   validity the host did not confirm.
 
@@ -743,6 +987,12 @@ A literal object that must contain the marker key is emitted through the `object
 This is the single canonical description of the literal-marker escape, referenced by FR-060,
 FR-061, UC-011, §15.5.
 
+The escape applies **only** when the `fields` payload contains the marker key (as above) — that is
+the case a plain literal object cannot express directly. A `{ "$": "object", "fields": X }` whose
+payload `X` does **not** contain the marker key is the ordinary `object`/`fields` **rule** (it
+builds a dict and omits `NoContent` values, which a plain literal does not), and is projected as
+the rule block, not the escape (FR-123). Both forms round-trip to `{ "$": "object", "fields": X }`.
+
 ### 11.5 Workspace Projection (canonical UI-only attributes)
 
 Blockly workspace state is a projection of the Transon template. The editor may keep UI-only
@@ -753,8 +1003,10 @@ the editor treats as UI-only.
 
 ### 11.6 Export Contract
 
-Export produces the canonical Transon JSON template. It may optionally also produce a separate
-editor state bundle (`{ template, workspace, editor_metadata }`); not required in v1.
+Export produces the canonical Transon JSON template. v1 exports the canonical Transon JSON
+**only** (OQ-002): no workspace/UI-state bundle is produced, keeping the JSON the single source
+of truth (AD-003). A separate editor-state bundle (`{ template, workspace, editor_metadata }`)
+remains future work.
 
 ### 11.7 Import Contract
 
@@ -777,18 +1029,23 @@ The full playground/dev/demo experience. Recommended layout:
 │ Blockly Canvas       │ Input JSON            │
 │                      ├──────────────────────┤
 │                      │ Output / Errors       │
+│                      ├──────────────────────┤
+│                      │ Files produced        │
 └──────────────────────┴──────────────────────┘
 ```
 
-Sandbox mode includes: canvas, palette, generated template JSON, input JSON, output JSON,
-validation/runtime errors, examples, and run/validate controls. This is the canonical panel set
-referenced by FR-002, UC-014, AC-031.
+Sandbox mode includes: canvas, palette, generated template JSON (editable per §7.15, §12.7),
+input JSON, output JSON, validation/runtime errors, a "Files produced" panel (§12.11), examples,
+and run/validate controls. This is the canonical panel set referenced by FR-002, UC-014, AC-031.
+The "Files produced" panel is shown when a template can emit `file` writes; it may be collapsed
+or hidden when empty.
 
 ### 12.2 Compact Embedded Editor Mode
 
 The embeddable visual editor experience: toolbar plus palette + canvas, with an optional
-`Visual | JSON | Split` view switch. In v1 the JSON view may be read-only; direct JSON editing
-with sync back to blocks is future work unless explicitly approved.
+`Visual | JSON | Split` view switch. The JSON view supports direct editing with strict
+in-surface sync back to blocks (§7.15); an embedding may still opt the component into read-only
+mode (FR-107).
 
 ### 12.3 Toolbar Actions
 
@@ -809,6 +1066,7 @@ references it rather than defining competing taxonomies.
 | Iteration | `map`, `filter` |
 | Composition | `chain`, `zip`, `join` |
 | Computation | `expr`, `call` |
+| Control Flow | `switch`, `cond` |
 | Formatting | `format` |
 | Side Effects | `file` |
 | Includes | `include` |
@@ -823,17 +1081,25 @@ enabled.
 
 The palette shows block variants, not only raw rule names, grouped by the canonical categories
 (§12.4). Several palette blocks may generate the same rule with different parameter shapes. See
-§14 for the canonical `attr`/`object`/`map` variant examples.
+§14 for the canonical `attr`/`object`/`map` variant examples. Block and palette labels show
+**both** the friendly title and the rule name, e.g. `Get attribute (attr)` (OQ-008); the rule
+name keeps developers oriented and reinforces the JSON mapping (NFR-016).
 
 ### 12.6 Progressive Disclosure
 
 Common beginner-friendly blocks are visible by default. Advanced blocks (`set`, `get`, `parent`,
 `zip`, `file`, `include`, custom rules) may be available under advanced categories or toggles.
+Because per-shape variants enlarge the palette, palette size is managed (OQ-009) with canonical
+categories (§12.4), a palette search/filter, an advanced-blocks toggle, and the clear dual labels
+of §12.5 — a clearer palette is preferred over hidden mode dropdowns (NFR-012, AD-015).
 
 ### 12.7 Generated JSON Panel
 
-Updates when blocks change; shows formatted JSON; shows an invalid-generation state when the
-workspace is incomplete; allows copying; may allow direct editing in a future version.
+Updates when blocks change — but never while the user is actively typing in it (FR-131); shows
+formatted JSON; shows an invalid-generation state when the workspace is incomplete; allows
+copying; and supports direct (bidirectional) editing per §7.15 — edits sync back to blocks only
+when valid and in-surface (§15.7), otherwise the panel shows the error and is marked out of sync
+(FR-111…FR-113).
 
 ### 12.8 Sample Input Panel
 
@@ -842,8 +1108,9 @@ selected.
 
 ### 12.9 Output Panel
 
-Shows the transformation result, runtime errors, captured file outputs, and expected-vs-actual
-result for examples.
+Shows the transformation result, runtime errors, and expected-vs-actual result for examples.
+Captured `file` writes are shown separately in the "Files produced" panel (§12.11), not inline
+with the transformation output (OQ-007).
 
 ### 12.10 Tooltips
 
@@ -851,9 +1118,23 @@ Rule and parameter tooltips are derived from engine metadata and explain rule/pa
 whether a parameter is required, whether it is dynamic or constant where known, and common
 examples.
 
+### 12.11 Files Produced Panel
+
+A dedicated panel that lists captured `file` writes from preview execution (§16.5), each with its
+name and a content preview, kept separate from the transformation output (OQ-007, §17.11, AC-024).
+No filesystem write occurs in browser preview (NFR-035, AD-009). The panel may be collapsed or
+hidden when the latest execution produced no files.
+
 ---
 
 ## 13. Blockly Block Model
+
+**Structure vs behavior boundary (§7.16, `ARCHITECTURE.md` AD-031).** Block *structure* — the
+shapes, inputs, labels, and variants below — is **projected** from metadata by `G_palette` and the
+generated codec, so it grows by metadata alone. Block *behavior* that JSON cannot express (field
+validators, custom field widgets, mutator interaction UI, drag/connection rules, change events) is
+handled by a finite, **rule-agnostic** runtime that does **not** grow per rule (NFR-046). New rules
+ride entirely on metadata + projections; only a brand-new interaction primitive touches code.
 
 ### 13.1 Block Output Types
 
@@ -888,7 +1169,9 @@ Dynamic parameters accept templates; a template block can connect into a dynamic
 ### 13.6 Constant Parameters
 
 Constant parameters accept literal values or dropdowns; e.g. `op` is selected from known
-operators:
+operators. The dropdown menu may be curated by presentation data (FR-130) — display-only: alias
+spellings collapse into one canonical menu entry, while every metadata-valid token stays accepted
+and round-trips verbatim:
 
 ```json
 { "$": "expr", "op": "add", "value": 1 }
@@ -896,28 +1179,56 @@ operators:
 
 ### 13.7 Literal Blocks
 
-The editor includes blocks for string, number, boolean, null, array, and object literals.
+The editor includes blocks for string, number, boolean, null, array, and object literals. In the
+projected workspace vocabulary (FR-124) these are the structural block types `transon_literal`
+(scalars), `transon_array`, and `transon_object_literal`. The literal-object block type is named to
+avoid collision with the `object` rule block (FR-123); a literal object carrying the marker key uses
+the codec-skeleton-owned escape (§11.4) rather than the `object` rule's `fields` variant.
 
 ### 13.8 Array Blocks
 
-Array blocks support a dynamic number of items; each item is a template.
+Array blocks support a dynamic number of items; each item is a template. Items may be added and
+removed **on the canvas** through the finite, rule-agnostic behavior runtime's mutator UI (§13.13,
+AD-031, NFR-046) — not only by editing the JSON (§7.15).
 
 ### 13.9 Object Blocks
 
 Object blocks support a dynamic number of fields (literal key, template value). If the object
-contains the marker key, the editor must use or recommend the `object` rule escape (§11.4).
+contains the marker key, the editor must use or recommend the `object` rule escape (§11.4). Fields
+may be added and removed on the canvas through the behavior-runtime mutator UI (§13.13).
 
-### 13.10 Generic Advanced Rule Block
+### 13.13 Structural Mutators (on-canvas add/remove)
 
-When metadata exists but no specialized block does, the editor may render a generic rule block
-that allows the metadata-declared parameters and disallows undeclared parameters unless
-explicitly enabled for debugging.
+The structural blocks that hold a variable number of children — `transon_array` (items) and
+`transon_object_literal` (key/value fields) — expose an on-canvas **add/remove** affordance
+(Blockly mutator) so users can grow and shrink them visually, without dropping to the JSON panel.
+This affordance lives in the finite, **rule-agnostic** behavior runtime (AD-031) and is keyed to the
+structural vocabulary, never to a rule name, so it does **not** grow per rule (NFR-046). The
+mutator only changes how many item/field inputs a block exposes; it adds no semantics and is the
+visual counterpart of the workspace shape the codec already serializes (FR-124, FR-126) — so a block
+edited via the mutator round-trips identically to the same block authored via JSON (AC-038).
+
+### 13.10 Projected Rule Block
+
+Every rule block is projected from metadata by `G_palette` (AD-026); the projection allows the
+metadata-declared parameters and disallows undeclared parameters unless explicitly enabled for
+debugging. Richer per-rule UX comes from richer metadata plus the finite behavior runtime (AD-031),
+never from a separately authored "specialized" block. The projected block is a **value/output block**
+with **external inputs** (`inputsInline: false`, FR-129): every value parameter connects from the
+side via a puzzle socket, and the block body holds only fields (dropdowns for constant params) and
+mutator +/- controls — no inline-embedded values. This is a display-only default in the block
+definition and does not affect the codec or round-trip (§21.12). When a variant has **two or more
+value inputs**, the block **title takes its own first row** and the named inputs start on the second
+row (readability); a variant with ≤1 value input keeps the title and input on one flowing row.
+Structural collection blocks (`transon_array`, `transon_object_literal`) follow the same model:
+external value inputs plus the +/- mutator.
 
 ### 13.11 Invalid / Unsupported Block
 
 If an imported template cannot be represented with available blocks, the editor may create an
 unsupported placeholder block only if it preserves the original JSON exactly and blocks edits
-that would corrupt it; otherwise import fails.
+that would corrupt it; otherwise import fails. This is the `transon_unsupported` block type in the
+projected workspace vocabulary (FR-124).
 
 ### 13.12 Statement Ordering and `set`
 
@@ -1040,7 +1351,28 @@ Built-in `expr` operators shall be supported:
 
 ### 14.15 Functions
 
-Built-in `call` functions shall be supported: `str`, `int`, `float`.
+Built-in `call` functions shall be supported: `str`, `int`, `float`, `type`. The `type` function
+returns the JSON type of a value — one of object, array, string, int, float, boolean, or null — and
+is **total** (never raises on well-formed JSON), making it the one operation a switch/cond key can
+safely apply to an unknown node; it is the node-type-dispatch primitive the generated codec relies on
+([metadata-contract.md](metadata-contract.md) §6.4, FR-118).
+
+### 14.16 Conditional Dispatch
+
+`switch` and `cond` are **lazy multi-way dispatch** rules (engine v0.1.3, `ARCHITECTURE.md`
+AD-029), supported as **first-class authored blocks** like every other rule (FR-040, category
+*Control Flow* in §12.4):
+
+- `switch` — evaluates `key`, then walks **only** the matching entry of a literal-keyed `cases`
+  mapping; an optional `default` covers no-match (including a `NO_CONTENT` key). Variant: `key`+`cases`.
+- `cond` — an ordered list of `{when, then}` arms; the first truthy `when` selects its `then`
+  (subsuming `if`/`else`), with an optional `default`. Variant: `cases`.
+
+Only the selected branch is evaluated (lazy dispatch). The editor projects them from metadata like
+any other rule — including the pre-derived variant signatures ([`metadata-contract.md`](metadata-contract.md)
+§2.5) and the optional `default` parameter. Separately, the **generated codec** uses these same
+engine rules internally for its own dispatch (FR-118); that internal use is orthogonal to their
+availability as authored blocks.
 
 ---
 
@@ -1054,6 +1386,12 @@ round-trip" (UC-005, §7.5, AD-004) qualifies *coverage*, not the comparison: eq
 always semantic, and "strict" means it must hold for *every* template within the supported
 surface (§15.7), with no silently-dropped cases. Where it cannot hold, the editor reports it
 (FR-038) rather than degrading equivalence.
+
+**Round-trip by construction (§7.16, FR-115, AC-035).** Because the encoder and decoder are
+generated from the **same** metadata source (`ARCHITECTURE.md` AD-026), they are two directions of
+one bijection over the supported surface and agree by construction — there is no second
+hand-written implementation to drift. Correctness reduces to "both directions have a single source:
+the metadata," verified per rule by execution (AD-011).
 
 ### 15.2 Stable JSON Formatting
 
@@ -1082,9 +1420,11 @@ When a literal output object must contain the marker key, the editor uses the `o
 
 Each rule invocation must match **exactly one** declared variant; zero, multiple, or partial
 matches are reported as `import_unsupported` (§16.4, §17.6). This behavioral rule is referenced
-by FR-053, FR-054, FR-055, §9.6, and the supported surface (§15.7). The `import_matcher` format
-(derived mechanically from the engine schema `_required`/`_modes`) and the matching algorithm
-are implementation detail; see [`ARCHITECTURE.md`](ARCHITECTURE.md) §5.7.
+by FR-053, FR-054, FR-055, §9.6, and the supported surface (§15.7). Variants are **pre-derived in
+the metadata** (the engine computes the variant signatures from `_required`/`_modes` once, in
+Python, and emits them as data — FR-116, [`metadata-contract.md`](metadata-contract.md) §2.5); the
+generated decoder matches against those signatures. The matcher is part of the generated codec
+skeleton + arms, not a hand-written editor algorithm; see [`ARCHITECTURE.md`](ARCHITECTURE.md) §5.7.
 
 ### 15.7 Supported Template Surface
 
@@ -1110,7 +1450,9 @@ than one variant; a custom rule with incomplete metadata that cannot be rendered
 generic block (FR-086); or not valid JSON / otherwise not representable without changing meaning.
 
 The surface is bounded by the engine's rule/operator/function catalog, not a separate editor
-list; the engine-parity checks in [`traceability.md`](traceability.md) keep the two aligned.
+list; the engine-parity checks in [`traceability.md`](traceability.md) keep the two aligned. The
+in-surface/out-of-surface decision is enforced by the generated codec **skeleton** (FR-117,
+`ARCHITECTURE.md` AD-028), so it is sourced from the same metadata as the per-rule arms.
 
 ### 15.8 Round-trip Test Corpus
 
@@ -1152,9 +1494,9 @@ The single canonical error taxonomy. FR-095 (error display) and §17 reference t
 
 | Code | Category | Raised during |
 |------|----------|---------------|
-| `json_template` | Invalid JSON in imported template text | import |
+| `json_template` | Invalid JSON in imported template text or in a direct JSON edit (§7.15) | import / JSON edit |
 | `json_input` | Invalid JSON in sample input | execution setup |
-| `import_unsupported` | Out-of-surface template (§15.7): unknown rule, unknown parameter, ambiguous/partial variant match, ambiguous marker handling, malformed template, or unsupported workspace representation | import |
+| `import_unsupported` | Out-of-surface template (§15.7): unknown rule, unknown parameter, ambiguous/partial variant match, ambiguous marker handling, malformed template, or unsupported workspace representation. Also raised when a direct JSON edit (§7.15) is valid JSON but out of surface. | import / JSON edit |
 | `template_definition` | Transon definition/validation error (engine `DefinitionError` via `validate()`) | validation |
 | `runtime_transformation` | Transon transformation/runtime error (engine `TransformationError` via `transform()`) | execution |
 | `include_loader` | Include template could not be resolved (§16.6) | validation/execution |
@@ -1220,9 +1562,11 @@ possible, and preserve previous successful output but mark it stale.
 ### 17.9 Engine Runtime Failure
 
 If the host-provided engine runtime (§10.4) fails to load or initialize: show the runtime
-initialization error reported by the host; keep visual editing, JSON generation, and
-import/export available; disable validation/execution actions; and suggest retrying
-initialization where the host supports it.
+initialization error reported by the host; keep block **authoring** (canvas editing) and raw JSON
+**text** handling (copy/download, and typing into the JSON panel) available; because the
+visual ⇄ JSON projection runs the codec through the engine (AD-026, AD-030), JSON
+generation/import-sync are unavailable along with validation/execution until the runtime recovers;
+and suggest retrying initialization where the host supports it.
 
 ### 17.10 Include Resolution Failure
 
@@ -1246,8 +1590,9 @@ engine runtime status; current template size; current block count.
 ### 18.2 Developer Diagnostics
 
 Generated template-path-to-block mapping; raw engine errors; raw validation results;
-import/export timing; host engine runtime init timing; metadata load status; generic vs
-specialized renderer used; missing-metadata warnings.
+import/export timing; host engine runtime init timing; metadata load status; projection/codec
+artifact version and whether it is up to date with the current metadata (AD-030);
+missing-metadata warnings.
 
 ### 18.3 Logging
 
@@ -1269,10 +1614,11 @@ by at least one test there.
 
 ### 19.1 Unit Tests
 
-Block-to-template generation; template-to-block parsing; literal scalar/array/object handling;
-marker detection; literal marker-key escape; rule parameter generation; required/optional
-handling; mutually exclusive variants; variant import matching; operator/function dropdown
-generation; metadata parsing; generic block generation; specialized override selection;
+Generator (`G_*`) output on metadata; generated-encoder block-from-document generation; generated-
+decoder template-from-workspace parsing; literal scalar/array/object handling; marker detection;
+literal marker-key escape; rule parameter generation; required/optional handling; pre-derived
+variant signatures and variant matching; operator/function dropdown (resolved-enum) generation;
+metadata parsing; codec-skeleton invariants (recursion/ordering/passthrough);
 path-to-block mapping.
 
 ### 19.2 Round-trip Tests
@@ -1369,6 +1715,39 @@ Version 1 is acceptable when all criteria below are met.
 - **AC-031 — Sandbox mode.** Sandbox mode shows the panels defined in §12.1.
 - **AC-032 — Compact editor mode.** Compact mode can show canvas and palette without requiring
   input/output panels.
+- **AC-033 — Bidirectional JSON editing.** A user can edit the generated JSON directly; a valid
+  in-surface edit syncs back to the workspace, while an invalid or out-of-surface edit is reported
+  and leaves the workspace unchanged (§7.15, FR-111…FR-113).
+- **AC-034 — Projection coverage with no editor change.** A new rule with complete metadata appears
+  across palette, toolbox, encoder, and decoder, and participates in validation/execution, with no
+  editor code change **and** no projection-template change — only metadata (§7.16, FR-120; restates
+  AC-028 for the projection model).
+- **AC-035 — Round-trip by construction.** For every built-in rule and variant, the encoder and
+  decoder generated from the one metadata source round-trip a document to semantic identity via
+  engine execution (§7.16, FR-115, §15.1, AD-011).
+- **AC-036 — Self-hosting projection template.** At least one of the editor's own projection
+  templates loads as a valid in-surface Transon template in the editor and round-trips (§7.16,
+  FR-121, UC-016).
+- **AC-037 — Presentation from data, not code.** A new rule's title/category/advanced/colour comes
+  from metadata or projection-template data (not TypeScript), and the rule appears in palette +
+  toolbox with no editor code change (strengthens AC-034), demonstrated by a synthetic-rule
+  projection test driving presentation from the data source (§7.11, FR-127, NFR-048).
+- **AC-038 — On-canvas structural mutators.** A user can add and remove items of a `transon_array`
+  block and key/value fields of a `transon_object_literal` block directly on the canvas via the
+  behavior-runtime mutator UI (§13.13); the result round-trips identically to the same structure
+  authored via the JSON panel (AD-031, NFR-046, FR-124/126).
+- **AC-039 — Accessibility baseline.** The editor passes the §19.5 accessibility suite: the sandbox
+  shell has no critical axe violations for contrast or ARIA; the toolbar and panels are
+  keyboard-reachable with visible focus states; error state and expected-vs-actual match state are
+  conveyed without relying on colour alone; and major panels carry screen-reader labels (binds
+  NFR-045 and §19.5 to a checkable DoD).
+- **AC-040 — Conventional renderer + external puzzle inputs.** The mounted workspace uses the
+  **thrasos** renderer (puzzle-tab connections) and the committed Transon theme (system font,
+  chrome-aligned surface); every projected rule-variant block is a value/output block with
+  **external inputs** (`inputsInline: false`, §13.10) — sub-expressions connect from the side and the
+  body holds only fields + mutator controls. Block/category colours stay data-driven (FR-127) and the
+  codec artifacts are unchanged. Verified deterministically (renderer + theme + external-input wiring)
+  and visually in a real browser (FR-129, AD-033).
 
 ---
 
@@ -1444,3 +1823,13 @@ Every supported rule block must have tests for generation and import.
 
 If Transon has quirky but documented behavior, the editor must represent or warn about it; agents
 must not "fix" engine behavior in the editor without an explicit architecture decision.
+
+### 21.15 Projections, not hand-written mappings
+
+The palette, toolbox, encoder, and decoder are **projections of engine metadata** (§7.16, AD-026).
+Do not reintroduce a hand-written codec, typed IR, per-rule block-definition code, or a per-rule
+specialized override registry (the superseded AD-014/AD-016 model). New rule support comes from
+metadata + the projection templates; only the finite, rule-agnostic behavior runtime (AD-031) and a
+genuinely new interaction primitive may add code (NFR-046). The generated codec artifacts are
+regenerated at build time (AD-030) — never hand-edit a committed codec artifact; change the metadata
+or the generator and regenerate.

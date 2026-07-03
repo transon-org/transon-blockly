@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/editor-core" },
+    { "path": "packages/editor-blockly" },
+    { "path": "packages/editor-ui" },
+    { "path": "packages/editor-element" },
+    { "path": "test/engine-node-adapter" },
+    { "path": "examples/reference-host" }
+  ]
+}

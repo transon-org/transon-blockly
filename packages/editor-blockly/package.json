@@ -1,0 +1,37 @@
+{
+  "name": "@transon/editor-blockly",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Blockly (Zelos) rendering layer for the Transon Visual Editor: registers the metadata-projected palette/toolbox and the finite, rule-agnostic behavior runtime (AD-017/AD-018/AD-031). Engine-free; the codec runs through the host EngineProvider in @transon/editor-core (AD-008).",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@transon/editor-core": "workspace:*",
+    "blockly": "13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.9",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vite-plugin-dts": "4.5.4",
+    "vitest": "2.1.9"
+  }
+}

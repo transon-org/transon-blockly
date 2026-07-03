@@ -1,0 +1,88 @@
+{
+  "$doc": "Editor-owned presentation projection-data (metadata-contract.md §2.9, SPEC FR-127/NFR-048). The SINGLE committed source for per-rule title/category/advanced + the toolbox category order + the category->colour map, consumed by the G_palette/G_toolbox projections (AD-026). The engine export stays Blockly-agnostic and emits NONE of this (§2.8); the editor joins it by rule name. NOT TypeScript and NOT inline template literals (FR-127 source-scan). Values are editor design defaults: category = SPEC §12.4 mapping; advanced = SPEC §12.6 list (set/get/parent/zip/file/include); titles = friendly labels shown as 'Title (rule)' (OQ-008, §12.5); categoryOrder = §12.4 table order; categoryColour = distinct Zelos hues (0-360). Adjust freely — this file is the decision. `dropdownMenus` (SPEC FR-130) curates a constant parameter's dropdown menu: per rule/param, an ordered list of {value, label, aliases} entries — display-only, every metadata option must stay accepted and round-trip verbatim.",
+  "categoryOrder": [
+    "Input / Context",
+    "Variables",
+    "Data Access",
+    "Objects / Arrays",
+    "Iteration",
+    "Composition",
+    "Computation",
+    "Control Flow",
+    "Formatting",
+    "Side Effects",
+    "Includes",
+    "Literals",
+    "Custom"
+  ],
+  "categoryColour": {
+    "Input / Context": 210,
+    "Variables": 330,
+    "Data Access": 285,
+    "Objects / Arrays": 255,
+    "Iteration": 120,
+    "Composition": 165,
+    "Computation": 30,
+    "Control Flow": 60,
+    "Formatting": 90,
+    "Side Effects": 0,
+    "Includes": 195,
+    "Literals": 150,
+    "Custom": 300
+  },
+  "structuralBlocks": {
+    "Literals": ["transon_literal"],
+    "Objects / Arrays": ["transon_array", "transon_object_literal"]
+  },
+  "structuralTitles": {
+    "transon_literal": "Literal",
+    "transon_array": "Array",
+    "transon_object_literal": "Object",
+    "transon_unsupported": "Unsupported"
+  },
+  "unsupportedColour": "#9aa0a6",
+  "rules": {
+    "this": { "title": "This", "category": "Input / Context", "advanced": false },
+    "parent": { "title": "Parent scope", "category": "Input / Context", "advanced": true },
+    "item": { "title": "Current item", "category": "Input / Context", "advanced": false },
+    "key": { "title": "Current key", "category": "Input / Context", "advanced": false },
+    "index": { "title": "Current index", "category": "Input / Context", "advanced": false },
+    "value": { "title": "Current value", "category": "Input / Context", "advanced": false },
+    "set": { "title": "Set variable", "category": "Variables", "advanced": true },
+    "get": { "title": "Get variable", "category": "Variables", "advanced": true },
+    "attr": { "title": "Get attribute", "category": "Data Access", "advanced": false },
+    "object": { "title": "Build object", "category": "Objects / Arrays", "advanced": false },
+    "map": { "title": "Map", "category": "Iteration", "advanced": false },
+    "filter": { "title": "Filter", "category": "Iteration", "advanced": false },
+    "zip": { "title": "Zip", "category": "Composition", "advanced": true },
+    "file": { "title": "Write file", "category": "Side Effects", "advanced": true },
+    "join": { "title": "Join", "category": "Composition", "advanced": false },
+    "chain": { "title": "Chain", "category": "Composition", "advanced": false },
+    "expr": { "title": "Expression", "category": "Computation", "advanced": false },
+    "call": { "title": "Call function", "category": "Computation", "advanced": false },
+    "format": { "title": "Format string", "category": "Formatting", "advanced": false },
+    "include": { "title": "Include template", "category": "Includes", "advanced": true },
+    "switch": { "title": "Switch", "category": "Control Flow", "advanced": false },
+    "cond": { "title": "Condition", "category": "Control Flow", "advanced": false }
+  },
+  "dropdownMenus": {
+    "expr": {
+      "op": [
+        { "value": "<",  "label": "< (lt)",  "aliases": ["lt"] },
+        { "value": "<=", "label": "<= (le)", "aliases": ["le"] },
+        { "value": "==", "label": "== (eq)", "aliases": ["eq"] },
+        { "value": "!=", "label": "!= (ne)", "aliases": ["ne"] },
+        { "value": ">=", "label": ">= (ge)", "aliases": ["ge"] },
+        { "value": ">",  "label": "> (gt)",  "aliases": ["gt"] },
+        { "value": "+",  "label": "+ (add)", "aliases": ["add"] },
+        { "value": "-",  "label": "- (sub)", "aliases": ["sub"] },
+        { "value": "*",  "label": "* (mul)", "aliases": ["mul"] },
+        { "value": "/",  "label": "/ (div)", "aliases": ["div"] },
+        { "value": "%",  "label": "% (mod)", "aliases": ["mod"] },
+        { "value": "&&", "label": "&& (and)", "aliases": ["and"] },
+        { "value": "||", "label": "|| (or)", "aliases": ["or"] },
+        { "value": "!",  "label": "! (not)", "aliases": ["not"] }
+      ]
+    }
+  }
+}

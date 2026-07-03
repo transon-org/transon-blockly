@@ -1,0 +1,48 @@
+{
+  "name": "@transon/editor-element",
+  "version": "0.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Framework-agnostic public surface for the Transon Visual Editor: createTransonEditor() + the <transon-editor> custom element (AD-019). ESM primary + a self-contained IIFE that auto-registers the element (AD-020). Bundles the internal React UI; ships no engine (AD-008).",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./iife": "./dist/iife.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "./dist/iife.js",
+    "./src/iife.ts"
+  ],
+  "scripts": {
+    "build": "vite build && BUILD_TARGET=iife vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@transon/editor-blockly": "workspace:*",
+    "@transon/editor-core": "workspace:*",
+    "@transon/editor-ui": "workspace:*",
+    "blockly": "13.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.9",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "jsdom": "27.4.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vite-plugin-dts": "4.5.4",
+    "vitest": "2.1.9"
+  }
+}

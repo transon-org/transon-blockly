@@ -1,0 +1,24 @@
+{
+  "name": "@transon/engine-node-adapter",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Test-only Node->Python `transon` EngineProvider adapter (AD-011, AD-025).",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@transon/editor-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@transon/editor-blockly": "workspace:*",
+    "@transon/editor-ui": "workspace:*",
+    "@types/node": "22.18.9",
+    "blockly": "13.0.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.3",
+    "vitest": "2.1.9"
+  }
+}

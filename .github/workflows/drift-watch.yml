@@ -1,0 +1,65 @@
+name: drift-watch
+
+# Outer loop (M-08): the inner loop (pre-commit + agentic-checks) fires on a *change* and blocks it.
+# This fires on a *schedule* to catch drift that accumulates with no PR open — the engine moves out
+# from under the committed metadata snapshot, a link rots, the maturity ratchet slips. It is
+# PROPOSE-ONLY: it runs the read-only gates and, on drift, opens/updates an issue. It never writes the
+# repo, commits, or merges.
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"        # every Monday 07:00 UTC
+  workflow_dispatch: {}         # and on demand
+
+permissions:
+  contents: read
+  issues: write                 # the only write: opening/updating the proposal issue
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      # Deliberately UNPINNED (unlike agentic-checks, which installs the snapshot's own pin):
+      # this watch exists to notice the engine moving out from under the committed snapshot,
+      # so it installs the LATEST release — a new transon that changes the export shows up
+      # here as drift and becomes a re-pin proposal issue.
+      - name: Install latest transon engine
+        run: pip install transon
+
+      - name: Run drift watch (read-only; drift continues, watcher failure fails the job)
+        id: watch
+        run: |
+          set +e
+          python harness/automations/drift_watch.py --out drift-report.md
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 1 ]; then exit 1; fi
+
+      - name: Propose — open or update the drift issue
+        if: steps.watch.outputs.code == '2'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('drift-report.md', 'utf8');
+            const title = 'Drift watch: gates report accumulated drift';
+            const marker = '<!-- drift-watch -->';
+            const { owner, repo } = context.repo;
+            const existing = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', labels: 'drift-watch', per_page: 20,
+            });
+            const hit = existing.data.find(i => (i.body || '').includes(marker));
+            const fullBody = `${marker}\n\n${body}`;
+            if (hit) {
+              await github.rest.issues.update({ owner, repo, issue_number: hit.number, body: fullBody });
+            } else {
+              await github.rest.issues.create({ owner, repo, title, body: fullBody, labels: ['drift-watch'] });
+            }

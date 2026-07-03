@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit — free external "mentor" reviewer, structurally triggered on every PR (M-05, gap G-05).
+# It does NOT replace the internal `round-trip-reviewer` subagent; it is a second, independent checker
+# that fires automatically at the PR boundary (the internal reviewer is invoked by a human). The
+# path_instructions below pin its attention to the same trust-critical surfaces and the same contract
+# IDs the `harness/skills/round-trip-review.md` checklist uses, so both reviewers speak the contract.
+#
+# Requires the CodeRabbit GitHub App installed on the repo to actually run; this file is the config
+# it reads. Until then it documents the structural-review intent (and satisfies the D4 maturity gate).
+language: en-US
+early_access: false
+
+reviews:
+  profile: assertive            # surface more, since the core is trust-critical and code is young
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  poem: false
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  # Don't spend review budget on generated or vendored artifacts.
+  path_filters:
+    - "!**/*.lock"
+    - "!pnpm-lock.yaml"
+    - "!docs/metadata-snapshot.json"   # generated engine export (~220KB); regenerated, never hand-edited
+
+  # The contract is docs/ + AGENTS.md. Each instruction cites the SPEC/AD anchors a reviewer must check.
+  path_instructions:
+    # 1. Round-trip core — the codec, variant matching, supported surface, marker escape, ordering.
+    - path: "packages/**/*{codec,variant,surface,marker,projection,encode,decode}*"
+      instructions: >-
+        Trust-critical round-trip core. Verify against the round-trip-review checklist:
+        (1) import->export preserves meaning for in-surface templates (AD-003/AD-004, SPEC §15.7);
+        anything else takes an explicit unsupported path, never a silent meaning change.
+        (2) Each rule invocation matches EXACTLY one variant — zero/multiple/partial must become
+        import_unsupported (SPEC §15.6). (3) The custom marker is honored everywhere, including the
+        object/fields literal-marker escape (SPEC §11.4, §15.4). (4) Key ordering is preserved
+        (SPEC §15.3). (5) No hand-written per-rule codec/IR/block code — support must be metadata +
+        projection only (SPEC §21.15, NFR-046, AD-026). Flag any new transformation DSL/path syntax
+        (SPEC §21.8). Require a round-trip corpus case for each touched rule/variant (SPEC §15.8).
+
+    # 2. Runtime-safety surfaces — engine execution, file writes, include loading, remote examples.
+    - path: "packages/**/*{engine,provider,execut,include,file,remote,host}*"
+      instructions: >-
+        Runtime-safety surface. The editor ships NO engine runtime (AD-008): validation, execution,
+        include resolution, and file capture must cross the host EngineProvider boundary (SPEC §10.4),
+        and the engine is authoritative (NFR-004) — never report a template valid/invalid that the
+        engine would disagree with. `file` writes are captured, never written to the local filesystem
+        (NFR-035, AD-009). `include` resolves only via the host loader; a missing loader is reported,
+        not guessed (AD-010). Treat remote-example fetches as untrusted input.
+
+    # 3. Tests — coverage must be ID-cited and execution-based, not textual.
+    - path: "**/*{test,spec}*"
+      instructions: >-
+        Tests must cite the requirement ID they cover (e.g. `// FR-035`, SPEC §21.13, AC-027).
+        Round-trip equivalence is execution-based via an injected engine, not string comparison
+        (AD-011). New rule/variant support needs a corpus case (SPEC §15.8).
+
+    # 4. Contract docs — SPEC-first and ID-stability are non-negotiable.
+    - path: "docs/{SPEC,ARCHITECTURE,metadata-contract,ROADMAP,traceability}.md"
+      instructions: >-
+        Contract change. Enforce SPEC-first (SPEC §21.2): a behavior change updates SPEC.md before code.
+        IDs are append-only — never renumber FR/NFR/AC/UC/AD/OQ; deprecate in place (SPEC §21.1).
+        Rules/params/operators/functions are engine-owned via get_editor_metadata(); reject any
+        hand-maintained parallel catalog (AD-012). Keep scope a visual Transon editor, not a workflow
+        platform (SPEC §4).
+
+    # 5. Harness — gates must fail closed; adapters stay single-source and symmetric.
+    - path: "harness/**"
+      instructions: >-
+        Harness change. Deterministic gates must fail closed, not silently skip (a gate that silently
+        passes is worse than none). Keep .cursor/ and .claude/ adapters thin and symmetric — both read
+        the tool-neutral harness/ core, neither references the other (see docs/portability.md). New
+        tooling lands in harness/ + both adapters, or carries an explicit exclusion.
+
+chat:
+  auto_reply: true

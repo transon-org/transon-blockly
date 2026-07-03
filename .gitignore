@@ -1,0 +1,14 @@
+# Python (harness scripts/hooks)
+__pycache__/
+*.py[cod]
+
+# Node / build (added as the monorepo lands)
+node_modules/
+dist/
+.turbo/
+*.log
+.pnpm-store
+
+# Local, per-developer agent settings (the shared .claude/settings.json IS tracked)
+.claude/settings.local.json
+.DS_Store

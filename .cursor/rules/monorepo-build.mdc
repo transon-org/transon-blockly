@@ -1,0 +1,29 @@
+---
+description: Monorepo, packaging, and build conventions (pnpm/Turborepo/Vite/Vitest/Changesets). M0 stub — fill in the pinned versions chosen at M0.
+globs: pnpm-workspace.yaml,turbo.json,**/vite.config.*,**/vitest.config.*,**/tsconfig*.json,**/package.json,.changeset/**
+alwaysApply: false
+---
+
+# Monorepo & build conventions (AD-019, AD-020, AD-021)
+
+> **M0 stub.** This rule activates once the monorepo is scaffolded. At **M0**, pin the tool versions
+> (Node LTS, pnpm, Blockly, Vite, Vitest, Turborepo, Changesets) in `docs/ROADMAP.md` §"Version pins"
+> and replace the `<pin>` placeholders below with the chosen versions (AD-021).
+
+## Layout
+- pnpm workspaces + Turborepo. Packages (AD-019/020): `@transon/editor-core` (pure TS) →
+  `@transon/editor-blockly` (Zelos) → `editor-ui` (internal React) → `@transon/editor-element`
+  (vanilla + `<transon-editor>`) + `@transon/editor-react`.
+- **Dependency direction is one-way:** core → blockly → ui → element/react. Never import "up".
+
+## Hard constraints
+- **No engine runtime in any published bundle** (AD-008). The engine is host-provided via
+  `EngineProvider`; engine adapters and Pyodide live only in `examples/`/tests, never in package deps.
+- `@transon/editor-core` stays free of Blockly/React/DOM/engine deps (AD-016) so it builds and
+  unit-tests headless.
+- Build with **Vite library mode**; ship ESM + types per package. Test with **Vitest**.
+- Version/release with **Changesets**; one changeset per user-visible change.
+
+## Pinned versions (set at M0)
+- Node: `<pin>` · pnpm: `<pin>` · Blockly: `<pin>` · Vite: `<pin>` · Vitest: `<pin>` ·
+  Turborepo: `<pin>` · Changesets: `<pin>`. Keep these in sync with `docs/ROADMAP.md`.
