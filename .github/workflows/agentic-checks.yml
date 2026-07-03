@@ -17,10 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      # 0. M-09: install the engine at the committed snapshot's own version — the wheel IS the
+      #    release the snapshot was pinned from, so parity + snapshot-drift below are binding
+      #    (`--require-engine`), not self-skipping.
+      - uses: ./.github/actions/install-pinned-transon
 
       # 1. Requirement-ID consistency: no dead/deprecated IDs; done rows have a citing test.
       - name: Traceability
@@ -34,15 +41,15 @@ jobs:
       - name: Harness evals
         run: python harness/evals/run_evals.py
 
-      # 3. Engine/spec drift. Self-skips today (the engine is not yet installable here). Once M0 lands,
-      #    pin + `pip install transon` above and add `--require-engine` to make parity binding (M-09).
+      # 3. Engine/spec drift — binding (M-09 flipped): the pinned wheel is installed above, so
+      #    a parity failure is real drift, never an environment gap.
       - name: Engine parity
-        run: python harness/scripts/check_engine_parity.py
+        run: python harness/scripts/check_engine_parity.py --require-engine
 
-      # 4. Committed metadata snapshot drift. Self-skips until the engine is pinned; add
-      #    `--require-engine` alongside the parity flip at M-09 so the snapshot can't go stale.
+      # 4. Committed metadata snapshot drift — binding (M-09 flipped): the snapshot must be
+      #    byte-identical to the pinned wheel's export.
       - name: Metadata snapshot
-        run: python harness/scripts/update_memory.py --check
+        run: python harness/scripts/update_memory.py --check --require-engine
 
       # 5. Agentic-maturity ratchet: fail if the harness regresses below the committed baseline.
       - name: Agentic maturity (ratchet)
@@ -59,3 +66,48 @@ jobs:
       # 8. Blockly behavior runtime stays finite + rule-agnostic (NFR-046, AD-031).
       - name: Behavior runtime size (NFR-046)
         run: python harness/scripts/check_behavior_runtime_size.py
+
+  # The full TypeScript workspace: typecheck + build + every vitest suite, including the
+  # engine-executed adapter tests (the round-trip corpus runs against the real pinned engine).
+  # Before this job existed the entire suite passed only on developer machines — CI stayed
+  # green even if every test broke (AC-027 was local-only).
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      # This job runs third-party install/build scripts (pnpm) — never leave the
+      # repo token on disk for them.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The Node→Python adapter spawns `python3` and imports transon (AD-011); same
+      # snapshot-derived pin as the gates job.
+      - uses: ./.github/actions/install-pinned-transon
+
+      - uses: pnpm/action-setup@v4   # version comes from package.json "packageManager"
+
+      # 22, not the root engines ">=20": blockly@13 declares engines.node >=22 and
+      # pnpm hard-fails install on the mismatch (first CI run proved it).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # Build everything first: some suites assert on their OWN package's dist output
+      # (editor-react peer-not-bundled, editor-element no-engine IIFE), which turbo's
+      # `test.dependsOn: ^build` alone would not produce.
+      - name: Build
+        run: pnpm build
+
+      - name: Test (all workspace suites)
+        run: pnpm test

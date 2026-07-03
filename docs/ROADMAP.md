@@ -143,18 +143,21 @@ Transon repo (this editor repo consumes the contract; see `metadata-contract.md`
 - DoD additions: metadata-export-parity, variant-signature-parity, and resolved-enum-parity checks
   exist and pass against the engine export (`traceability.md`); the adapter can execute a template
   with markers `@` and `$`.
-- **Status (☑ done; CI pin flip deferred to M-09).** The **engine half has landed** in the sibling `transon` repo: the
+- **Status (☑ done; M-09 CI pin flip landed 2026-07-03).** The **engine half has landed** in the sibling `transon` repo: the
   `switch`/`cond` rules and the projection-ready `get_editor_metadata()` export exist and are pinned
-  in [`docs/metadata-snapshot.json`](metadata-snapshot.json) (engine `v0.1.3`,
-  `metadata_version 2.0`, see [`metadata-snapshot.md`](metadata-snapshot.md)); the export/variant/enum
-  parity checks run against it. **Editor side (landed, reviewed):** the monorepo scaffolding
+  in [`docs/metadata-snapshot.json`](metadata-snapshot.json) (pinned at engine `v0.1.3` /
+  `metadata_version 2.0` when M0 closed; the snapshot has since moved with the engine — `v0.1.6` /
+  `3.0` as of 2026-07-03, see [`metadata-snapshot.md`](metadata-snapshot.md)); the
+  export/variant/enum parity checks run against it. **Editor side (landed, reviewed):** the monorepo scaffolding
   + pinned tooling (AD-021), the engine-free `EngineProvider` port (`@transon/editor-core`, AD-008),
   the typed metadata-snapshot loader (AD-012/NFR-047), and the Node→Python `EngineProvider` test
   adapter (`test/engine-node-adapter`, AD-011) — `version()`/`validate()` round-trip and the `@`/`$`
   two-pass staging proof (FR-116/FR-119/AD-027/AD-030) both pass, signed off by an independent
   `round-trip-reviewer`. The M0 DoD additions (export/variant/enum parity + adapter runs `@`/`$`) are
-  met. **Only deferred item:** the hard-fail CI engine-pin flip (`--require-engine`, M-09) waits on
-  `transon` being pip-installable in CI. Living status: [`docs/current-state.md`](current-state.md).
+  met. **The formerly deferred M-09 CI engine-pin flip landed 2026-07-03:** `transon` is on PyPI, so
+  `agentic-checks` installs the snapshot-pinned wheel and runs parity + snapshot-drift with
+  `--require-engine` (binding); `drift-watch` installs the *latest* wheel to catch upstream movement.
+  Living status: [`docs/current-state.md`](current-state.md).
 
 ## M1 — `editor-core`: codec skeleton + `G_encode`/`G_decode` for one rule (de-risk prototype)
 

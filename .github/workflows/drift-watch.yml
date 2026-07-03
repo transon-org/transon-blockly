@@ -25,9 +25,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      # The engine is not pinned in CI yet (M-09), so engine-parity / snapshot self-skip; the
-      # traceability, link, and maturity-ratchet checks still run. Once M-09 pins transon, add a
-      # `pip install transon` step here so the snapshot-drift watch becomes meaningful.
+      # Deliberately UNPINNED (unlike agentic-checks, which installs the snapshot's own pin):
+      # this watch exists to notice the engine moving out from under the committed snapshot,
+      # so it installs the LATEST release — a new transon that changes the export shows up
+      # here as drift and becomes a re-pin proposal issue.
+      - name: Install latest transon engine
+        run: pip install transon
+
       - name: Run drift watch (read-only; never fails the job)
         id: watch
         run: |

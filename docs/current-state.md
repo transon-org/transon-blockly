@@ -8,13 +8,41 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `5d963e8` — docs: sync tracked statuses with implemented reality (audit pass) |
+| Repo HEAD | `a2bb9ac` — harness+docs: external code-review remediation (15 findings fixed, 2 refuted) |
 | Branch | `main` |
-| Engine pin | transon `v0.1.6` @ `b64b340b9090` (see [metadata-snapshot.md](metadata-snapshot.md)) |
+| Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**Deep completeness audit DONE + M-09 flipped + CI now runs the full test suite (2026-07-03;
+UNCOMMITTED).** Swept all 269 SPEC/ARCH IDs (4 read-only agents classified the 117 with no test
+citation) and remediated the structural findings. **Audit verdicts:** nothing claimed done is false;
+the genuine NOT-implemented set is FR-017 (block comments), FR-033 (import rejections never carry
+`template_path`), FR-048 (param-level docs never rendered), FR-086's "limited generic block" half,
+UC-010's context-restriction half, AD-013's advisory-typing half, NFR-021 (zero snapshot tests),
+NFR-029 (no perf benchmark; OQ-005 targets never set), NFR-027 (dormant — no auto-run exists);
+implemented-but-untested: FR-026/049/057/066/083(ops/fns)/085, `onImportFile`, NFR-026/030/031/034/039.
+**The umbrella gap was CI: `agentic-checks` ran ONLY the Python gates — the 1448-test vitest suite,
+typecheck, and builds were enforced nowhere.** Remediation: **(1)** new CI `tests` job (pinned engine
+wheel + pnpm/turbo typecheck → build → full test). **(2) M-09 flipped** — transon is on PyPI; the
+gates job pip-installs the wheel at the snapshot's own `engine_version` (pin read from
+`metadata-snapshot.json`, cannot drift) and runs parity + snapshot checks `--require-engine`;
+`drift-watch` deliberately installs the *latest* wheel (upstream movement → proposal issue).
+**(3)** Snapshot re-pinned from the released wheel: the committed `engine_version` was `null`
+(source-tree import has no dist metadata; the checkout venv's stale editable install even reports
+0.1.5) → now `"0.1.6"`, byte-identical to what CI verifies. `update_memory.py` gained (a) wheel
+provenance fallback (sidecar: `v0.1.6 (pip wheel)`; commit honestly `unknown` for a wheel) and
+(b) a *tolerant-locally, strict-in-CI* drift check: a live export whose ONLY difference is
+`engine_version: null` (source import) is a SKIP note, never a pass-through under
+`--require-engine`. **(4)** traceability.md: new **Use-case coverage (§5)** table (UC-001..016 —
+previously absent entirely; 9× [x], 5× [~] composition gaps, UC-010 [ ]); audit-note annotations on
+the §7.4/§7.7/§7.9/§7.11 rows; the §7.9 note's **FR-068 mislabel fixed** (FR-068 = error→block
+mapping, tested — the deferred edge is the FR-057 missing-required path); AD-028 [~]→[x]
+(escape long tested); new NFR-021/027/029 rows ([ ]). **(5)** ROADMAP M-09 passages updated; Next
+steps gained the ordered verification burn-down (step 5). All gates + full 11-task turbo suite green
+after the re-pin (engine_version is informational in `snapshot.ts`; UI reads the live engine)._
 
 _**External-review remediation DONE (2026-07-03) — 17 findings triaged: 15 fixed, 2 refuted; all gates
 green; UNCOMMITTED.** Verified each finding of an external code review against the tree. **Fixed
@@ -450,8 +478,21 @@ living read of it.
    via the Playwright MCP and passed (axe 0 violations incl. contrast; Pyodide `ready`), but is not yet a
    committed gate. (b) Structured error→block highlighting still falls back to the root block because real
    engine errors carry only a text location trail — a structured template-path would need an engine change.
-4. (Deferred, M-09) Pin `transon` in CI and flip `check_engine_parity.py --require-engine` +
-   `update_memory.py --check --require-engine` on, once the engine is pip-installable in CI.
+4. ~~(Deferred, M-09) Pin `transon` in CI and flip `--require-engine` on~~ **DONE (2026-07-03,
+   see Last action)** — `agentic-checks` installs the snapshot-pinned wheel (pin read out of
+   `metadata-snapshot.json`, so it cannot drift) and runs parity + snapshot with
+   `--require-engine`; `drift-watch` installs the *latest* wheel so upstream movement becomes a
+   proposal issue. A new CI `tests` job also runs typecheck + build + the full vitest workspace.
+5. **Verification burn-down (2026-07-03 deep audit — see traceability audit notes).** In rough
+   value order: (a) FR-033 — populate `template_path` on import rejections (`reverse.ts`);
+   (b) negative-path tests: FR-057 missing-required → `generation_status: 'incomplete'`,
+   FR-085/086 incomplete-metadata reject, `onImportFile` file wrapper, FR-066 DOM render of a
+   validation error, FR-049 param-examples join; (c) decide-or-descope (SPEC-first §21):
+   FR-017 block comments, FR-048 param-level docs rendering, UC-010 context-restricted
+   iteration accessors, AD-013 advisory typing half, NFR-021 snapshot tests, NFR-029 perf
+   benchmark (+ OQ-005 targets), FR-083 custom operator/function coverage;
+   (d) NFR-030/031/034 isolation/negative tests; (e) M-14 Playwright/axe browser CI job
+   (contrast/keyboard/Pyodide), M-15 coverage ratchet.
 
 **Regen flow** (only if a codec generator changes — M5 did NOT): write generators →
 `pnpm --filter editor-core build` → `UPDATE_ARTIFACTS=1` test → rebuild (double-build, run.ts bundles the
@@ -459,9 +500,9 @@ artifacts) → a normal run must be byte-equal.
 
 ## Open blockers / waiting-on
 
-- **UAT #1/#2 editor work waits on engine R-28** (`../transon` — RFC + roadmap entry placed,
-  uncommitted; implementation user-managed). Editor steps 2(b)/2(c) start after it lands and the
-  snapshot is re-pinned.
+- **UAT #1/#2 editor work**: engine R-28 SHIPPED (`v0.1.4`; `container`/`arm` present in the
+  pinned 3.0 snapshot) — no longer a blocker, but the editor slice is ⚠ IN PROGRESS in a
+  SEPARATE session (see Next step 2); coordinate before touching its surfaces.
 - None blocking M0 — it depends only on owner-controlled inputs (ROADMAP §"Remaining inputs").
 
 ## Do-not-relitigate (pointers, not copies)

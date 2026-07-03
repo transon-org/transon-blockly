@@ -11,3 +11,4 @@ dist/
 
 # Local, per-developer agent settings (the shared .claude/settings.json IS tracked)
 .claude/settings.local.json
+.DS_Store
