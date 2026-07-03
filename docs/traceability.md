@@ -30,13 +30,14 @@ tests-required discipline (`SPEC.md` §21.1, §21.2, §21.13). Architecture is i
 4. Before a PR: every implemented FR must have a referencing test; flag any test that references
    a non-existent or `(deprecated)` ID.
 
-Suggested one-shot check (manual until automated):
+Suggested one-shot check (automated in `harness/scripts/check_traceability.py`; manual equivalent):
 
 ```bash
 # IDs defined in the spec
 grep -oE '\b(FR|AC)-[0-9]+\b' docs/SPEC.md | sort -u > /tmp/spec_ids.txt
-# IDs referenced in tests
-grep -rhoE '\b(FR|AC)-[0-9]+\b' --include='*.ts' --include='*.tsx' src test \
+# IDs referenced in tests (all test locations: packages/*/test, test/, examples/*/test)
+grep -rhoE '\b(FR|AC)-[0-9]+\b' --include='*.ts' --include='*.tsx' \
+  packages/*/test test examples/*/test \
   | sort -u > /tmp/test_ids.txt
 # requirements with no test reference
 comm -23 /tmp/spec_ids.txt /tmp/test_ids.txt

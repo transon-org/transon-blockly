@@ -8,13 +8,36 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `ca3a975` — retro(demo): 4-minute demo-video production pipeline + rough cut |
+| Repo HEAD | `5d963e8` — docs: sync tracked statuses with implemented reality (audit pass) |
 | Branch | `main` |
 | Engine pin | transon `v0.1.6` @ `b64b340b9090` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**External-review remediation DONE (2026-07-03) — 17 findings triaged: 15 fixed, 2 refuted; all gates
+green; UNCOMMITTED.** Verified each finding of an external code review against the tree. **Fixed
+(docs):** AGENTS.md stale `AD-001..AD-032` range (now unbounded `AD-*`) + stale Zelos package label;
+CLAUDE.md re-thinned to a pure pointer (single-source description now only in `harness/README.md` /
+`docs/portability.md`); ARCHITECTURE.md §5.1 row / mermaid label / §6.3 bullet + README package table
+aligned to the thrasos default (AD-033); traceability.md one-shot grep now covers all real test
+locations (`packages/*/test`, `test/`, `examples/*/test`); review-gate.md Stage-3 snapshot gate is now
+blocking (`update_memory.py --check --require-engine`, skip must be an explicit waived-gate record).
+**Fixed (harness code):** `drift_watch.py` keeps watcher errors (exit 1) distinct from drift (exit 2)
+via a `WATCHER_ERROR` sentinel; `run_evals.py` cost-tier check now compares the writer against BOTH
+judge roles, rejects boolean `loop_limit` (bool⊂int), and requires the adjacent "test…first" phrase;
+`commit-msg` hook comment points at `harness/githooks` and its path regex mirrors `CODE_DIRS` exactly
+(dropped `lib|app`); `check_maturity.py` D2 trailer credit needs actual `Refs:`/`Slice:` hook content,
+not mere commit-msg file presence (ratchet still L4); `check_traceability.py` coverage gate (3) now
+accepts only test-scoped citations (`test_id_refs` filter — still green, so all done rows genuinely
+have test citations); `update_memory.py` watches `harness/` for the handoff nudge and propagates a
+`write_state()` failure into the exit code. **Refuted (no change):** the "unchecked presentation
+source-scan row" (already `[x]` in both tables) and the README `createTransonEditor` example ("engine
+at top level" is wrong — the real options shape IS `{ host: { engine } }`, per `EditorControllerOptions`
+/ `TransonEditorHost`). Validated: traceability, links, evals, maturity (`--check`), engine parity,
+snapshot `--check`, full `drift_watch` run — all exit 0; watcher-error path + new eval guards
+smoke-tested directly._
 
 _**Docs-vs-reality synchronization pass DONE (2026-07-03) — statuses reconciled; all gates + all 7 test
 suites verified green (core 21 · blockly 27 · ui 116 · element 12 · react 5 · adapter 1260 ·
