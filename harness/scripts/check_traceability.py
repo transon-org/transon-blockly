@@ -70,6 +70,10 @@ def _is_test_path(rel: str) -> bool:
     )
 
 
+# Generated/vendored trees — never scanned (speed + no spurious ID matches from vendored code).
+EXCLUDED_DIR_NAMES = {"node_modules", "dist", "build", ".turbo", "coverage"}
+
+
 def code_id_refs() -> Dict[str, List[str]]:
     refs: Dict[str, List[str]] = {}
     for directory in CODE_DIRS:
@@ -77,6 +81,8 @@ def code_id_refs() -> Dict[str, List[str]]:
         if not base.exists():
             continue
         for path in base.rglob("*"):
+            if EXCLUDED_DIR_NAMES & set(path.relative_to(base).parts[:-1]):
+                continue
             if path.is_file() and path.suffix in CODE_EXTS:
                 for ident in _ids(_read(path)):
                     refs.setdefault(ident, []).append(str(path.relative_to(PROJECT_ROOT)))

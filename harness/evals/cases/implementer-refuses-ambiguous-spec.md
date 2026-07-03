@@ -6,7 +6,7 @@
 
 ## Input
 
-```
+```text
 /implement-requirement FR-XXX
 ```
 

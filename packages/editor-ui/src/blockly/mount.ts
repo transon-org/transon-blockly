@@ -55,6 +55,9 @@ export interface TransonMount {
   clear(): void;
   /** Update the palette view — advanced-blocks toggle + search (§12.6). Re-projects the toolbox. */
   setToolboxView(view: ToolboxView): void;
+  /** Toggle read-only after mount (FR-107): controlled embeds can flip the prop at runtime, and the
+   *  injected workspace must follow (Blockly 13 `WorkspaceSvg.setIsReadOnly`). */
+  setReadOnly(readOnly: boolean): void;
   dispose(): void;
 }
 
@@ -118,6 +121,9 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
       workspace.updateToolbox(
         progressiveToolbox(baseToolbox, view) as Blockly.utils.toolbox.ToolboxDefinition,
       );
+    },
+    setReadOnly(readOnly) {
+      workspace.setIsReadOnly(readOnly);
     },
     dispose() {
       workspace.removeChangeListener(listener);

@@ -180,6 +180,16 @@ function removeInputs(block: Blockly.Block, prefix: string): void {
   for (const n of names) if (block.getInput(n)) block.removeInput(n);
 }
 
+/** Run a +/- shape change wrapped in a mutation BlockChange event. appendValueInput/removeInput
+ *  fire no Blockly events on their own, so without this the on-canvas mutations would be invisible
+ *  to undo/redo and to workspace change listeners (the workspace→JSON sync). */
+function withMutationEvent(block: DynamicBlock, mutate: () => void): void {
+  const save = (): string => JSON.stringify(block.saveExtraState?.() ?? null);
+  const oldState = save();
+  mutate();
+  Blockly.Events.fire(new Blockly.Events.BlockChange(block, 'mutation', null, oldState, save()));
+}
+
 /** Append the +/- control row once (run from the mutator helper at block init, for fresh + loaded
  *  blocks alike). The buttons call the block's add/remove methods. */
 function appendControls(block: DynamicBlock, add: () => void, remove: () => void): void {
@@ -206,13 +216,17 @@ const ARRAY_MUTATOR = {
     for (let i = 0; i < (this.itemCount_ ?? 0); i++) this.appendValueInput(`ITEM${i}`);
   },
   addItem_(this: DynamicBlock): void {
-    this.appendValueInput(`ITEM${this.itemCount_ ?? 0}`);
-    this.itemCount_ = (this.itemCount_ ?? 0) + 1;
+    withMutationEvent(this, () => {
+      this.appendValueInput(`ITEM${this.itemCount_ ?? 0}`);
+      this.itemCount_ = (this.itemCount_ ?? 0) + 1;
+    });
   },
   removeItem_(this: DynamicBlock): void {
     if ((this.itemCount_ ?? 0) > 0) {
-      this.itemCount_ = (this.itemCount_ ?? 0) - 1;
-      this.removeInput(`ITEM${this.itemCount_}`);
+      withMutationEvent(this, () => {
+        this.itemCount_ = (this.itemCount_ ?? 0) - 1;
+        this.removeInput(`ITEM${this.itemCount_}`);
+      });
     }
   },
 };
@@ -247,14 +261,18 @@ const OBJECT_MUTATOR = {
     }
   },
   addField_(this: DynamicBlock): void {
-    const i = this.fieldCount_ ?? 0;
-    this.appendValueInput(`VALUE${i}`).appendField(new Blockly.FieldTextInput('key'), `KEY${i}`);
-    this.fieldCount_ = i + 1;
+    withMutationEvent(this, () => {
+      const i = this.fieldCount_ ?? 0;
+      this.appendValueInput(`VALUE${i}`).appendField(new Blockly.FieldTextInput('key'), `KEY${i}`);
+      this.fieldCount_ = i + 1;
+    });
   },
   removeField_(this: DynamicBlock): void {
     if ((this.fieldCount_ ?? 0) > 0) {
-      this.fieldCount_ = (this.fieldCount_ ?? 0) - 1;
-      this.removeInput(`VALUE${this.fieldCount_}`);
+      withMutationEvent(this, () => {
+        this.fieldCount_ = (this.fieldCount_ ?? 0) - 1;
+        this.removeInput(`VALUE${this.fieldCount_}`);
+      });
     }
   },
 };

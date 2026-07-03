@@ -6,7 +6,7 @@
   "description": "Transon Visual Editor monorepo (M0 scaffolding).",
   "packageManager": "pnpm@10.27.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "build": "turbo run build",

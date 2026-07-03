@@ -8,13 +8,34 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `a2bb9ac` — harness+docs: external code-review remediation (15 findings fixed, 2 refuted) |
-| Branch | `main` |
+| Repo HEAD | `3b891c0` — Merge pull request #1 from transon-org/audit-ci-tests-m09 |
+| Branch | `recent-changes` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**PR #4 review comments addressed — all 38 CodeRabbit threads dispositioned (2026-07-04, branch
+`recent-changes`).** 36 fixed / 2 skipped-with-reason (theme.ts `name`: Blockly 13's installed
+`ITheme` typings REQUIRE `name` in the second arg, CodeRabbit's web claim was wrong; the
+current-state.md intro finding was already obsolete). Highlights: CI actions pinned to commit SHAs
++ `persist-credentials: false`; MCP servers pinned (`@playwright/mcp@0.0.77`,
+`@upstash/context7-mcp@3.2.2`); drift-watch fails the job on watcher exit 1 (drift 2 still flows to
+the issue step); fail-closed `--require-engine` on the snapshot gate (drift_watch.py +
+worktrees.md); traceability scan excludes vendor dirs; check_no_codec_mapping catches multiline
+destructuring (+selftest); check_engine_parity survives malformed exports (reports, no crash);
+engines.node ≥22 (blockly@13 + engine-strict) in package.json/README/CI comment; reference-host
+provider hardened (engineVersion validated pre-interpolation, memoized concurrent init, closure
+status, guarded accessors, full dispose reset) + glue normalizes unexpected Python errors into the
+JSON envelope; editor-blockly +/- mutators fire `BlockChange('mutation')` (undo/redo + JSON sync);
+editor-element preserves live template across attribute remounts, validates `mode`, nulls the
+controller on destroy, no-engine bundle test fails loud (turbo `test` now depends on own `build`);
+editor-ui: live `readOnly` sync (`setIsReadOnly` through mount/controller + React effect),
+stale-async guards (shared `session/latest.ts` generation tokens) on
+project/applyReverse/execute/validate, pending initial template consumed on the idle→ready
+transition, vacuous embedding readOnly test fixed. All 20 turbo tasks green (build/typecheck/test)
++ all 8 harness gates green. **Next:** push, let CodeRabbit re-review, merge PR #4._
 
 _**Deep completeness audit DONE + M-09 flipped + CI now runs the full test suite (2026-07-03;
 UNCOMMITTED).** Swept all 269 SPEC/ARCH IDs (4 read-only agents classified the 117 with no test
@@ -446,6 +467,10 @@ living read of it.
 
 ## Next steps (ordered)
 
+0a. **Land PR #4 (`recent-changes`)** — review fixes are committed and pushed; wait for
+   CodeRabbit's re-review + CI, then merge. Two threads were intentionally not "fixed"
+   (theme.ts `name` — required by the installed typings; current-state.md intro — already
+   current); replies posted on the threads.
 0. ~~Gate + commit the R-31 consumer migration~~ **DONE (2026-07-03)** — `review-gate` run
    (findings fixed, see Last action) and the tree committed on branch `r31-corpus-migration`
    (R-31 + FR-132 + fixes, plus a dev-env chore commit). The engine side is already released

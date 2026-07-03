@@ -32,6 +32,12 @@ export interface PyodideHostOptions {
 
 type PyCallable = (...args: unknown[]) => unknown;
 
+/**
+ * PEP 440-ish version allowlist. `engineVersion` is interpolated into Python source executed in
+ * Pyodide, so anything outside a plain version literal must be rejected up front.
+ */
+const ENGINE_VERSION_RE = /^\d+(\.\d+)*([a-z]+\d*)?$/;
+
 async function defaultLoadPyodide(indexURL: string): Promise<PyodideLike> {
   // Browser-only: dynamically import the Pyodide ESM from the pinned CDN (never bundled, AD-008).
   const mod = (await import(/* @vite-ignore */ `${indexURL}pyodide.mjs`)) as {
@@ -47,32 +53,55 @@ async function defaultLoadPyodide(indexURL: string): Promise<PyodideLike> {
  */
 export function createPyodideHost(opts: PyodideHostOptions = {}): EngineProvider {
   const engineVersion = opts.engineVersion ?? PINNED_ENGINE_VERSION;
+  if (!ENGINE_VERSION_RE.test(engineVersion)) {
+    throw new Error(
+      `createPyodideHost: invalid engineVersion ${JSON.stringify(engineVersion)} — expected a plain version like "0.1.6"`,
+    );
+  }
   const indexURL = opts.pyodideIndexUrl ?? PYODIDE_CDN;
   let py: PyodideLike | undefined;
+  // Closure-backed state (not `this`-based) so methods work regardless of call binding.
+  let status: EngineProvider['status'] = 'idle';
+  let initPromise: Promise<void> | undefined;
+
+  const requirePy = (method: string): PyodideLike => {
+    if (!py) {
+      throw new Error(`createPyodideHost: ${method}() requires init() to have resolved (status: ${status})`);
+    }
+    return py;
+  };
 
   const provider: EngineProvider = {
-    status: 'idle',
+    get status() {
+      return status;
+    },
     async init(): Promise<void> {
-      if (this.status === 'ready') return;
-      (this as { status: EngineProvider['status'] }).status = 'loading';
-      try {
-        py = await (opts.loadPyodide ? opts.loadPyodide() : defaultLoadPyodide(indexURL));
-        await py.loadPackage('micropip');
-        await py.runPythonAsync(`import micropip\nawait micropip.install("transon==${engineVersion}")`);
-        await py.runPythonAsync(GLUE_PY);
-        (this as { status: EngineProvider['status'] }).status = 'ready';
-      } catch (e) {
-        (this as { status: EngineProvider['status'] }).status = 'failed';
-        throw e;
-      }
+      if (status === 'ready') return;
+      // Concurrent init() calls share the in-flight promise instead of re-loading Pyodide.
+      if (initPromise) return initPromise;
+      status = 'loading';
+      initPromise = (async () => {
+        try {
+          py = await (opts.loadPyodide ? opts.loadPyodide() : defaultLoadPyodide(indexURL));
+          await py.loadPackage('micropip');
+          await py.runPythonAsync(`import micropip\nawait micropip.install("transon==${engineVersion}")`);
+          await py.runPythonAsync(GLUE_PY);
+          status = 'ready';
+        } catch (e) {
+          status = 'failed';
+          initPromise = undefined; // allow a retry after failure
+          throw e;
+        }
+      })();
+      return initPromise;
     },
     async validate(template: Json, o: { marker: string }): Promise<ValidationResult> {
-      const fn = py!.globals.get('transon_validate') as PyCallable;
+      const fn = requirePy('validate').globals.get('transon_validate') as PyCallable;
       const out = fn(JSON.stringify(template), o.marker) as string;
       return JSON.parse(out) as ValidationResult;
     },
     async transform(template, input, o): Promise<ExecutionResult> {
-      const fn = py!.globals.get('transon_transform') as PyCallable;
+      const fn = requirePy('transform').globals.get('transon_transform') as PyCallable;
       const jsLoader = o.includeLoader
         ? (name: string): string | null => {
             const t = o.includeLoader!(name);
@@ -92,11 +121,13 @@ export function createPyodideHost(opts: PyodideHostOptions = {}): EngineProvider
       return { ...rest, filesWritten: files_written } as ExecutionResult;
     },
     async version(): Promise<{ engine: string; metadata: string }> {
-      const fn = py!.globals.get('transon_version') as PyCallable;
+      const fn = requirePy('version').globals.get('transon_version') as PyCallable;
       return JSON.parse(fn() as string) as { engine: string; metadata: string };
     },
     dispose(): void {
       py = undefined;
+      initPromise = undefined;
+      status = 'idle';
     },
   };
   return provider;

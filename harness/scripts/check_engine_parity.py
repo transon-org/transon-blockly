@@ -115,9 +115,16 @@ def _load_export() -> Optional[dict]:
     return meta if isinstance(meta, dict) else None
 
 
+def _dict_entries(value) -> List[dict]:
+    """Only the dict entries of a maybe-list — a malformed export (non-list value, non-dict
+    entry) yields nothing here instead of raising. ``check_export_shape()`` is what *reports*
+    the malformation; the iteration paths just have to survive it."""
+    return [item for item in value if isinstance(item, dict)] if isinstance(value, list) else []
+
+
 def _operator_tokens(operators) -> Set[str]:
     tokens: Set[str] = set()
-    for op in operators:
+    for op in _dict_entries(operators):
         if op.get("name"):
             tokens.add(op["name"])
         if op.get("alternative"):
@@ -139,13 +146,13 @@ class EngineCatalog:
         return self.export is not None
 
     def rule_names(self) -> Set[str]:
-        return {r["name"] for r in self.rules}
+        return {r["name"] for r in _dict_entries(self.rules) if r.get("name")}
 
     def operator_tokens(self) -> Set[str]:
         return _operator_tokens(self.operators)
 
     def function_names(self) -> Set[str]:
-        return {fn["name"] for fn in self.functions}
+        return {fn["name"] for fn in _dict_entries(self.functions) if fn.get("name")}
 
 
 def engine_catalog() -> Optional[EngineCatalog]:
@@ -192,14 +199,19 @@ def check_export_shape(export: dict) -> List[str]:
     if not isinstance(export.get("docs"), dict):
         problems.append("export: missing split `docs` payload (metadata-contract §2.7)")
     for key in ("rules", "operators", "functions"):
-        if not isinstance(catalog.get(key), list):
+        value = catalog.get(key)
+        if not isinstance(value, list):
             problems.append(f"export: `catalog.{key}` is missing or not a list")
-    for rule in catalog.get("rules", []):
+        else:
+            for entry in value:
+                if not isinstance(entry, dict):
+                    problems.append(f"export: `catalog.{key}` entry {entry!r} is not an object")
+    for rule in _dict_entries(catalog.get("rules")):
         name = rule.get("name", "<unnamed>")
         for field in ("name", "params", "variants"):
             if field not in rule:
                 problems.append(f"export: rule `{name}` is missing `{field}` (metadata-contract §2.1)")
-        for param in rule.get("params", []):
+        for param in _dict_entries(rule.get("params")):
             if param.get("kind") not in ("dynamic", "constant"):
                 problems.append(
                     f"export: rule `{name}` param `{param.get('name')}` has invalid `kind`"
@@ -211,17 +223,20 @@ def check_export_shape(export: dict) -> List[str]:
 def check_variant_signatures(catalog_rules: List[dict]) -> List[str]:
     """Variant-signature parity: well-formed pre-derived variants (§2.5)."""
     problems: List[str] = []
-    for rule in catalog_rules:
+    for rule in _dict_entries(catalog_rules):
         name = rule.get("name", "<unnamed>")
-        param_names = {p.get("name") for p in rule.get("params", [])}
+        param_names = {p.get("name") for p in _dict_entries(rule.get("params"))}
         variants = rule.get("variants")
-        if not variants:
+        if not isinstance(variants, list) or not variants:
             problems.append(f"variants: rule `{name}` has no pre-derived variant signatures (§2.5)")
             continue
         for variant in variants:
+            if not isinstance(variant, dict):
+                problems.append(f"variants: rule `{name}` has a non-object variant entry {variant!r} (§2.5)")
+                continue
             if "id" not in variant:
                 problems.append(f"variants: rule `{name}` has a variant with no `id` (§2.5)")
-            for vp in variant.get("params", []):
+            for vp in _dict_entries(variant.get("params")):
                 if vp.get("name") not in param_names:
                     problems.append(
                         f"variants: rule `{name}` variant `{variant.get('id')}` references unknown"
@@ -243,9 +258,9 @@ def check_resolved_enums(catalog: EngineCatalog) -> List[str]:
         ("call", "name"): catalog.function_names(),
     }
     seen: Set[Tuple[str, str]] = set()
-    for rule in catalog.rules:
+    for rule in _dict_entries(catalog.rules):
         rule_name = rule.get("name")
-        for param in rule.get("params", []):
+        for param in _dict_entries(rule.get("params")):
             key = (rule_name, param.get("name"))
             if key not in expected:
                 continue

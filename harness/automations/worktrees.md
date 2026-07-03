@@ -30,7 +30,7 @@ git worktree add ../tb-docs-fix    -b docs-fix     # slice B → another sibling
 
 Each directory is a normal checkout: run `python harness/scripts/check_maturity.py` etc. inside it. The
 engine sibling (`../transon`) is found the same way from any worktree (`TRANSON_REPO` or the
-parent-of-parent `transon` lookup) — verify with `update_memory.py --check`.
+parent-of-parent `transon` lookup) — verify with `update_memory.py --check --require-engine`.
 
 ## Finish & clean up
 

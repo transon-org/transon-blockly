@@ -38,7 +38,12 @@ _FIELDS = r"inputs|extraState|fields"
 MAPPING_ACCESS = re.compile(
     rf"\.(?:{_FIELDS})\b"                         # b.inputs
     rf"|\[\s*['\"](?:{_FIELDS})['\"]\s*\]"         # b['inputs'] / b["inputs"]
-    rf"|(?:const|let|var)\s*\{{[^}}]*\b(?:{_FIELDS})\b[^}}]*\}}\s*="  # const { inputs } = b
+)
+# Destructuring reads (`const { inputs, fields } = b`) are matched against the whole file
+# text, not per line — a formatter can wrap the pattern across lines (`const {\n  inputs,\n`)
+# and the gate must not be evadable by formatting. `[^}]` spans newlines, so no DOTALL needed.
+DESTRUCTURE = re.compile(
+    rf"(?:const|let|var)\s*\{{[^}}]*\b(?:{_FIELDS})\b[^}}]*\}}\s*="
 )
 # A line-comment prefix to ignore (the scan is intentionally simple; comments may mention them).
 COMMENT = re.compile(r"^\s*(//|\*|/\*)")
@@ -49,12 +54,21 @@ def scan(root: Path) -> list[str]:
     problems: list[str] = []
     for pkg_src in sorted(root.glob("packages/*/src")):
         for ts in sorted(pkg_src.rglob("*.ts")):
-            for lineno, line in enumerate(ts.read_text(encoding="utf-8").splitlines(), 1):
+            rel = ts.relative_to(root)
+            text = ts.read_text(encoding="utf-8")
+            lines = text.splitlines()
+            for lineno, line in enumerate(lines, 1):
                 if COMMENT.match(line):
                     continue
                 if MAPPING_ACCESS.search(line):
-                    rel = ts.relative_to(root)
                     problems.append(f"{rel}:{lineno}: codec↔workspace mapping access — {line.strip()}")
+            # Destructuring can span lines, so match it on the full text and map back to a line.
+            for m in DESTRUCTURE.finditer(text):
+                lineno = text.count("\n", 0, m.start()) + 1
+                line = lines[lineno - 1]
+                if COMMENT.match(line):
+                    continue
+                problems.append(f"{rel}:{lineno}: codec↔workspace mapping access — {line.strip()}")
     return problems
 
 
@@ -70,9 +84,13 @@ def _selftest() -> int:
             "export function g(b) { return b['inputs'].NAME ?? b[\"fields\"].VALUE; }\n", encoding="utf-8")
         (src / "bad_destructure.ts").write_text(
             "export function h(b) { const { inputs, fields } = b; return inputs ?? fields; }\n", encoding="utf-8")
+        (src / "bad_destructure_multiline.ts").write_text(
+            "export function k(b) {\n  const {\n    inputs,\n    fields,\n  } = b;\n"
+            "  return inputs ?? fields;\n}\n", encoding="utf-8")
         bad = scan(root)
         if not (any("bad_dot" in p for p in bad) and any("bad_bracket" in p for p in bad)
-                and any("bad_destructure" in p for p in bad)):
+                and any("bad_destructure.ts" in p for p in bad)
+                and any("bad_destructure_multiline" in p for p in bad)):
             print(f"selftest FAILED: not all access styles caught: {bad}")
             return 1
         # A clean projection-style file — must NOT be flagged (keys, not member access).

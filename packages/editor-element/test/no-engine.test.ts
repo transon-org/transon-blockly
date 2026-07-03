@@ -26,7 +26,11 @@ describe('no engine bundled (AD-008, AD-020, AC-022)', () => {
 
   it('the built IIFE bundle contains no engine (AD-020)', () => {
     const iife = resolve(PKG_DIR, 'dist', 'iife.js');
-    if (!existsSync(iife)) return; // built by the package `build` script; skip if not yet built
+    if (!existsSync(iife)) {
+      // Fail loud rather than silently skipping: this is the assertion that actually proves the
+      // shipped bundle contains no engine code (AD-008/AD-020).
+      throw new Error('dist/iife.js not found — run `build` before `test` to verify no engine is bundled');
+    }
     const bundle = readFileSync(iife, 'utf8');
     expect(bundle).not.toMatch(ENGINE_MARKERS);
   });

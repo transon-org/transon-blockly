@@ -6,6 +6,11 @@ import type { EngineProvider, ValidationResult } from '@transon/editor-core';
 import type { EditorStore } from './store.js';
 import { isEngineReady } from './engine-status.js';
 import { engineErrorCode, type EditorError } from './errors.js';
+import { createLatestGuard } from './latest.js';
+
+// Per-store latest-call guard: only the newest started validation may commit its verdict (§17.8
+// stale-result safety) — an older overlapping call resolving late must not overwrite fresher state.
+const beginValidation = createLatestGuard<EditorStore>();
 
 /**
  * Validate the current `template_json` through the host engine. No-op when the engine is not ready
@@ -21,8 +26,12 @@ export async function validateTemplate(
 ): Promise<ValidationResult | null> {
   const template = store.getState().template_json;
   if (!isEngineReady(engine) || template == null) return null;
+  const isCurrent = beginValidation(store);
   store.setState({ validation_status: 'pending' });
   const res = await engine!.validate(template, { marker });
+  // A newer validation started while this one was in flight: drop the stale verdict (§17.8) — the
+  // latest call owns validation_status/errors, and the caller must not fire onValidate for it.
+  if (!isCurrent()) return null;
   if (res.status === 'ok' && res.valid) {
     store.setState({ validation_status: 'valid', errors: [] });
     return res;

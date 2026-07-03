@@ -77,6 +77,12 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // FR-107: `readOnly` is a live prop — when it flips after mount, sync it into the controller so
+  // the injected Blockly workspace and the §7.15 JSON-panel gate follow the shell chrome.
+  useEffect(() => {
+    controllerRef.current?.setReadOnly(props.readOnly ?? false);
+  }, [props.readOnly]);
+
   const controller = controllerRef.current;
   const mode = state.editor_mode;
   const readOnly = props.readOnly ?? false;

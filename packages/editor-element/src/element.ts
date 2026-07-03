@@ -19,6 +19,13 @@ function parseAttr(value: string | null): Json | undefined {
   }
 }
 
+const EDITOR_MODES: readonly EditorMode[] = ['sandbox', 'compact'];
+
+/** Validate the `mode` attribute against the supported EditorMode values (default: sandbox). */
+function parseMode(value: string | null): EditorMode {
+  return EDITOR_MODES.includes(value as EditorMode) ? (value as EditorMode) : 'sandbox';
+}
+
 export class TransonEditorElement extends HTMLElement {
   static get observedAttributes(): string[] {
     return ['mode', 'marker', 'readonly'];
@@ -44,6 +51,9 @@ export class TransonEditorElement extends HTMLElement {
   }
 
   #mount(): void {
+    // A remount (attribute change) must not drop live edits: prefer the current workspace
+    // template over the static `template` attribute when one exists.
+    const liveTemplate = this.#handle?.getTemplate();
     this.#unmount();
     const mountPoint = document.createElement('div'); // light-DOM child (AD-018)
     this.appendChild(mountPoint);
@@ -51,9 +61,9 @@ export class TransonEditorElement extends HTMLElement {
     const marker = this.getAttribute('marker');
     this.#handle = createTransonEditor(mountPoint, {
       host: marker ? { ...this.host, marker } : this.host,
-      mode: (this.getAttribute('mode') as EditorMode | null) ?? 'sandbox',
+      mode: parseMode(this.getAttribute('mode')),
       readOnly: this.hasAttribute('readonly'),
-      template: parseAttr(this.getAttribute('template')),
+      template: liveTemplate ?? parseAttr(this.getAttribute('template')),
       input: parseAttr(this.getAttribute('input')),
       // Re-emit the editor callbacks as DOM CustomEvents; the payloads travel in `event.detail`
       // (FR-011): change → the generated template, validate → the ValidationResult, execute → the

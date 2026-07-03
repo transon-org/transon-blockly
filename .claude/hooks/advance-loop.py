@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def main() -> int:
+    # Intentional drain: consume the hook's stdin JSON payload; its content is unused.
     try:
         json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
@@ -25,7 +26,9 @@ def main() -> int:
     try:
         from check_traceability import check
         problems = check()
-    except Exception:
+    except Exception as exc:
+        # Fail-open on purpose, but leave a diagnostic trail on stderr.
+        print(f"advance-loop: check failed ({exc})", file=sys.stderr)
         print("{}")
         return 0
 

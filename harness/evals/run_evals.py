@@ -143,18 +143,9 @@ def eval_loop_recipe() -> List[str]:
     return out
 
 
-def eval_cross_tool_parity() -> List[str]:
-    """Cursor and Claude adapters stay symmetric: every command/skill/agent exists on
-    *both* sides, both reference the tool-neutral ``harness/`` core (neither references the
-    other — no second-class tool), and read-only roles stay read-only. This is the gate
-    behind the "new tooling lands in both tools" policy (see docs/portability.md)."""
-    claude = PROJECT_ROOT / ".claude"
-    harness = PROJECT_ROOT / "harness"
-    if not claude.exists():
-        return ["parity: no .claude/ adapters — Claude Code is not at parity with Cursor"]
+def _parity_existence(claude: Path) -> List[str]:
+    """Bidirectional existence parity for agents, commands, skills, workflows."""
     out: List[str] = []
-
-    # 1. Bidirectional existence parity for agents, commands, skills, workflows.
     kinds = (
         ("agents", "*.md", lambda p: p.stem),
         ("commands", "*.md", lambda p: p.stem),
@@ -168,30 +159,58 @@ def eval_cross_tool_parity() -> List[str]:
             out.append(f"parity: .claude/{kind}/{missing} missing (Cursor has it)")
         for missing in sorted(cl - cur):
             out.append(f"parity: .cursor/{kind}/{missing} missing (Claude has it)")
+    return out
 
-    # 2. Read-only Claude roles must not gain write tools.
+
+def _parity_readonly_tools(claude: Path) -> List[str]:
+    """Read-only Claude roles must not gain write tools."""
+    out: List[str] = []
     for name in READERS:
         tools = _frontmatter(claude / "agents" / f"{name}.md").get("tools", "")
         if "Write" in tools or "Edit" in tools:
             out.append(f"parity: .claude agent '{name}' must be read-only (no Write/Edit in tools)")
+    return out
 
-    # 3. No second-class tool: neither adapter may reference the other's dir — both point at harness/.
+
+def _parity_no_cross_reference(claude: Path) -> List[str]:
+    """No second-class tool: neither adapter may reference the other's dir — both point at harness/."""
+    out: List[str] = []
     for tool_dir, other in ((CURSOR, ".claude/"), (claude, ".cursor/")):
         for sub in ("agents", "commands", "skills", "workflows"):
             for path in (tool_dir / sub).rglob("*.md"):
                 if other in _read(path):
                     out.append(f"parity: {path.relative_to(PROJECT_ROOT)} references {other} — "
                                "adapters must point at harness/, not each other")
+    return out
 
-    # 4. Canonical bodies live in the tool-neutral harness/ core. (workflows only once one exists)
+
+def _parity_canonical_bodies(claude: Path, harness: Path) -> List[str]:
+    """Canonical bodies live in the tool-neutral harness/ core. (workflows only once one exists)"""
+    out: List[str] = []
     canonical_kinds = ["agents", "commands", "skills"]
     if (claude / "workflows").exists() or (CURSOR / "workflows").exists():
         canonical_kinds.append("workflows")
     for sub in canonical_kinds:
         if not list((harness / sub).glob("*.md")):
             out.append(f"parity: harness/{sub}/ has no canonical bodies")
-
     return out
+
+
+def eval_cross_tool_parity() -> List[str]:
+    """Cursor and Claude adapters stay symmetric: every command/skill/agent exists on
+    *both* sides, both reference the tool-neutral ``harness/`` core (neither references the
+    other — no second-class tool), and read-only roles stay read-only. This is the gate
+    behind the "new tooling lands in both tools" policy (see docs/portability.md)."""
+    claude = PROJECT_ROOT / ".claude"
+    harness = PROJECT_ROOT / "harness"
+    if not claude.exists():
+        return ["parity: no .claude/ adapters — Claude Code is not at parity with Cursor"]
+    return (
+        _parity_existence(claude)
+        + _parity_readonly_tools(claude)
+        + _parity_no_cross_reference(claude)
+        + _parity_canonical_bodies(claude, harness)
+    )
 
 
 def check() -> List[str]:

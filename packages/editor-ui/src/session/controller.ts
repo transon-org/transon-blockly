@@ -15,6 +15,7 @@ import { tryReverse } from './reverse.js';
 import { mountBlockly, type TransonMount } from '../blockly/mount.js';
 import type { ToolboxView } from '../blockly/toolbox.js';
 import { highlightErrors, clearHighlights } from '../blockly/highlight.js';
+import { createLatestGuard } from './latest.js';
 import type { TransonEditorHost, ExampleCase } from './host.js';
 
 export interface EditorControllerOptions {
@@ -63,6 +64,9 @@ export interface EditorController {
    *  invalid/out-of-surface edit is reported and the workspace is left unchanged. Debounced. */
   setTemplateText(text: string): void;
   setMode(mode: EditorMode): void;
+  /** Toggle read-only mode at runtime (FR-107): the mounted workspace and the §7.15 JSON-panel
+   *  reverse sync both follow, so a controlled embed flipping the prop stays consistent. */
+  setReadOnly(readOnly: boolean): void;
   /** Update the palette progressive-disclosure view — advanced toggle + search (§12.6). */
   setPaletteView(view: ToolboxView): void;
   /** Validate the current template through the host engine (§6.4). */
@@ -86,19 +90,30 @@ export function createEditorController(
     sample_input_json: opts.input ?? null,
   });
 
+  // Live read-only flag (FR-107): initialized from the option, flipped at runtime via setReadOnly.
+  let readOnly = opts.readOnly ?? false;
+
+  // Latest-call guard shared by the forward projection and the §7.15 reverse sync (§17.8
+  // stale-result safety): both mutate workspace/template state, so an older async completion
+  // (runForward/tryReverse resolving out of order) must not overwrite a newer one's result.
+  const beginSync = createLatestGuard<EditorStore>();
+
   // Re-project the live workspace into the session (forward, one-way). Used by the change listener
   // (debounced) and by programmatic loads (immediate).
   const project = async (): Promise<void> => {
+    const isCurrent = beginSync(store);
     const workspace = mount.serialize();
     store.setState({ workspace, json_sync_status: 'in_sync' });
-    applyForward(store, await runForward(engine, workspace, marker));
+    const forward = await runForward(engine, workspace, marker);
+    if (!isCurrent()) return; // superseded by a newer projection/reverse sync: drop the stale result
+    applyForward(store, forward);
     clearHighlights(mount.workspace); // a new generation supersedes prior error highlights
     opts.onChange?.(store.getState().template_json);
   };
   const debouncedProject = debounce(() => void project(), opts.debounceMs ?? 150);
 
   const mount: TransonMount = mountBlockly(container, {
-    readOnly: opts.readOnly,
+    readOnly,
     categories: host.categories,
     onWorkspaceChange: () => debouncedProject(),
   });
@@ -108,7 +123,9 @@ export function createEditorController(
   // the error marked out_of_sync (FR-112/113, AD-024).
   const applyReverse = async (text: string): Promise<void> => {
     if (!engine || engine.status !== 'ready') return; // gated; the panel is read-only when not ready
+    const isCurrent = beginSync(store);
     const outcome = await tryReverse(engine, text, marker);
+    if (!isCurrent()) return; // superseded by a newer edit/projection: drop the stale outcome
     if (outcome.status === 'accepted') {
       mount.loadDocument(outcome.block);
       await project(); // sets workspace/template_json, json_sync in_sync, clears errors + highlights
@@ -135,12 +152,26 @@ export function createEditorController(
   let statusTimer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
   let inputInvalid = false; // last setInputText could not parse (§16.4 json_input)
+  // Initial opts.template awaiting a ready engine (FR-102): loadDocumentSafely is engine-gated, so
+  // with an async host (e.g. the Pyodide reference host) the engine is still idle/loading at
+  // construction — refreshStatus consumes this on the idle/loading→ready transition.
+  let pendingInitialTemplate: Json | undefined = opts.template;
   const refreshStatus = (): void => {
     if (disposed) return;
     const before = store.getState().engine_runtime_status;
     applyEngineStatus(store, engine);
     const now = store.getState().engine_runtime_status;
-    if (now === 'ready' && before !== 'ready') void project();
+    if (now === 'ready' && before !== 'ready') {
+      if (pendingInitialTemplate !== undefined) {
+        // Deferred initial template (FR-102): load it now that the codec can run; loadDocumentSafely
+        // ends in project(), so the plain re-projection below would be redundant.
+        const doc = pendingInitialTemplate;
+        pendingInitialTemplate = undefined;
+        void loadDocumentSafely(doc);
+      } else {
+        void project();
+      }
+    }
     // Load engine + metadata versions once ready (FR-080 diagnostics); idempotent, load once.
     if (now === 'ready' && store.getState().engine_version === null) void loadEngineVersions(store, engine);
     if (engine && (engine.status === 'idle' || engine.status === 'loading')) {
@@ -157,8 +188,14 @@ export function createEditorController(
   void project(); // initial projection: `unavailable` when not ready, `empty`/generated when ready
   if (engine) refreshStatus(); // poll for the ready transition
 
-  // Optional initial template.
-  if (opts.template !== undefined) void loadDocumentSafely(opts.template);
+  // Optional initial template (FR-102). Loaded now only when the engine is already ready (e.g. the
+  // synchronous test host); otherwise it stays pending and refreshStatus loads it on the ready
+  // transition above — without this the engine-gated loadDocumentSafely would silently drop it.
+  if (pendingInitialTemplate !== undefined && engine?.status === 'ready') {
+    const doc = pendingInitialTemplate;
+    pendingInitialTemplate = undefined;
+    void loadDocumentSafely(doc);
+  }
 
   async function loadDocumentSafely(doc: Json): Promise<void> {
     // Reverse path (New/Import/Load-Example): encode the document to a workspace block and project
@@ -262,12 +299,16 @@ export function createEditorController(
       }
     },
     setTemplateText(text) {
-      if (opts.readOnly) return; // read-only mode: the JSON panel does not sync edits back (FR-107)
+      if (readOnly) return; // read-only mode: the JSON panel does not sync edits back (FR-107)
       store.setState({ json_sync_status: 'editing' });
       debouncedReverse(text);
     },
     setMode(mode) {
       store.setState({ editor_mode: mode });
+    },
+    setReadOnly(next) {
+      readOnly = next;
+      mount.setReadOnly(next); // keep the injected workspace in step with the shell (FR-107)
     },
     setPaletteView(view) {
       mount.setToolboxView(view);

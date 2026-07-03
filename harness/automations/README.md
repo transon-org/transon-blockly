@@ -30,7 +30,7 @@ tool adapters and carry an **explicit exclusion** from the "both `.cursor/` and 
 | File | What it proposes | Trigger |
 |---|---|---|
 | [`drift_watch.py`](drift_watch.py) | runs the read-only gates and reports any drift (traceability · links · engine parity · snapshot · maturity ratchet) | `.github/workflows/drift-watch.yml` (cron + manual), or `python harness/automations/drift_watch.py` locally |
-| [`ci_triage.py`](ci_triage.py) | maps a failing gate to a likely cause + the exact fix command | piped a gate name / CI log: `... | python harness/automations/ci_triage.py` |
+| [`ci_triage.py`](ci_triage.py) | maps a failing gate to a likely cause + the exact fix command | piped a gate name / CI log, e.g. `gh run view --log \| python harness/automations/ci_triage.py` |
 | [`worktrees.md`](worktrees.md) | the git-worktree flow for working **disjoint** slices in parallel without branch thrash | documentation (run by a human) |
 
 Run the drift watcher locally any time:

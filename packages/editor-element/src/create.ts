@@ -46,6 +46,9 @@ export function createTransonEditor(
     setTemplate: (doc) => controller?.setTemplate(doc) ?? Promise.resolve(),
     validate: () => controller?.validate() ?? Promise.resolve(),
     run: () => controller?.run() ?? Promise.resolve(),
-    destroy: () => root.unmount(),
+    destroy: () => {
+      root.unmount();
+      controller = null; // handle methods become safe no-ops against the disposed controller
+    },
   };
 }

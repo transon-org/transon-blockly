@@ -55,7 +55,7 @@ The editor never bundles an engine — the host supplies an `EngineProvider`. Th
 
 ## Running the demo
 
-Requires Node ≥ 20 and [pnpm](https://pnpm.io).
+Requires Node ≥ 22 and [pnpm](https://pnpm.io).
 
 ```sh
 pnpm install

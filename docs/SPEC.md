@@ -680,7 +680,7 @@ editor-metadata catalog ([`metadata-contract.md`](metadata-contract.md) §2).
   The editor shall assert this shape over §15.8 so a malformed-but-loadable block cannot pass
   silently.
 - **FR-125** The block definitions produced by `G_palette` shall be **valid, loadable** Blockly
-  (Zelos) definitions: every rule with complete metadata (FR-085) yields a definition that loads and
+  definitions: every rule with complete metadata (FR-085) yields a definition that loads and
   instantiates without error (consistent message↔args, well-formed input/field/connection types),
   verified by an **automated headless gate**. Incomplete metadata follows FR-086.
 - **FR-126** The generated **encoder shall emit, and the decoder shall consume, Blockly

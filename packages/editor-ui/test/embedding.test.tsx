@@ -33,10 +33,8 @@ describe('read-only mode (FR-107)', () => {
     );
     expect((screen.getByTestId('btn-new') as HTMLButtonElement).disabled).toBe(true);
     // the generated-JSON textarea is read-only (view, not edit)
-    await waitFor(() => {
-      const ta = screen.queryByTestId('json-content') as HTMLTextAreaElement | null;
-      if (ta) expect(ta.readOnly).toBe(true);
-    });
+    const ta = (await screen.findByTestId('json-content')) as HTMLTextAreaElement;
+    expect(ta.readOnly).toBe(true);
   });
 
   it('the controller does not sync reverse edits in read-only mode (FR-107)', async () => {

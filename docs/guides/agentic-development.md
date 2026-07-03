@@ -13,12 +13,11 @@
 > `commands/`), and this file does **not** restate it. The gap backlog and maturity tracking live in
 > [maturity-plan.md](maturity-plan.md) (see §5).
 
-This repo (`transon-blockly`) is, at the time of writing, a **docs + AI-harness repository**: there
-is no `packages/`, no `package.json`, and no `pnpm-workspace.yaml` yet (M0 hasn't landed). What it
-*does* have is two enforcement layers around the contract: **advisory** editor hooks that nudge, and
-**binding** git hooks + a CI workflow that block. That makes the harness unusually important — for now
-it is most of what governs how code *will* arrive. This guide explains what the harness is, how to
-drive it, why it is shaped the way it is, and where it is thin. Its companion,
+This repo (`transon-blockly`) is a pnpm/Turborepo monorepo (`packages/`, `examples/`, `test/`)
+built and governed through an AI harness. Around the contract docs sit two enforcement layers:
+**advisory** editor hooks that nudge, and **binding** git hooks + a CI workflow that block. That
+makes the harness the thing that governs how code arrives. This guide explains what the harness is,
+how to drive it, why it is shaped the way it is, and where it is thin. Its companion,
 [maturity-plan.md](maturity-plan.md), scores the harness and tracks what is left to harden.
 
 ---
@@ -169,21 +168,23 @@ git config core.hooksPath harness/githooks
 After this, `pre-commit` runs the gates and `commit-msg` requires a `Refs:`/`Slice:` trailer on
 code-touching commits. Bypass in an emergency with `git commit --no-verify` (CI still enforces them).
 
-**Wire the engine** so parity actually checks something. Today `transon` is not pip-installed here; the
-parity check only passes because a sibling checkout exists at `../transon` (its `get_editor_metadata()`
-export is used). To make it deterministic:
+**Wire the engine** so parity actually checks something. Install `transon` at the committed
+snapshot's own pin — the same thing CI does via `.github/actions/install-pinned-transon`, which reads
+the version out of `docs/metadata-snapshot.json` — or point `TRANSON_REPO` at a sibling checkout:
 
 ```bash
-pip install transon                 # or: export TRANSON_REPO=/path/to/transon
+pip install "transon==$(python -c 'import json; print(json.load(open("docs/metadata-snapshot.json"))["engine_version"])')"
 python harness/scripts/check_traceability.py
-python harness/scripts/check_engine_parity.py   # add --require-engine to fail (not skip) if absent
+python harness/scripts/check_engine_parity.py --require-engine
 python harness/evals/run_evals.py
 python harness/scripts/check_maturity.py         # see the per-dimension maturity levels
 ```
 
-If neither the package nor `TRANSON_REPO`/sibling is present, plain `check_engine_parity.py` **skips
-with exit 0** — it does nothing. Pass `--require-engine` to turn that skip into a hard failure; CI flips
-this on once M0 makes the engine installable. See Gap **G-02** / plan item **M-09**.
+Without `--require-engine`, `check_engine_parity.py` **skips with exit 0** when no engine is
+importable — tolerable on a fresh clone, never in a gate. CI is **fail-closed** (M-09): it
+pip-installs the wheel at the snapshot's own `engine_version` (the pin cannot drift from the snapshot
+it guards) and runs both `check_engine_parity.py` and `update_memory.py --check` with
+`--require-engine`, so a missing engine fails the run instead of skipping.
 
 ### 2.4 Tool-for-job map
 

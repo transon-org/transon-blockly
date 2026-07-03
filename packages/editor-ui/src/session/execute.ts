@@ -7,6 +7,11 @@ import type { EngineProvider, ExecutionResult, Json } from '@transon/editor-core
 import type { EditorStore } from './store.js';
 import { isEngineReady } from './engine-status.js';
 import { engineErrorCode, type EditorError } from './errors.js';
+import { createLatestGuard } from './latest.js';
+
+// Per-store latest-call guard: only the newest started execution may commit its result (§17.8
+// stale-result safety) — an older overlapping run resolving late must not overwrite fresher state.
+const beginExecution = createLatestGuard<EditorStore>();
 
 export interface ExecuteOptions {
   /** Host include resolver (AD-010, §16.6); unresolved names surface `include_loader`. Used by an
@@ -32,12 +37,16 @@ export async function executeTemplate(
 ): Promise<ExecutionResult | null> {
   const { template_json, sample_input_json } = store.getState();
   if (!isEngineReady(engine) || template_json == null) return null;
+  const isCurrent = beginExecution(store);
   store.setState({ execution_status: 'pending' });
   const res = await engine!.transform(template_json, sample_input_json ?? null, {
     marker,
     includeLoader: opts.includeLoader,
     includes: opts.includes,
   });
+  // A newer execution started while this one was in flight: drop the stale result (§17.8) — the
+  // latest run owns execution_status/output, and the caller must not fire onExecute for it.
+  if (!isCurrent()) return null;
   if (res.status === 'ok' && res.success) {
     store.setState({
       execution_status: 'success',

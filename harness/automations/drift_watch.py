@@ -28,7 +28,7 @@ GATES: List[Tuple[str, List[str]]] = [
     ("traceability", ["harness/scripts/check_traceability.py"]),
     ("markdown links", ["harness/scripts/check_links.py"]),
     ("engine parity", ["harness/scripts/check_engine_parity.py"]),
-    ("metadata snapshot", ["harness/scripts/update_memory.py", "--check"]),
+    ("metadata snapshot", ["harness/scripts/update_memory.py", "--check", "--require-engine"]),
     ("maturity ratchet", ["harness/scripts/check_maturity.py", "--check"]),
 ]
 

@@ -30,6 +30,8 @@ def transon_validate(template_json, marker):
         Transformer(json.loads(template_json), marker=marker).validate()
     except (DefinitionError, TransformationError) as exc:
         return json.dumps({"status": "ok", "valid": False, **_error_fields(exc)})
+    except Exception as exc:  # unexpected engine/runtime error: same envelope, never escapes Pyodide
+        return json.dumps({"status": "ok", "valid": False, **_error_fields(exc)})
     return json.dumps({"status": "ok", "valid": True})
 
 
@@ -70,6 +72,10 @@ def transon_transform(template_json, input_json, marker, includes_json, js_loade
     try:
         output = Transformer(template, **kwargs).transform(data, copy_output=True)
     except (DefinitionError, TransformationError) as exc:
+        return json.dumps(
+            {"status": "ok", "success": False, "files_written": files_written, **_error_fields(exc)}
+        )
+    except Exception as exc:  # unexpected engine/runtime error: same envelope, never escapes Pyodide
         return json.dumps(
             {"status": "ok", "success": False, "files_written": files_written, **_error_fields(exc)}
         )

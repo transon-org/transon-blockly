@@ -19,9 +19,11 @@ jobs:
   watch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
@@ -32,16 +34,18 @@ jobs:
       - name: Install latest transon engine
         run: pip install transon
 
-      - name: Run drift watch (read-only; never fails the job)
+      - name: Run drift watch (read-only; drift continues, watcher failure fails the job)
         id: watch
         run: |
           set +e
           python harness/automations/drift_watch.py --out drift-report.md
-          echo "code=$?" >> "$GITHUB_OUTPUT"
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 1 ]; then exit 1; fi
 
       - name: Propose — open or update the drift issue
         if: steps.watch.outputs.code == '2'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const fs = require('fs');
