@@ -4,6 +4,8 @@
 // notably it DROPS an empty `inputs:{}` and adds UI-only id/x/y), proving the codec is transparent
 // to a real Blockly serialization round-trip. Complements the forward FR-126 gate
 // (blockly-load.test.ts: encode→load only).
+//   FR-037 — UI-only attributes (§11.5: block ids, x/y positions, UI extraState) need not be
+//            preserved: decode drops them here without changing document meaning.
 //
 // NB: the interactive editor reverse-sync (§7.15 accept/reject in-surface edits, the EditorSession
 // store) is M4; this is the codec-level decoder-consume guarantee (FR-126) only.

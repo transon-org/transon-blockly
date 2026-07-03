@@ -1,6 +1,7 @@
 // Literal-marker escape — the codec-skeleton-owned `{<marker>:object, fields:X}` escape (§11.4).
 //   FR-059/060/061 — emit/distinguish a literal object that contains the marker key.
 //   FR-062        — literal objects containing "$" when the marker is "$".
+//   AC-005        — a literal marker-key object round-trips via the escape.
 //   FR-123        — the escape is skeleton-owned, matches EXACTLY marker + fields, and takes
 //                   precedence over the (M2) `object` rule arm; any extra key falls through.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

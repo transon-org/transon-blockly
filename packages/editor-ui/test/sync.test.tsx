@@ -1,4 +1,5 @@
-// D5 — strict bidirectional JSON sync, controller wiring (§7.15, AD-024, AC-033). The real
+// D5 — strict bidirectional JSON sync, controller wiring (§7.15, AD-024, AC-033; FR-038 — a
+// rejected edit is clearly reported, never silently degraded). The real
 // accept/reject DECISION (encode→surface→round-trip) is proven against the engine in the adapter
 // (test/ui/reverse.test.ts); here we test the controller's RESPONSE over a real Blockly mount: an
 // accepted edit loads into the workspace + marks in_sync; a rejected edit leaves the workspace

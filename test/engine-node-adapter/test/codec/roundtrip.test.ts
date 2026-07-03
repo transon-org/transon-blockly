@@ -1,7 +1,12 @@
 // The M1 de-risk pass criterion: round-trip identity for the prototype `attr` rule + the
 // structural skeleton, proven by *executing* the generated codec through a real engine.
 //
-//   FR-035/036/039, AC-011 — import→export preserves meaning (structural identity).
+//   FR-035, FR-036, FR-039, AC-011 — import→export preserves meaning (structural identity);
+//                                    automated round-trip tests across all built-in rules.
+//   AC-002, AC-003, AC-004 — the corpus includes the simple `attr` template, nested templates,
+//                            and literal objects/arrays/scalars; each round-trips below.
+//   AC-027 — automated tests cover generation, import, export, and round-trip across the
+//            full catalog (this suite + encode/decode/examples-corpus/catalog-coverage).
 //   AC-035, AD-011, §15.1 — round-trip *by construction*: encoder + decoder derive from one
 //                           metadata source; semantic identity is checked by execution.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

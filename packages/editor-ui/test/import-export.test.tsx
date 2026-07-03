@@ -1,4 +1,4 @@
-// D3 — import / export UX (§7.13, FR-007/008/096..101, AC-021). Copy + Download of the generated
+// D3 — import / export UX (§7.13, FR-007/008/096..101; AC-009, AC-010, AC-021). Copy + Download of the generated
 // canonical JSON, Import via the strict §7.15 gate, the FR-101 unsaved-changes guard, and the FR-100
 // no-backend constraint. Copy/Download/Import use only clipboard/Blob/File — never the network.
 //
