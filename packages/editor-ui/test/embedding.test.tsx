@@ -32,7 +32,7 @@ describe('read-only mode (FR-107)', () => {
       expect(screen.getByTestId('editor-shell').getAttribute('data-readonly')).toBe(''),
     );
     expect((screen.getByTestId('btn-new') as HTMLButtonElement).disabled).toBe(true);
-    // the generated-JSON textarea is read-only (view, not edit)
+    // FR-107: the generated-JSON textarea is read-only (view, not edit)
     const ta = (await screen.findByTestId('json-content')) as HTMLTextAreaElement;
     expect(ta.readOnly).toBe(true);
   });

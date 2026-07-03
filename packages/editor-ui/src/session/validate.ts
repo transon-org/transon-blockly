@@ -25,13 +25,15 @@ export async function validateTemplate(
   marker: string,
 ): Promise<ValidationResult | null> {
   const template = store.getState().template_json;
-  if (!isEngineReady(engine) || template == null) return null;
+  const activeEngine = engine;
+  if (!activeEngine || !isEngineReady(activeEngine) || template == null) return null;
   const isCurrent = beginValidation(store);
   store.setState({ validation_status: 'pending' });
-  const res = await engine!.validate(template, { marker });
-  // A newer validation started while this one was in flight: drop the stale verdict (§17.8) — the
-  // latest call owns validation_status/errors, and the caller must not fire onValidate for it.
-  if (!isCurrent()) return null;
+  const res = await activeEngine.validate(template, { marker });
+  // Drop the verdict when a newer validation started while this one was in flight (§17.8 — the
+  // latest call owns validation_status/errors) or the engine left `ready` (disposed/failed
+  // mid-flight, NFR-004: the engine must still be authoritative); onValidate must not fire either.
+  if (!isCurrent() || !isEngineReady(activeEngine)) return null;
   if (res.status === 'ok' && res.valid) {
     store.setState({ validation_status: 'valid', errors: [] });
     return res;

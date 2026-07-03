@@ -28,9 +28,7 @@ def _error_fields(exc):
 def transon_validate(template_json, marker):
     try:
         Transformer(json.loads(template_json), marker=marker).validate()
-    except (DefinitionError, TransformationError) as exc:
-        return json.dumps({"status": "ok", "valid": False, **_error_fields(exc)})
-    except Exception as exc:  # unexpected engine/runtime error: same envelope, never escapes Pyodide
+    except Exception as exc:  # _error_fields discriminates engine vs unexpected; never escapes Pyodide
         return json.dumps({"status": "ok", "valid": False, **_error_fields(exc)})
     return json.dumps({"status": "ok", "valid": True})
 
@@ -71,11 +69,7 @@ def transon_transform(template_json, input_json, marker, includes_json, js_loade
         kwargs["template_loader"] = loader
     try:
         output = Transformer(template, **kwargs).transform(data, copy_output=True)
-    except (DefinitionError, TransformationError) as exc:
-        return json.dumps(
-            {"status": "ok", "success": False, "files_written": files_written, **_error_fields(exc)}
-        )
-    except Exception as exc:  # unexpected engine/runtime error: same envelope, never escapes Pyodide
+    except Exception as exc:  # _error_fields discriminates engine vs unexpected; never escapes Pyodide
         return json.dumps(
             {"status": "ok", "success": False, "files_written": files_written, **_error_fields(exc)}
         )
@@ -87,12 +81,15 @@ def transon_transform(template_json, input_json, marker, includes_json, js_loade
 def transon_version():
     import transon
 
-    version = getattr(transon, "__version__", None)
-    meta = get_editor_metadata() if get_editor_metadata else {}
-    return json.dumps(
-        {
-            "engine": str(version) if version else str(meta.get("engine_version", "unknown")),
-            "metadata": str(meta.get("metadata_version", "unknown")),
-        }
-    )
+    try:
+        version = getattr(transon, "__version__", None)
+        meta = get_editor_metadata() if get_editor_metadata else {}
+        return json.dumps(
+            {
+                "engine": str(version) if version else str(meta.get("engine_version", "unknown")),
+                "metadata": str(meta.get("metadata_version", "unknown")),
+            }
+        )
+    except Exception as exc:  # same envelope discipline as validate/transform; never escapes Pyodide
+        return json.dumps({"engine": "unknown", "metadata": "unknown", **_error_fields(exc)})
 `;

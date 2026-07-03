@@ -20,6 +20,7 @@ Also importable: ``check()`` returns the list of problems (used by the stop hook
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -80,12 +81,14 @@ def code_id_refs() -> Dict[str, List[str]]:
         base = PROJECT_ROOT / directory
         if not base.exists():
             continue
-        for path in base.rglob("*"):
-            if EXCLUDED_DIR_NAMES & set(path.relative_to(base).parts[:-1]):
-                continue
-            if path.is_file() and path.suffix in CODE_EXTS:
-                for ident in _ids(_read(path)):
-                    refs.setdefault(ident, []).append(str(path.relative_to(PROJECT_ROOT)))
+        # os.walk so excluded trees are pruned before descent (rglob would still traverse them).
+        for root, dirnames, filenames in os.walk(base):
+            dirnames[:] = [d for d in dirnames if d not in EXCLUDED_DIR_NAMES]
+            for filename in filenames:
+                path = Path(root, filename)
+                if path.suffix in CODE_EXTS:
+                    for ident in _ids(_read(path)):
+                        refs.setdefault(ident, []).append(str(path.relative_to(PROJECT_ROOT)))
     return refs
 
 

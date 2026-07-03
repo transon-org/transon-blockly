@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `3b891c0` — Merge pull request #1 from transon-org/audit-ci-tests-m09 |
+| Repo HEAD | `4c60cee` — review: address all 38 CodeRabbit threads on PR #4 |
 | Branch | `recent-changes` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -35,7 +35,17 @@ editor-ui: live `readOnly` sync (`setIsReadOnly` through mount/controller + Reac
 stale-async guards (shared `session/latest.ts` generation tokens) on
 project/applyReverse/execute/validate, pending initial template consumed on the idle→ready
 transition, vacuous embedding readOnly test fixed. All 20 turbo tasks green (build/typecheck/test)
-+ all 8 harness gates green. **Next:** push, let CodeRabbit re-review, merge PR #4._
++ all 8 harness gates green. **Round 2 (same day):** CodeRabbit confirmed all 36 fixes and
+withdrew its 2 disputed findings; its follow-up pass produced 7 more fixes — collapsed the now
+redundant narrow except branches in glue.py (+ same envelope for `transon_version`), a dispose
+generation token so a stale `init()` can't resurrect the Pyodide host, post-await
+`isEngineReady` re-checks in execute/validate, `beginSync` invalidation on
+`newWorkspace()`/`loadDocumentSafely` (slow encode/project can't repopulate a cleared canvas),
+os.walk dir-pruning in check_traceability (rglob still descended into node_modules),
+stderr logging in stop-traceability.py, FR-107 marker in embedding.test.tsx. Declined 2:
+the pnpm/action-setup SHA "mismatch" (CodeRabbit compared the annotated tag OBJECT sha; the pin
+is the dereferenced v4.3.0 COMMIT `b906affc`, which is correct) and the "future date" complaint
+(2026-07-04 is the actual date). **Next:** merge PR #4 once CI is green._
 
 _**Deep completeness audit DONE + M-09 flipped + CI now runs the full test suite (2026-07-03;
 UNCOMMITTED).** Swept all 269 SPEC/ARCH IDs (4 read-only agents classified the 117 with no test

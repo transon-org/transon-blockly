@@ -36,17 +36,19 @@ export async function executeTemplate(
   opts: ExecuteOptions = {},
 ): Promise<ExecutionResult | null> {
   const { template_json, sample_input_json } = store.getState();
-  if (!isEngineReady(engine) || template_json == null) return null;
+  const activeEngine = engine;
+  if (!activeEngine || !isEngineReady(activeEngine) || template_json == null) return null;
   const isCurrent = beginExecution(store);
   store.setState({ execution_status: 'pending' });
-  const res = await engine!.transform(template_json, sample_input_json ?? null, {
+  const res = await activeEngine.transform(template_json, sample_input_json ?? null, {
     marker,
     includeLoader: opts.includeLoader,
     includes: opts.includes,
   });
-  // A newer execution started while this one was in flight: drop the stale result (§17.8) — the
-  // latest run owns execution_status/output, and the caller must not fire onExecute for it.
-  if (!isCurrent()) return null;
+  // Drop the result when a newer execution started while this one was in flight (§17.8 — the latest
+  // run owns execution_status/output) or the engine left `ready` (disposed/failed mid-flight,
+  // NFR-004: never publish over a no-longer-authoritative engine); onExecute must not fire either.
+  if (!isCurrent() || !isEngineReady(activeEngine)) return null;
   if (res.status === 'ok' && res.success) {
     store.setState({
       execution_status: 'success',

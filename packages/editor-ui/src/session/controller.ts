@@ -202,7 +202,9 @@ export function createEditorController(
     // it onto the canvas. Engine-gated — without a ready engine the codec cannot run. The strict
     // §7.15 JSON-panel accept/reject (surface check) is layered on in D5 (reverse.ts).
     if (engine && engine.status === 'ready') {
+      const isCurrent = beginSync(store);
       const block = await encode(engine, doc, marker);
+      if (!isCurrent()) return; // superseded (newer load/edit/clear) while encoding: drop it (§17.8)
       mount.loadDocument(block);
       await project();
     }
@@ -214,6 +216,10 @@ export function createEditorController(
     setTemplate: (doc) => loadDocumentSafely(doc),
     newWorkspace() {
       if (!guardReplace()) return; // FR-101: keep the current workspace if the user cancels
+      // Programmatic clear suppresses the workspace-change event, so invalidate any in-flight
+      // project()/applyReverse()/encode explicitly — a slow completion must not repopulate the
+      // canvas or the store after the clear (§17.8).
+      beginSync(store);
       mount.clear();
       store.setState({
         workspace: mount.serialize(),

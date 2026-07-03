@@ -51,7 +51,9 @@ def main() -> int:
     try:
         from check_traceability import check
         problems = check()
-    except Exception:
+    except Exception as exc:
+        # Fail-open on purpose, but leave a diagnostic trail on stderr.
+        print(f"stop-traceability: check failed ({exc})", file=sys.stderr)
         print("{}")
         return 0
     if not problems:

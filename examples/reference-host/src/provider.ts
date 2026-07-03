@@ -63,6 +63,8 @@ export function createPyodideHost(opts: PyodideHostOptions = {}): EngineProvider
   // Closure-backed state (not `this`-based) so methods work regardless of call binding.
   let status: EngineProvider['status'] = 'idle';
   let initPromise: Promise<void> | undefined;
+  // Bumped by dispose(): an init() started before the dispose must not resurrect the host.
+  let generation = 0;
 
   const requirePy = (method: string): PyodideLike => {
     if (!py) {
@@ -80,16 +82,23 @@ export function createPyodideHost(opts: PyodideHostOptions = {}): EngineProvider
       // Concurrent init() calls share the in-flight promise instead of re-loading Pyodide.
       if (initPromise) return initPromise;
       status = 'loading';
+      const startedGeneration = generation;
+      const stale = (): boolean => generation !== startedGeneration; // disposed mid-flight
       initPromise = (async () => {
         try {
-          py = await (opts.loadPyodide ? opts.loadPyodide() : defaultLoadPyodide(indexURL));
-          await py.loadPackage('micropip');
-          await py.runPythonAsync(`import micropip\nawait micropip.install("transon==${engineVersion}")`);
-          await py.runPythonAsync(GLUE_PY);
+          const loaded = await (opts.loadPyodide ? opts.loadPyodide() : defaultLoadPyodide(indexURL));
+          if (stale()) return;
+          await loaded.loadPackage('micropip');
+          await loaded.runPythonAsync(`import micropip\nawait micropip.install("transon==${engineVersion}")`);
+          await loaded.runPythonAsync(GLUE_PY);
+          if (stale()) return;
+          py = loaded;
           status = 'ready';
         } catch (e) {
-          status = 'failed';
-          initPromise = undefined; // allow a retry after failure
+          if (!stale()) {
+            status = 'failed';
+            initPromise = undefined; // allow a retry after failure
+          }
           throw e;
         }
       })();
@@ -125,6 +134,7 @@ export function createPyodideHost(opts: PyodideHostOptions = {}): EngineProvider
       return JSON.parse(fn() as string) as { engine: string; metadata: string };
     },
     dispose(): void {
+      generation += 1; // invalidate any in-flight init() so it cannot resurrect the host
       py = undefined;
       initPromise = undefined;
       status = 'idle';
