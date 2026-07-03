@@ -5277,6 +5277,6 @@
       "WorkedExampleConditionalEnrichmentInsideMap"
     ]
   },
-  "engine_version": null,
+  "engine_version": "0.1.6",
   "metadata_version": "3.0"
 }

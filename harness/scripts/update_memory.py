@@ -99,10 +99,21 @@ def _engine_provenance() -> dict:
     root = _engine_repo_root()
     if root is None:
         return {"importable": False}
+    commit = _git_in(root, "rev-parse", "HEAD")
+    describe = _git_in(root, "describe", "--tags", "--always")
+    if not describe:
+        # Not a git checkout — an installed wheel (site-packages). Record the distribution
+        # version so the sidecar still names the exact engine the snapshot came from.
+        try:
+            from importlib.metadata import version
+
+            describe = f"v{version('transon')} (pip wheel)"
+        except Exception:
+            pass
     return {
         "importable": True,
-        "commit": _git_in(root, "rev-parse", "HEAD"),
-        "describe": _git_in(root, "describe", "--tags", "--always"),
+        "commit": commit,
+        "describe": describe,
         "root": str(root),
     }
 
@@ -288,11 +299,34 @@ def check(require_engine: bool = False) -> Tuple[List[str], List[str]]:
         (problems if require_engine else skips).append(msg)
         return problems, skips
 
-    if SNAPSHOT_JSON.exists() and SNAPSHOT_JSON.read_text(encoding="utf-8") != _dump(export):
-        problems.append(
-            "docs/metadata-snapshot.json has drifted from the engine export — "
-            "re-run `python harness/scripts/update_memory.py --snapshot`"
-        )
+    if SNAPSHOT_JSON.exists():
+        committed_text = SNAPSHOT_JSON.read_text(encoding="utf-8")
+        if committed_text != _dump(export):
+            # A source-tree engine import (sys.path injection, no dist-info) reports
+            # engine_version None even when the code matches the wheel-pinned release.
+            # Tolerate ONLY that one-field difference, and only as a skip note — under
+            # --require-engine CI installs the wheel, so the strict compare still binds.
+            masked_ok = False
+            if export.get("engine_version") is None:
+                try:
+                    committed = json.loads(committed_text)
+                except ValueError:
+                    committed = None
+                if isinstance(committed, dict) and committed.get("engine_version") is not None:
+                    masked = dict(committed)
+                    masked["engine_version"] = None
+                    masked_ok = _dump(masked) == _dump(export)
+                    if masked_ok:
+                        skips.append(
+                            "engine_version not verified — the local engine import carries no "
+                            f"dist metadata; snapshot pins {committed.get('engine_version')!r} "
+                            "(install the pinned wheel to verify strictly)"
+                        )
+            if not masked_ok:
+                problems.append(
+                    "docs/metadata-snapshot.json has drifted from the engine export — "
+                    "re-run `python harness/scripts/update_memory.py --snapshot`"
+                )
     return problems, skips
 
 
@@ -329,7 +363,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             for p in problems:
                 print(f"  - {p}")
             return 1
-        print("OK: metadata snapshot present and consistent." if not skips else "OK (snapshot drift check skipped).")
+        print("OK: metadata snapshot present and consistent." if not skips else "OK (with skips — see SKIP lines above).")
         return 0
 
     do_snapshot = args.snapshot or not args.state
