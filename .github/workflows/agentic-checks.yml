@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -24,12 +26,8 @@ jobs:
 
       # 0. M-09: install the engine at the committed snapshot's own version — the wheel IS the
       #    release the snapshot was pinned from, so parity + snapshot-drift below are binding
-      #    (`--require-engine`), not self-skipping. The pin is read out of the snapshot, so it
-      #    can never drift from it.
-      - name: Install pinned transon engine (M-09)
-        run: |
-          TRANSON_PIN="$(python -c 'import json; print(json.load(open("docs/metadata-snapshot.json"))["engine_version"])')"
-          pip install "transon==${TRANSON_PIN}"
+      #    (`--require-engine`), not self-skipping.
+      - uses: ./.github/actions/install-pinned-transon
 
       # 1. Requirement-ID consistency: no dead/deprecated IDs; done rows have a citing test.
       - name: Traceability
@@ -76,7 +74,11 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
+      # This job runs third-party install/build scripts (pnpm) — never leave the
+      # repo token on disk for them.
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -84,16 +86,15 @@ jobs:
 
       # The Node→Python adapter spawns `python3` and imports transon (AD-011); same
       # snapshot-derived pin as the gates job.
-      - name: Install pinned transon engine
-        run: |
-          TRANSON_PIN="$(python -c 'import json; print(json.load(open("docs/metadata-snapshot.json"))["engine_version"])')"
-          pip install "transon==${TRANSON_PIN}"
+      - uses: ./.github/actions/install-pinned-transon
 
       - uses: pnpm/action-setup@v4   # version comes from package.json "packageManager"
 
+      # 22, not the root engines ">=20": blockly@13 declares engines.node >=22 and
+      # pnpm hard-fails install on the mismatch (first CI run proved it).
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install workspace

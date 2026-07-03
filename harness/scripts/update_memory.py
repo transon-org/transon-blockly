@@ -105,10 +105,10 @@ def _engine_provenance() -> dict:
         # Not a git checkout — an installed wheel (site-packages). Record the distribution
         # version so the sidecar still names the exact engine the snapshot came from.
         try:
-            from importlib.metadata import version
+            from importlib.metadata import PackageNotFoundError, version
 
             describe = f"v{version('transon')} (pip wheel)"
-        except Exception:
+        except PackageNotFoundError:
             pass
     return {
         "importable": True,
@@ -304,10 +304,11 @@ def check(require_engine: bool = False) -> Tuple[List[str], List[str]]:
         if committed_text != _dump(export):
             # A source-tree engine import (sys.path injection, no dist-info) reports
             # engine_version None even when the code matches the wheel-pinned release.
-            # Tolerate ONLY that one-field difference, and only as a skip note — under
-            # --require-engine CI installs the wheel, so the strict compare still binds.
+            # Tolerate ONLY that one-field difference, ONLY as a skip note, and ONLY on
+            # non-binding runs: under --require-engine the gate fails closed — CI installs
+            # the pinned wheel, so a version-less import there is itself a problem.
             masked_ok = False
-            if export.get("engine_version") is None:
+            if not require_engine and export.get("engine_version") is None:
                 try:
                     committed = json.loads(committed_text)
                 except ValueError:

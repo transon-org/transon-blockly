@@ -145,9 +145,10 @@ Transon repo (this editor repo consumes the contract; see `metadata-contract.md`
   with markers `@` and `$`.
 - **Status (☑ done; M-09 CI pin flip landed 2026-07-03).** The **engine half has landed** in the sibling `transon` repo: the
   `switch`/`cond` rules and the projection-ready `get_editor_metadata()` export exist and are pinned
-  in [`docs/metadata-snapshot.json`](metadata-snapshot.json) (engine `v0.1.3`,
-  `metadata_version 2.0`, see [`metadata-snapshot.md`](metadata-snapshot.md)); the export/variant/enum
-  parity checks run against it. **Editor side (landed, reviewed):** the monorepo scaffolding
+  in [`docs/metadata-snapshot.json`](metadata-snapshot.json) (pinned at engine `v0.1.3` /
+  `metadata_version 2.0` when M0 closed; the snapshot has since moved with the engine — `v0.1.6` /
+  `3.0` as of 2026-07-03, see [`metadata-snapshot.md`](metadata-snapshot.md)); the
+  export/variant/enum parity checks run against it. **Editor side (landed, reviewed):** the monorepo scaffolding
   + pinned tooling (AD-021), the engine-free `EngineProvider` port (`@transon/editor-core`, AD-008),
   the typed metadata-snapshot loader (AD-012/NFR-047), and the Node→Python `EngineProvider` test
   adapter (`test/engine-node-adapter`, AD-011) — `version()`/`validate()` round-trip and the `@`/`$`

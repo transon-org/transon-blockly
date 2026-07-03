@@ -1,0 +1,13 @@
+# Shared by the `gates` and `tests` jobs so the two can never diverge on how the
+# engine pin is computed (M-09): the wheel version is read OUT OF the committed
+# metadata snapshot, so the pin cannot drift from the snapshot it guards.
+name: Install pinned transon engine
+description: pip-installs transon at the committed snapshot's own engine_version (M-09).
+runs:
+  using: composite
+  steps:
+    - name: Install pinned transon engine
+      shell: bash
+      run: |
+        TRANSON_PIN="$(python -c 'import json; print(json.load(open("docs/metadata-snapshot.json"))["engine_version"])')"
+        pip install "transon==${TRANSON_PIN}"
