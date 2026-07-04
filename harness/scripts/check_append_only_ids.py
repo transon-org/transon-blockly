@@ -40,7 +40,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DOCS = PROJECT_ROOT / "docs"
 LEDGER = DOCS / "id-ledger.json"
 
-ID_RE = re.compile(r"\b(FR|NFR|AC|UC|AD|OQ)-(\d+)\b")
+# The docs cite IDs in compact slash-separated form too (e.g. "FR-081/084/085",
+# "NFR-028/031/032") — capture the whole run and split, or the trailing IDs would
+# read as removed the day their full-form mention disappears.
+ID_RE = re.compile(r"\b(FR|NFR|AC|UC|AD|OQ)-(\d+(?:/\d+)*)\b")
 FAMILIES = ("FR", "NFR", "AC", "UC", "AD", "OQ")
 CONTRACT_DOCS = ("SPEC.md", "ARCHITECTURE.md", "ROADMAP.md", "metadata-contract.md")
 
@@ -52,7 +55,8 @@ def defined_ids() -> Dict[str, Set[int]]:
         if not path.exists():
             continue
         for match in ID_RE.finditer(path.read_text(encoding="utf-8", errors="ignore")):
-            ids[match.group(1)].add(int(match.group(2)))
+            for num in match.group(2).split("/"):
+                ids[match.group(1)].add(int(num))
     return ids
 
 

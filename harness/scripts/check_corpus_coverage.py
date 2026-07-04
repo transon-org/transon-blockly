@@ -46,6 +46,24 @@ CORPUS_FILES = (
 IDENT_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 
 
+def _scan_string(text: str, i: int) -> Tuple[int, bool]:
+    """Scan the quoted string starting at ``text[i]``; return (index past it, terminated?).
+
+    The one place quote/escape semantics live — both the comment stripper and the
+    contents reader delegate here so escape handling cannot drift between them.
+    """
+    quote = text[i]
+    j = i + 1
+    while j < len(text):
+        if text[j] == "\\":
+            j += 2
+            continue
+        if text[j] == quote:
+            return j + 1, True
+        j += 1
+    return len(text), False
+
+
 def _strip_comments(text: str) -> str:
     """Remove // and /* */ comments, preserving ' " ` string contents and offsets."""
     out: List[str] = []
@@ -53,15 +71,7 @@ def _strip_comments(text: str) -> str:
     while i < n:
         ch = text[i]
         if ch in "'\"`":
-            quote, j = ch, i + 1
-            while j < n:
-                if text[j] == "\\":
-                    j += 2
-                    continue
-                if text[j] == quote:
-                    j += 1
-                    break
-                j += 1
+            j, _ = _scan_string(text, i)
             out.append(text[i:j])
             i = j
         elif text.startswith("//", i):
@@ -77,20 +87,23 @@ def _strip_comments(text: str) -> str:
 
 
 def _read_string(text: str, i: int) -> Tuple[Optional[str], int]:
-    """Read a quoted string starting at ``i``; return (contents, index past it)."""
-    quote = text[i]
-    j = i + 1
-    parts: List[str] = []
-    while j < len(text):
-        if text[j] == "\\" and j + 1 < len(text):
-            parts.append(text[j + 1])
-            j += 2
-            continue
-        if text[j] == quote:
-            return "".join(parts), j + 1
-        parts.append(text[j])
-        j += 1
-    return None, len(text)
+    """Read a quoted string starting at ``i``; return (unescaped contents, index past it)."""
+    end, terminated = _scan_string(text, i)
+    if not terminated:
+        return None, end
+    body = text[i + 1 : end - 1]
+    if "\\" in body:
+        parts: List[str] = []
+        k = 0
+        while k < len(body):
+            if body[k] == "\\" and k + 1 < len(body):
+                parts.append(body[k + 1])
+                k += 2
+            else:
+                parts.append(body[k])
+                k += 1
+        body = "".join(parts)
+    return body, end
 
 
 def iter_rule_objects(text: str) -> List[Tuple[str, FrozenSet[str]]]:
