@@ -1,4 +1,4 @@
-# RFC: Template-Driven Editor — APPLIED (superseded by the contract docs)
+# RFC-001: Template-driven editor — APPLIED (superseded by the contract docs)
 
 - **Status:** Applied / Closed (2026-06-27). This RFC has been fully absorbed into the contract
   docs; it is retained only as a provenance tombstone and is **no longer normative**. Do not edit it

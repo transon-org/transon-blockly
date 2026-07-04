@@ -8,13 +8,42 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `6557fb5` — Merge pull request #4 from transon-org/recent-changes |
+| Repo HEAD | `c8cedaf` — Merge pull request #5 from transon-org/review-hardening |
 | Branch | `main` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**Proposal naming aligned (2026-07-05, on `main`; UNCOMMITTED; housekeeping only).** Renamed
+`docs/proposals/template-driven-editor.md` → `docs/proposals/rfc-001-template-driven-editor.md`
+(`git mv`) and retitled it `RFC-001: Template-driven editor — APPLIED (…)` to match the
+`rfc-NNN-` file naming and `RFC-NNN:` title pattern of RFC-002/RFC-003. Content unchanged (already
+the shared tombstone format); no cross-references to the old filename existed anywhere in the repo._
+
+_**RFC-003 written — canvas density + navigation for large templates (2026-07-05, on `main`;
+UNCOMMITTED; PROPOSAL ONLY, no code/SPEC changes).** User reported the editor shows ~50 blocks max
+and large templates are un-navigable. Root-caused to four factors: (1) `Blockly.inject` in
+`packages/editor-ui/src/blockly/mount.ts` passes NO `zoom`/`move` options (Blockly defaults are
+off — viewport pinned at 100%, no wheel zoom, no fit, no minimap); (2) the FR-129/§13.10
+external-inputs staircase + title-own-row for ≥2-input variants (width grows with nesting depth);
+(3) OQ-008 dual labels `"<title> (<rule>)"` + raw param-name prefixes on every socket (`G_palette`
+`P_LABEL`/`P_PARAM_SEG` in `codegen.ts`); (4) untuned thrasos renderer constants. Wrote
+`docs/proposals/rfc-003-canvas-density-and-navigation.md` (house RFC style, status Proposed):
+P-A zoom/fit/pan (additive; §11.5 already reserves `zoom` UI metadata), P-B compact renderer
+constants + pinned density target, P-C label diet (canvas title-only, rule name → tooltip + flyout;
+re-answers OQ-008), P-D subtree collapsing (additive; `collapsed_state` already in §11.5),
+P-E **balanced adaptive inline/external layout** (runtime flips `inputsInline` on connection
+changes, damped, manual override wins; revises FR-129/§13.10/AC-040, AD-034 updates AD-033).
+Key design principle codified from the discussion: *small children read densely; complex
+(multiline) children get their own block* — the inline/external split cannot be static because the
+same socket can hold a literal or a subtree. Proposed IDs at verified next-free (`id-ledger.json`):
+FR-133…135, NFR-049, AC-041, AD-034, OQ-018…020. Everything display-only (§21.12); round-trip
+corpus must stay zero-diff. Anchored to NFR-029 (already prohibits an unusable large-template
+canvas). **Next:** user reviews the RFC (esp. OQ-018 label form, OQ-020 minimap defer/adopt);
+then SPEC edits land SPEC-first and phases 1–3 run as `/implement-requirement` slices; P-E gets a
+prototype on the largest corpus examples before its SPEC revision is finalized._
 
 _**CodeRabbit review analysis → config hardening + 2 new deterministic gates (2026-07-04, on `main`;
 UNCOMMITTED).** Analyzed how PRs #1–#4 were reviewed (49 CodeRabbit findings, ~91% signal, ~13 real
@@ -513,6 +542,13 @@ living read of it.
    only: (i) context-sensitive examples (selected block → its rule's reference examples;
    `rule`/`tier`/`tags` joins already in place) — separate FR when wanted. (~~(ii) 0.1.6 pin
    bump~~ done in this tree — transon 0.1.6 is on PyPI.)
+0c. **RFC-003 review + ratification (canvas density + navigation)** — user reviews
+   `docs/proposals/rfc-003-canvas-density-and-navigation.md` (decide OQ-018 label form, OQ-019
+   adaptive-layout scope, OQ-020 minimap defer/adopt), then land the SPEC/ROADMAP edits SPEC-first
+   (reserve FR-133…135, NFR-049, AC-041, AD-034 via `check_append_only_ids.py --update`) and run
+   phases 1–3 as `/implement-requirement` slices (P-A zoom/fit + P-D collapse first — additive,
+   highest leverage). P-E (adaptive layout) prototypes on the largest corpus examples BEFORE its
+   SPEC revision is finalized.
 1. ~~Push the milestone branches + open PR(s)~~ **DONE / SUPERSEDED (verified 2026-07-03)** — the
    entire history (M0–M5 + `fix-editor-layout-css` + `fr-130` + `fr-131` + `r31-corpus-migration`)
    landed **linearly on `main`** and `main` is pushed (`origin/main` == `ca3a975`); no PRs were used.
