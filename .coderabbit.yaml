@@ -11,6 +11,14 @@
 language: en-US
 early_access: false
 
+# Guardrails against the reviewer's known false-positive modes (PR #4: 4/48 findings withdrawn —
+# 2 from web-search "verification" contradicting installed typings, 1 from treating repo dates as
+# future). Schema caps this field at 250 characters.
+tone_instructions: >-
+  Verify third-party API claims against the exact version pinned in pnpm-lock.yaml / installed
+  typings, never web search alone. Repo dates later than your training data are not errors.
+  Cite SPEC/AD IDs when applying path instructions.
+
 reviews:
   profile: assertive            # surface more, since the core is trust-critical and code is young
   request_changes_workflow: true
@@ -23,6 +31,18 @@ reviews:
     drafts: false
     base_branches:
       - main
+      # Whole-repo review PRs are opened against this snapshot branch (PRs #2/#3 were silently
+      # skipped because only `main` was listed). On any other base, trigger manually by
+      # commenting `@coderabbitai full review` on the PR.
+      - very-beginning
+
+  # Fold CI results into the review: CodeRabbit waits for the deterministic gates + test jobs
+  # (agentic-checks.yml) and comments on failures, so the binding checks and the PR-boundary
+  # review speak in one place. Timeout accommodates the full pnpm build + 1551-test suite.
+  tools:
+    github-checks:
+      enabled: true
+      timeout_ms: 300000
 
   # Don't spend review budget on generated or vendored artifacts.
   path_filters:
@@ -33,17 +53,25 @@ reviews:
   # The contract is docs/ + AGENTS.md. Each instruction cites the SPEC/AD anchors a reviewer must check.
   path_instructions:
     # 1. Round-trip core — the codec, variant matching, supported surface, marker escape, ordering.
+    # Scoped to what a static reviewer can actually verify: semantic round-trip correctness needs
+    # corpus EXECUTION, which belongs to the adapter tests + round-trip-reviewer, and per-rule/variant
+    # corpus coverage is enforced deterministically by harness/scripts/check_corpus_coverage.py.
     - path: "packages/**/*{codec,variant,surface,marker,projection,encode,decode}*"
       instructions: >-
-        Trust-critical round-trip core. Verify against the round-trip-review checklist:
-        (1) import->export preserves meaning for in-surface templates (AD-003/AD-004, SPEC §15.7);
-        anything else takes an explicit unsupported path, never a silent meaning change.
-        (2) Each rule invocation matches EXACTLY one variant — zero/multiple/partial must become
-        import_unsupported (SPEC §15.6). (3) The custom marker is honored everywhere, including the
-        object/fields literal-marker escape (SPEC §11.4, §15.4). (4) Key ordering is preserved
-        (SPEC §15.3). (5) No hand-written per-rule codec/IR/block code — support must be metadata +
-        projection only (SPEC §21.15, NFR-046, AD-026). Flag any new transformation DSL/path syntax
-        (SPEC §21.8). Require a round-trip corpus case for each touched rule/variant (SPEC §15.8).
+        Trust-critical round-trip core. You cannot execute the round-trip corpus, so do NOT assert
+        semantic round-trip correctness either way — execution-based verification is owned by the
+        corpus tests (AD-011) and the round-trip-reviewer; per-rule/variant corpus coverage is
+        enforced by harness/scripts/check_corpus_coverage.py (SPEC §15.8) — do not re-litigate
+        either. What IS statically checkable here, flag it: (1) any hand-written per-rule
+        codec/IR/block mapping — support must be metadata + projection only (SPEC §21.15, NFR-046,
+        AD-026, AD-032); (2) any manual edit to generated codec artifacts
+        (packages/editor-core/src/codec/*.json) — they are projection outputs, regenerated and
+        byte-checked (AD-030), never hand-edited; (3) round-trip assertions that compare strings
+        instead of executing through the injected engine (AD-011); (4) any new transformation
+        DSL or path syntax (SPEC §21.8); (5) out-of-surface handling that rewrites or "fixes"
+        meaning instead of taking the explicit unsupported path (AD-003/AD-004, SPEC §15.6/15.7);
+        (6) marker handling that bypasses the literal-marker escape (SPEC §11.4, §15.4) or
+        drops key ordering (SPEC §15.3).
 
     # 2. Runtime-safety surfaces — engine execution, file writes, include loading, remote examples.
     - path: "packages/**/*{engine,provider,execut,include,file,remote,host}*"
@@ -60,7 +88,10 @@ reviews:
       instructions: >-
         Tests must cite the requirement ID they cover (e.g. `// FR-035`, SPEC §21.13, AC-027).
         Round-trip equivalence is execution-based via an injected engine, not string comparison
-        (AD-011). New rule/variant support needs a corpus case (SPEC §15.8).
+        (AD-011). New rule/variant support needs a corpus case (SPEC §15.8). Diff-local
+        cross-check: when a PR adds or changes a test citing an FR/NFR/AC ID, the matching
+        docs/traceability.md row must be updated in the SAME PR (AGENTS.md development loop) —
+        flag the PR if the table update is missing.
 
     # 4. Contract docs — SPEC-first and ID-stability are non-negotiable.
     - path: "docs/{SPEC,ARCHITECTURE,metadata-contract,ROADMAP,traceability}.md"

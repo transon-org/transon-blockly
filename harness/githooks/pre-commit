@@ -23,3 +23,7 @@ python3 harness/scripts/check_no_codec_mapping.py
 python3 harness/scripts/check_presentation.py
 # Blockly behavior runtime stays finite + rule-agnostic (NFR-046, AD-031).
 python3 harness/scripts/check_behavior_runtime_size.py
+# Round-trip corpus exercises every rule/variant + optional params both ways (SPEC §15.8, FR-045/046).
+python3 harness/scripts/check_corpus_coverage.py
+# Requirement IDs are append-only vs the committed ledger — never deleted or renumbered (SPEC §21.1).
+python3 harness/scripts/check_append_only_ids.py

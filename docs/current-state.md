@@ -8,13 +8,36 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `4c60cee` — review: address all 38 CodeRabbit threads on PR #4 |
-| Branch | `recent-changes` |
+| Repo HEAD | `6557fb5` — Merge pull request #4 from transon-org/recent-changes |
+| Branch | `main` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**CodeRabbit review analysis → config hardening + 2 new deterministic gates (2026-07-04, on `main`;
+UNCOMMITTED).** Analyzed how PRs #1–#4 were reviewed (49 CodeRabbit findings, ~91% signal, ~13 real
+runtime bugs — but ZERO comments on the codec core: its path instruction demanded corpus execution a
+static reviewer cannot do). Remediation: **(1)** `.coderabbit.yaml` — round-trip instruction #1
+rewritten to statically-checkable asks only (hand-written mapping, manual edits to generated
+`codec/*.json`, string-compare round-trip assertions, new DSL, silent out-of-surface rewrites) with
+an explicit "do not assert semantic round-trip either way"; tests instruction now demands the
+`docs/traceability.md` row update in the SAME PR; `tone_instructions` added (verify API claims
+against pinned versions not web search — PR #4's false-positive modes); `reviews.tools.github-checks`
+enabled (CI results fold into reviews, 300s timeout); `very-beginning` added to
+`auto_review.base_branches` (PRs #2/#3 were silently skipped). **(2)** New gate
+`check_corpus_coverage.py` — every snapshot rule/variant needs ≥1 corpus invocation matching exactly
+one variant (SPEC §15.8/§15.6), optional params exercised with AND without (FR-045/046); lexical
+scanner over `test/engine-node-adapter/test/codec/corpus.ts` (86 invocations → all 30 variants
+covered; the 5 uncredited are the deliberate out-of-surface cases; object/fields is covered by the
+FR-123 escape entries). **(3)** New gate `check_append_only_ids.py` + committed `docs/id-ledger.json`
+(286 IDs, maturity-baseline pattern) — deletion/renumbering of any FR/NFR/AC/UC/AD/OQ fails;
+new IDs register via `--update`, which refuses non-contiguous numbering (SPEC §21.1). Both wired
+into pre-commit + `agentic-checks.yml` (steps 9–10) + harness/README gate list; negative-tested
+(removal, unregistered add, gap-skip refusal, corpus-entry removal). All 11 gates green.
+**Next:** commit, then watch the next PR to confirm github-checks + the rewritten instructions
+change CodeRabbit's behavior as intended._
 
 _**PR #4 review comments addressed — all 38 CodeRabbit threads dispositioned (2026-07-04, branch
 `recent-changes`).** 36 fixed / 2 skipped-with-reason (theme.ts `name`: Blockly 13's installed

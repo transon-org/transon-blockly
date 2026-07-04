@@ -67,6 +67,17 @@ jobs:
       - name: Behavior runtime size (NFR-046)
         run: python harness/scripts/check_behavior_runtime_size.py
 
+      # 9. Round-trip corpus covers every rule/variant in the metadata snapshot, with optional
+      #    params exercised both ways (SPEC §15.8, FR-045/046) — the binding form of the
+      #    "corpus case per touched rule/variant" review instruction.
+      - name: Corpus coverage (SPEC §15.8)
+        run: python harness/scripts/check_corpus_coverage.py
+
+      # 10. Requirement IDs are append-only vs the committed docs/id-ledger.json — deletion or
+      #     renumbering of any FR/NFR/AC/UC/AD/OQ fails; new IDs must be registered (SPEC §21.1).
+      - name: Append-only requirement IDs (SPEC §21.1)
+        run: python harness/scripts/check_append_only_ids.py
+
   # The full TypeScript workspace: typecheck + build + every vitest suite, including the
   # engine-executed adapter tests (the round-trip corpus runs against the real pinned engine).
   # Before this job existed the entire suite passed only on developer machines — CI stayed

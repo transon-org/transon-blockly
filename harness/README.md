@@ -9,7 +9,7 @@ the root). Everything else lives here. The full cross-tool map is
 - `commands/` — command procedures (run-milestone · implement-requirement)
 - `skills/` — skill procedures (transon-authoring · blockly-authoring · round-trip-review · spec-traceability)
 - `workflows/` — workflow procedures (`review-gate` — adversarial pre-merge review)
-- `scripts/` — deterministic gates (`check_traceability` · `check_engine_parity` · `check_presentation` · `check_no_codec_mapping` · `check_behavior_runtime_size` · `check_maturity` · `check_links` · `update_memory`)
+- `scripts/` — deterministic gates (`check_traceability` · `check_engine_parity` · `check_presentation` · `check_no_codec_mapping` · `check_behavior_runtime_size` · `check_corpus_coverage` · `check_append_only_ids` · `check_maturity` · `check_links` · `update_memory`)
 - `evals/` — harness golden-path evals (`run_evals.py` + model-judged `cases/`)
 - `githooks/` — binding git hooks (`pre-commit` · `commit-msg`); enable with `git config core.hooksPath harness/githooks`
 - `automations/` — **outer-loop, propose-only** watchers (`drift_watch` · `ci_triage` · `worktrees.md`); the
