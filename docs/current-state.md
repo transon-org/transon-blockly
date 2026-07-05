@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `c8cedaf` — Merge pull request #5 from transon-org/review-hardening |
+| Repo HEAD | `262320b` — docs: add RFC-003 (canvas density + navigation); align RFC-001 naming |
 | Branch | `main` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -41,9 +41,17 @@ Key design principle codified from the discussion: *small children read densely;
 same socket can hold a literal or a subtree. Proposed IDs at verified next-free (`id-ledger.json`):
 FR-133…135, NFR-049, AC-041, AD-034, OQ-018…020. Everything display-only (§21.12); round-trip
 corpus must stay zero-diff. Anchored to NFR-029 (already prohibits an unusable large-template
-canvas). **Next:** user reviews the RFC (esp. OQ-018 label form, OQ-020 minimap defer/adopt);
-then SPEC edits land SPEC-first and phases 1–3 run as `/implement-requirement` slices; P-E gets a
-prototype on the largest corpus examples before its SPEC revision is finalized._
+canvas). Same day: added a **Gain** entry per proposal + a per-phase/cumulative gain column to
+the sequencing table (envelope: ~50 blocks capped → ~2–3.5× at 100% legibility; phase 1 alone
+makes any-size templates navigable; all figures pre-measurement, to be replaced by the NFR-049
+harness numbers per phase). Same day: **all three open questions ratified by the user** (via an
+interactive prompt) and recorded in the RFC — OQ-018 title-only canvas labels (C1+C3, dual label
+stays in flyout, rule name in tooltip), OQ-019 adaptive layout + manual override (prototype now
+only pins threshold/damping), OQ-020 **adopt minimap now** (user overrode the RFC's proposed
+defer; minimap folded into P-A/FR-133 + phase 1/M6 with a pinned `@blockly/workspace-minimap`
+dep). **Next:** land the SPEC/ARCHITECTURE/ROADMAP edits SPEC-first + author milestone M6
+(phases 1–3 only), then `/run-milestone M6`; P-E prototypes on the largest corpus examples before
+FR-135/AD-034 are finalized (→ M7). Full route in Next steps 0c._
 
 _**CodeRabbit review analysis → config hardening + 2 new deterministic gates (2026-07-04, on `main`;
 UNCOMMITTED).** Analyzed how PRs #1–#4 were reviewed (49 CodeRabbit findings, ~91% signal, ~13 real
@@ -542,13 +550,20 @@ living read of it.
    only: (i) context-sensitive examples (selected block → its rule's reference examples;
    `rule`/`tier`/`tags` joins already in place) — separate FR when wanted. (~~(ii) 0.1.6 pin
    bump~~ done in this tree — transon 0.1.6 is on PyPI.)
-0c. **RFC-003 review + ratification (canvas density + navigation)** — user reviews
-   `docs/proposals/rfc-003-canvas-density-and-navigation.md` (decide OQ-018 label form, OQ-019
-   adaptive-layout scope, OQ-020 minimap defer/adopt), then land the SPEC/ROADMAP edits SPEC-first
-   (reserve FR-133…135, NFR-049, AC-041, AD-034 via `check_append_only_ids.py --update`) and run
-   phases 1–3 as `/implement-requirement` slices (P-A zoom/fit + P-D collapse first — additive,
-   highest leverage). P-E (adaptive layout) prototypes on the largest corpus examples BEFORE its
-   SPEC revision is finalized.
+0c. **RFC-003 — ratified, awaiting SPEC/ROADMAP landing (canvas density + navigation).** All three
+   open questions were put to the user (2026-07-05) and are recorded in the RFC: **OQ-018 =
+   title-only canvas labels (C1+C3, dual label stays in flyout, rule name in tooltip); OQ-019 =
+   adaptive layout + manual override (prototype pins threshold/damping only); OQ-020 = adopt
+   `@blockly/workspace-minimap` NOW in phase 1/M6** (user overrode the RFC's proposed defer —
+   minimap is now part of P-A/FR-133). Remaining work: land the SPEC/ARCHITECTURE/ROADMAP edits
+   SPEC-first (reserve FR-133…135, NFR-049, AC-041, AD-034 via `check_append_only_ids.py
+   --update`; OQ-018…020 rows into ROADMAP §"Open questions"), **author milestone M6 scoped to
+   phases 1–3 only** (P-A zoom/fit/minimap + P-D collapse, P-C labels, P-B compact renderer) with
+   tracker row + DoD (AC-041 green, NFR-049 met, round-trip corpus zero-diff), then drive it with
+   `/run-milestone M6` (optionally `milestone-planner` first). `/run-milestone` needs the IDs in
+   the SPEC and a cited ROADMAP milestone — it cannot run the RFC directly. P-E (adaptive layout)
+   is deliberately NOT in M6 — it prototypes on the largest corpus examples BEFORE FR-135/AD-034
+   are finalized, then becomes its own milestone (M7).
 1. ~~Push the milestone branches + open PR(s)~~ **DONE / SUPERSEDED (verified 2026-07-03)** — the
    entire history (M0–M5 + `fix-editor-layout-css` + `fr-130` + `fr-131` + `r31-corpus-migration`)
    landed **linearly on `main`** and `main` is pushed (`origin/main` == `ca3a975`); no PRs were used.
