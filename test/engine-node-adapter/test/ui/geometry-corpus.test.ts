@@ -143,8 +143,11 @@ function checkWorkspace(mount: TransonMount, exampleName: string): string[] {
     const parentTop = parentXY.y;
     const parentBottom = parentXY.y + block.height;
 
-    // (c) grid quantization of rendered block heights (rule/literal blocks).
-    if (!QUANTIZATION_EXEMPT.has(block.type) && block.height % GRID_UNIT !== 0) {
+    // (c) grid quantization of rendered block heights. Degenerate geometry (0/NaN/negative) would
+    // sail through a bare modulo (0 % 4 == 0) — reject it explicitly first.
+    if (!Number.isFinite(block.height) || block.height <= 0) {
+      violations.push(`${exampleName}: ${block.type} height ${block.height} is not positive and finite`);
+    } else if (!QUANTIZATION_EXEMPT.has(block.type) && block.height % GRID_UNIT !== 0) {
       violations.push(`${exampleName}: ${block.type} height ${block.height} % ${GRID_UNIT} != 0`);
     }
 

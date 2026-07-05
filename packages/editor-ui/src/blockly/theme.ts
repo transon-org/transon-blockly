@@ -175,17 +175,11 @@ class CompactThrasosRenderer extends Blockly.thrasos.Renderer {
 /** Registered renderer name — thrasos-DERIVED (AD-033/AC-040's "thrasos" assertion matches on this
  *  substring), registered once (Blockly registries are singletons, HMR-safe like defineTheme). */
 const COMPACT_RENDERER_NAME = 'transon-thrasos-compact';
-let compactRendererRegistered = false;
 function ensureCompactRendererRegistered(): void {
-  if (compactRendererRegistered) return;
-  try {
-    Blockly.blockRendering.register(COMPACT_RENDERER_NAME, CompactThrasosRenderer);
-  } catch (e) {
-    // Re-registration (HMR / repeated test mounts in the same module instance) throws "already
-    // registered" — idempotent, like registerTransonBlocks()/defineTheme elsewhere in this layer.
-    if (!/already registered/i.test(String((e as Error)?.message))) throw e;
-  }
-  compactRendererRegistered = true;
+  // Idempotent across HMR / repeated test mounts (Blockly registries are singletons): a registry
+  // lookup, not exception-message matching — Blockly's error text is not a stable API.
+  if (Blockly.registry.hasItem(Blockly.registry.Type.RENDERER, COMPACT_RENDERER_NAME)) return;
+  Blockly.blockRendering.register(COMPACT_RENDERER_NAME, CompactThrasosRenderer);
 }
 ensureCompactRendererRegistered();
 

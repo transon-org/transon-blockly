@@ -337,7 +337,9 @@ describe('NFR-050(b) label/field ↔ connection anchoring', () => {
       // Sanity: the row really is stretched — its height far exceeds the anchor band, so anchored
       // and re-centered placements are DISTINGUISHABLE (else this test proves nothing).
       expect(row.height).toBeGreaterThan(2 * constants.TAB_HEIGHT);
-      for (const cl of fieldCenterlines(row)) {
+      const centerlines = fieldCenterlines(row);
+      expect(centerlines.length).toBeGreaterThan(0); // else the anchoring loop proves nothing
+      for (const cl of centerlines) {
         // Anchored at the tab (NFR-050(b)) …
         expect(Math.abs(cl - anchorOf(row, constants))).toBeLessThanOrEqual(0.5);
         // … and demonstrably NOT re-centered across the stretched row.
