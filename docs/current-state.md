@@ -8,13 +8,18 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `3db7497` — Merge commit '96d36940015a1cda7a05de147ea789393b5f96aa' into m6-canvas-density |
+| Repo HEAD | `7c58944` — fix(renderer): NFR-050 geometry invariants — zero-gap, centered tabs, grid |
 | Branch | `m6-canvas-density` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**M6 pushed — PR #7 OPEN (`m6-canvas-density` → `main`, 2026-07-05):** the full milestone
+(FR-133/134, §12.5 labels, NFR-049 density, NFR-050 geometry hardening, AC-041) in one PR;
+spec PR #6 already merged. **Next:** shepherd PR #7 review (CodeRabbit + CI), then M7 (P-E
+adaptive layout prototype, OQ-019)._
 
 _**NFR-050 geometry hardening LANDED (user feedback on the M6 compact renderer; 2026-07-05, branch
 `m6-canvas-density`).** User reported 5 visual defects (seams between stacked blocks, off-center
