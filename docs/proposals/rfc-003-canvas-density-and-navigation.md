@@ -135,9 +135,9 @@ signal, but hostile to the §12.6 beginner path; recorded here so the decision t
 considered.
 
 **Ratified (OQ-018, 2026-07-05): C1 + C3 as proposed** — canvas blocks title-only, flyout keeps
-the dual label, tooltip carries `"<rule> — <description>"`. The fallback in the contract-edits
-note below (dual label nowhere) is thereby **rejected**: if flyout and canvas can't share one
-`message0`, the flyout-specific label is the implementation cost we accept.
+the dual label, tooltip carries `"<rule> — <description>"`. The drafting-stage fallback (dual
+label nowhere on blocks) is **rejected**: if flyout and canvas can't share one `message0`, the
+flyout-specific label is the implementation cost we accept.
 
 - **Contract edits:** new **OQ-018** re-answering OQ-008 (deprecate OQ-008's answer in place, ROADMAP
   §"Open questions"); revise **§12.5** (canvas = title-only, flyout = dual label, tooltip carries
@@ -147,9 +147,7 @@ note below (dual label nowhere) is thereby **rejected**: if flyout and canvas ca
   artifacts (`G_palette.json`, `palette.json`) under the strict regen gate (AD-030);
   `presentation.json` short-label key (metadata-contract §2.9 addendum); flyout label needs a
   palette/flyout-specific label field or a flyout-only `labelKey` — the one place P-C touches more
-  than the projection, since today flyout and canvas share one `message0`. If keeping them identical
-  proves cheaper, fallback: dual label nowhere on blocks, rule name in tooltip + category docs only
-  — decide during review (folded into OQ-018).
+  than the projection, since today flyout and canvas share one `message0`.
 - **Gain:** `Get attribute (attr) name ⧉` → `Get attribute ⧉` — the label shrinks ~48%
   (25 → 13 characters) on the typical single-input block; canvas-average width drops an estimated
   **20–30%**. The saving **compounds with nesting depth**: in the external-inputs staircase each

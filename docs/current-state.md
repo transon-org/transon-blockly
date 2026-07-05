@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `6e263ff` — docs: land RFC-003 phases 1-3 (SPEC v2.1) + author milestone M6 |
+| Repo HEAD | `da6d94c` — docs: record PR #6 in the working handoff |
 | Branch | `m6-canvas-density-spec` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -32,7 +32,7 @@ OQ-018…020 ratified rows, OQ-008 superseded-on-canvas note (deprecate in place
 **metadata-contract** §2.9 addendum: optional short param display labels (editor-owned
 presentation data; engine export unchanged; date note bumped). **traceability** — AC-041 row,
 §7.17 row, NFR-049 row, NFR-029 note (M6 = its realization path), OQ intro extended.
-**id-ledger** registered FR-133/134, NFR-49, AC-41, OQ-18/19/20 (`--update`; 293 IDs). RFC-003
+**id-ledger** registered FR-133/134, NFR-049, AC-041, OQ-018/019/020 (`--update`; 293 IDs). RFC-003
 status flipped to phases-1–3-APPLIED (normative homes listed; **P-E stays PROPOSED** → M7, IDs
 assigned at next-free when it lands). Gates green: traceability, engine-parity, append-only IDs,
 snapshot `--check` (skip-note only). Prior commit on `main` (`6058e45`): OQ ratification + gain
