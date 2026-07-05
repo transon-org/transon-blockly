@@ -1,0 +1,607 @@
+{
+  "WorkedExampleNestedArithmetic": {
+    "blocksVisible": 10,
+    "width": 726,
+    "height": 280
+  },
+  "WorkedExampleReshapeRecords": {
+    "blocksVisible": 15,
+    "width": 867,
+    "height": 387
+  },
+  "WorkedExampleRenameAndFlatten": {
+    "blocksVisible": 17,
+    "width": 713,
+    "height": 548
+  },
+  "WorkedExampleFilterAndProject": {
+    "blocksVisible": 8,
+    "width": 418,
+    "height": 167
+  },
+  "WorkedExampleIndexByKey": {
+    "blocksVisible": 5,
+    "width": 256,
+    "height": 146
+  },
+  "WorkedExampleOptionalFieldsAndDefaults": {
+    "blocksVisible": 11,
+    "width": 396,
+    "height": 299
+  },
+  "WorkedExampleConditionalEnrichmentInsideMap": {
+    "blocksVisible": 23,
+    "width": 879,
+    "height": 599
+  },
+  "RecipeReadNestedValue": {
+    "blocksVisible": 4,
+    "width": 282,
+    "height": 131
+  },
+  "RecipeDefaultForMissingField": {
+    "blocksVisible": 3,
+    "width": 220,
+    "height": 62
+  },
+  "RecipePluckFieldFromEach": {
+    "blocksVisible": 3,
+    "width": 248,
+    "height": 60
+  },
+  "RecipeSwapKeysAndValues": {
+    "blocksVisible": 3,
+    "width": 200,
+    "height": 62
+  },
+  "RecipeJoinListToString": {
+    "blocksVisible": 3,
+    "width": 144,
+    "height": 84
+  },
+  "RecipeBuildStringFromFields": {
+    "blocksVisible": 2,
+    "width": 268,
+    "height": 84
+  },
+  "RecipeConvertType": {
+    "blocksVisible": 3,
+    "width": 399,
+    "height": 60
+  },
+  "RecipeMapCodeToLabel": {
+    "blocksVisible": 8,
+    "width": 288,
+    "height": 223
+  },
+  "RecipeBucketValueByRanges": {
+    "blocksVisible": 15,
+    "width": 635,
+    "height": 386
+  },
+  "RecipeComputeOnceUseTwice": {
+    "blocksVisible": 18,
+    "width": 658,
+    "height": 475
+  },
+  "RecipePairUpTwoLists": {
+    "blocksVisible": 15,
+    "width": 554,
+    "height": 387
+  },
+  "RecipeKeepItemsMatchingCondition": {
+    "blocksVisible": 6,
+    "width": 553,
+    "height": 127
+  },
+  "AttrSimpleFixedName": {
+    "blocksVisible": 2,
+    "width": 164,
+    "height": 62
+  },
+  "AttrSimpleNameDoesNotExist": {
+    "blocksVisible": 2,
+    "width": 164,
+    "height": 62
+  },
+  "AttrSimplePathDoesNotExist1": {
+    "blocksVisible": 5,
+    "width": 234,
+    "height": 153
+  },
+  "AttrSimplePathDoesNotExist2": {
+    "blocksVisible": 5,
+    "width": 234,
+    "height": 153
+  },
+  "AttrSimpleFixedIndex": {
+    "blocksVisible": 2,
+    "width": 164,
+    "height": 62
+  },
+  "AttrSimpleIndexDoesNotExist": {
+    "blocksVisible": 2,
+    "width": 164,
+    "height": 62
+  },
+  "AttrDynamicNameNoContent": {
+    "blocksVisible": 3,
+    "width": 368,
+    "height": 104
+  },
+  "AttrDynamicReferenceName1": {
+    "blocksVisible": 3,
+    "width": 320,
+    "height": 104
+  },
+  "AttrDynamicReferenceName2": {
+    "blocksVisible": 3,
+    "width": 320,
+    "height": 104
+  },
+  "AttrSimpleFixedNames": {
+    "blocksVisible": 21,
+    "width": 304,
+    "height": 665
+  },
+  "AttrDynamicReferenceNames": {
+    "blocksVisible": 3,
+    "width": 320,
+    "height": 104
+  },
+  "AttrDynamicReferenceMultipleNames": {
+    "blocksVisible": 13,
+    "width": 584,
+    "height": 300
+  },
+  "ChainWithAttr": {
+    "blocksVisible": 20,
+    "width": 430,
+    "height": 561
+  },
+  "CondFirstTruthyArm": {
+    "blocksVisible": 11,
+    "width": 489,
+    "height": 277
+  },
+  "CondDefaultBranch": {
+    "blocksVisible": 11,
+    "width": 489,
+    "height": 277
+  },
+  "ConvertValues": {
+    "blocksVisible": 4,
+    "width": 349,
+    "height": 87
+  },
+  "ConvertValue": {
+    "blocksVisible": 3,
+    "width": 446,
+    "height": 22
+  },
+  "ConvertNoParameters": {
+    "blocksVisible": 1,
+    "width": 218,
+    "height": 22
+  },
+  "ConvertToFloat": {
+    "blocksVisible": 1,
+    "width": 234,
+    "height": 22
+  },
+  "AttrWithDefault": {
+    "blocksVisible": 3,
+    "width": 228,
+    "height": 62
+  },
+  "GetWithDefault": {
+    "blocksVisible": 3,
+    "width": 188,
+    "height": 62
+  },
+  "FormatWithDefault": {
+    "blocksVisible": 5,
+    "width": 328,
+    "height": 126
+  },
+  "ExprSimpleMonads1": {
+    "blocksVisible": 2,
+    "width": 291,
+    "height": 22
+  },
+  "ExprSimpleMonads2": {
+    "blocksVisible": 5,
+    "width": 473,
+    "height": 89
+  },
+  "ExprMonadsComplex": {
+    "blocksVisible": 16,
+    "width": 758,
+    "height": 329
+  },
+  "ExprSimpleValues1": {
+    "blocksVisible": 4,
+    "width": 361,
+    "height": 87
+  },
+  "ExprSimpleValues2": {
+    "blocksVisible": 4,
+    "width": 361,
+    "height": 87
+  },
+  "ExprValuesComplex": {
+    "blocksVisible": 14,
+    "width": 726,
+    "height": 389
+  },
+  "ExprValuesIgnoresThis": {
+    "blocksVisible": 5,
+    "width": 313,
+    "height": 109
+  },
+  "ExprLogicalAnd": {
+    "blocksVisible": 2,
+    "width": 211,
+    "height": 22
+  },
+  "ExprLogicalOr": {
+    "blocksVisible": 2,
+    "width": 203,
+    "height": 22
+  },
+  "ExprOrNoContentFallback": {
+    "blocksVisible": 5,
+    "width": 453,
+    "height": 129
+  },
+  "ExprUnary1": {
+    "blocksVisible": 1,
+    "width": 210,
+    "height": 22
+  },
+  "ExprUnary2": {
+    "blocksVisible": 1,
+    "width": 178,
+    "height": 22
+  },
+  "FileWriteViaMap": {
+    "blocksVisible": 9,
+    "width": 665,
+    "height": 217
+  },
+  "FilterDict": {
+    "blocksVisible": 5,
+    "width": 457,
+    "height": 85
+  },
+  "FilterList": {
+    "blocksVisible": 5,
+    "width": 449,
+    "height": 85
+  },
+  "FilterListByOddIndex": {
+    "blocksVisible": 5,
+    "width": 457,
+    "height": 85
+  },
+  "FilterListNoContent": {
+    "blocksVisible": 15,
+    "width": 462,
+    "height": 279
+  },
+  "FormatFromSingleValue": {
+    "blocksVisible": 3,
+    "width": 264,
+    "height": 82
+  },
+  "FormatFromDict": {
+    "blocksVisible": 3,
+    "width": 320,
+    "height": 82
+  },
+  "FormatFromList": {
+    "blocksVisible": 3,
+    "width": 264,
+    "height": 82
+  },
+  "FormatWithValue": {
+    "blocksVisible": 9,
+    "width": 673,
+    "height": 220
+  },
+  "FormatWithDynamicPattern": {
+    "blocksVisible": 3,
+    "width": 344,
+    "height": 126
+  },
+  "FormatSkipsMissingValue": {
+    "blocksVisible": 4,
+    "width": 320,
+    "height": 126
+  },
+  "LookupMissingAttr": {
+    "blocksVisible": 2,
+    "width": 212,
+    "height": 62
+  },
+  "IncludeWithDefault": {
+    "blocksVisible": 3,
+    "width": 316,
+    "height": 62
+  },
+  "Include": {
+    "blocksVisible": 3,
+    "width": 344,
+    "height": 60
+  },
+  "JoinWithStaticNoOverrides": {
+    "blocksVisible": 5,
+    "width": 310,
+    "height": 202
+  },
+  "JoinWithStaticWithOverrides": {
+    "blocksVisible": 5,
+    "width": 310,
+    "height": 202
+  },
+  "JoinTwoDictsNoCommonKeys": {
+    "blocksVisible": 6,
+    "width": 358,
+    "height": 237
+  },
+  "JoinTwoDictsWithCommonKeys": {
+    "blocksVisible": 6,
+    "width": 358,
+    "height": 237
+  },
+  "JoinTwoStrings": {
+    "blocksVisible": 6,
+    "width": 358,
+    "height": 237
+  },
+  "JoinTwoStringsWithDynamicSep": {
+    "blocksVisible": 8,
+    "width": 358,
+    "height": 279
+  },
+  "JoinManyDynamicDicts": {
+    "blocksVisible": 15,
+    "width": 610,
+    "height": 465
+  },
+  "JoinSkipsMissingStringFields": {
+    "blocksVisible": 9,
+    "width": 358,
+    "height": 301
+  },
+  "JoinEmptyReturnsNoContent": {
+    "blocksVisible": 2,
+    "width": 154,
+    "height": 109
+  },
+  "JoinEmptyWithDefaultDict": {
+    "blocksVisible": 3,
+    "width": 160,
+    "height": 134
+  },
+  "MapListToNestedListWithItem": {
+    "blocksVisible": 5,
+    "width": 398,
+    "height": 161
+  },
+  "MapListToList": {
+    "blocksVisible": 16,
+    "width": 544,
+    "height": 465
+  },
+  "MapDictToList": {
+    "blocksVisible": 4,
+    "width": 260,
+    "height": 91
+  },
+  "MapDictToDictItems": {
+    "blocksVisible": 3,
+    "width": 200,
+    "height": 62
+  },
+  "MapDictToListItems": {
+    "blocksVisible": 4,
+    "width": 254,
+    "height": 87
+  },
+  "MapListsToDict": {
+    "blocksVisible": 13,
+    "width": 464,
+    "height": 364
+  },
+  "NoContentForAttr": {
+    "blocksVisible": 6,
+    "width": 318,
+    "height": 171
+  },
+  "NoContentForObjectKey": {
+    "blocksVisible": 4,
+    "width": 296,
+    "height": 104
+  },
+  "NoContentForObjectValue": {
+    "blocksVisible": 4,
+    "width": 296,
+    "height": 104
+  },
+  "NoContentForObjectFields": {
+    "blocksVisible": 6,
+    "width": 385,
+    "height": 171
+  },
+  "NoContentForMappingList": {
+    "blocksVisible": 13,
+    "width": 392,
+    "height": 371
+  },
+  "NoContentForMappingDict": {
+    "blocksVisible": 23,
+    "width": 464,
+    "height": 763
+  },
+  "ObjectDynamicKeyValue": {
+    "blocksVisible": 5,
+    "width": 328,
+    "height": 146
+  },
+  "ObjectFieldsLiteralMarker": {
+    "blocksVisible": 4,
+    "width": 272,
+    "height": 133
+  },
+  "ObjectFieldsMultipleLiteralKeys": {
+    "blocksVisible": 6,
+    "width": 388,
+    "height": 171
+  },
+  "OperatorLessThan": {
+    "blocksVisible": 2,
+    "width": 243,
+    "height": 22
+  },
+  "OperatorLessOrEqual": {
+    "blocksVisible": 2,
+    "width": 211,
+    "height": 22
+  },
+  "OperatorEqual": {
+    "blocksVisible": 2,
+    "width": 243,
+    "height": 22
+  },
+  "OperatorNotEqual": {
+    "blocksVisible": 2,
+    "width": 243,
+    "height": 22
+  },
+  "OperatorGreaterOrEqual": {
+    "blocksVisible": 2,
+    "width": 203,
+    "height": 22
+  },
+  "OperatorGreaterThan": {
+    "blocksVisible": 2,
+    "width": 235,
+    "height": 22
+  },
+  "OperatorSubtract": {
+    "blocksVisible": 2,
+    "width": 243,
+    "height": 22
+  },
+  "OperatorMultiply": {
+    "blocksVisible": 2,
+    "width": 243,
+    "height": 22
+  },
+  "OperatorDivide": {
+    "blocksVisible": 2,
+    "width": 243,
+    "height": 22
+  },
+  "OperatorModulo": {
+    "blocksVisible": 2,
+    "width": 243,
+    "height": 22
+  },
+  "SetVisibleToLaterSiblingKey": {
+    "blocksVisible": 5,
+    "width": 264,
+    "height": 133
+  },
+  "SetInvisibleToEarlierSiblingKey": {
+    "blocksVisible": 6,
+    "width": 280,
+    "height": 133
+  },
+  "SetInFirstChainFuncVisibleToSibling": {
+    "blocksVisible": 8,
+    "width": 415,
+    "height": 198
+  },
+  "SetInLaterChainFuncNotVisibleToSibling": {
+    "blocksVisible": 9,
+    "width": 415,
+    "height": 198
+  },
+  "SetInFirstChainFuncVisibleToLaterFunc": {
+    "blocksVisible": 6,
+    "width": 326,
+    "height": 129
+  },
+  "SetBeforeMapVisibleInsideIteration": {
+    "blocksVisible": 7,
+    "width": 370,
+    "height": 127
+  },
+  "SetInsideMapNotVisibleAfterLoop": {
+    "blocksVisible": 8,
+    "width": 402,
+    "height": 129
+  },
+  "SwitchDispatchOnKey": {
+    "blocksVisible": 6,
+    "width": 272,
+    "height": 199
+  },
+  "SwitchDefaultBranch": {
+    "blocksVisible": 6,
+    "width": 272,
+    "height": 175
+  },
+  "TypeOfObject": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 22
+  },
+  "TypeOfArray": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 22
+  },
+  "TypeOfString": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 22
+  },
+  "TypeOfInt": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 22
+  },
+  "TypeOfFloat": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 22
+  },
+  "TypeOfBoolean": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 22
+  },
+  "TypeOfNull": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 22
+  },
+  "TypeDispatchWithSwitch": {
+    "blocksVisible": 7,
+    "width": 371,
+    "height": 159
+  },
+  "ZipLists": {
+    "blocksVisible": 10,
+    "width": 224,
+    "height": 269
+  },
+  "ZipStrings": {
+    "blocksVisible": 4,
+    "width": 162,
+    "height": 87
+  }
+}

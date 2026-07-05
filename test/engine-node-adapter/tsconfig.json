@@ -2,6 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
+    // DOM lib is needed ONLY by test/ui/density-corpus.test.ts (NFR-049 §19.4): it mounts a rendered
+    // Blockly workspace under a per-file `@vitest-environment jsdom` override (this package's
+    // Vitest project default stays `node` — every other test here is a real-engine, no-DOM test).
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node"],
     "noEmit": false
   },
