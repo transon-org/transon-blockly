@@ -413,3 +413,40 @@ describe('NFR-050(c) grid-quantized vertical constants', () => {
     }
   });
 });
+
+describe('segmented +/- mutator control (AC-038 presentation)', () => {
+  // The two FieldImage button chips form ONE visual segmented control: 15x15 squares (symmetrical,
+  // each button square) joined with ZERO gap (CompactRenderInfo.getInRowSpacing_ returns 0 between
+  // adjacent image fields — the only FieldImages in the transon surface are these buttons).
+  it('the two image fields are square, equal, and flush (no gap) on the title row', () => {
+    const c = makeContainer();
+    const mount = mountBlockly(c);
+    try {
+      mount.workspace.setScale(1);
+      mount.loadDocument(ARRAY_STACK);
+      const parent = mount.workspace.getTopBlocks(false)[0] as Blockly.BlockSvg;
+      const minus = parent.getField('TRANSON_MINUS');
+      const plus = parent.getField('TRANSON_PLUS');
+      expect(minus).toBeTruthy();
+      expect(plus).toBeTruthy();
+      // square + symmetrical: equal 15-wide buttons drawn as 15×15 squares (the field BOX height
+      // is 16 — image 15 + Blockly's private 1px Y_PADDING — exactly the 16px grid row,
+      // NFR-050(c))
+      for (const f of [minus!, plus!]) {
+        const size = f.getSize();
+        expect(size.width).toBe(15);
+        expect(size.height).toBe(16);
+      }
+      // flush + ordered (rendered DOM is the source of truth): the field groups sit exactly one
+      // button-width apart — minus (red) left, plus (green) right, zero gap between the squares
+      const xOf = (f: Blockly.Field): number => {
+        const m = /translate\((-?[\d.]+)/.exec(f.getSvgRoot()!.getAttribute('transform') ?? '');
+        return m ? parseFloat(m[1]!) : NaN;
+      };
+      expect(xOf(plus!) - xOf(minus!)).toBe(15);
+    } finally {
+      mount.dispose();
+      c.remove();
+    }
+  });
+});

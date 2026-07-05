@@ -8,13 +8,28 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `183feda` — review: hoist minimap resync out of finally (Biome noUnsafeFinally) |
-| Branch | `m6-canvas-density` |
+| Repo HEAD | `d041aa8` — Merge pull request #7 from transon-org/m6-canvas-density |
+| Branch | `mutator-controls-inline` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**Mutator +/- controls inlined into the title row, button-styled (2026-07-05, branch
+`mutator-controls-inline` off `m6-canvas-density`).** User-requested UX change: the array/object
++/- controls moved from their dedicated `TRANSON_CONTROLS` dummy row onto the title row
+(`Array [+] [−]` — the blockly-samples plus-minus idiom), drawn as button chips (rounded-rect
+20×15 data-URI SVGs; height 15 keeps the FieldImage row at 16 = grid, NFR-050(c)); named fields
+`TRANSON_PLUS`/`TRANSON_MINUS` (idempotency guard via getField; FieldImage non-serializable, so
+still UI-only); `cursor: pointer` on canvas `image` fields in the scoped stylesheet. Red-first
+placement tests in `packages/editor-blockly/test/mutator.test.ts` (3 new). Density win: corpus
+total bbox height **−13.5%** (recovers most of the geometry-fix give-back; zero examples taller;
+median width +14px — horizontal is the abundant dimension), baseline regenerated. All 20 turbo
+tasks + geometry corpus sweep green; browser-verified with REAL clicks (+ adds a row, − removes,
+JSON stays in_sync) — evidence `retro/evidence/mutator-controls-inline.jpeg`. **Next:** open a PR
+for this branch after PR #7 merges (stacked), or fold into PR #7 if preferred._
+
 
 _**NFR-050(b) anchoring hardening LANDED (2nd user feedback round; 2026-07-05, on PR #7):** on
 rows stretched by a tall child, labels re-centered across the stretched height (the first (b)

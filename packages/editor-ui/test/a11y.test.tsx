@@ -61,7 +61,10 @@ describe('state not conveyed by colour alone (NFR-045, FR-095)', () => {
 });
 
 describe('axe-core: no critical/serious ARIA violations on the sandbox chrome (AC-039)', () => {
-  it('scans the shell (excluding the Blockly canvas + contrast, unavailable under jsdom)', async () => {
+  // Explicit 30s timeout: a full axe scan over the mounted shell is genuinely heavy, and under
+  // parallel-worker/machine load it regularly blew vitest's 5s default — the recurring
+  // "sole-failure a11y flake" documented in the M6 retro. The scan itself is unchanged.
+  it('scans the shell (excluding the Blockly canvas + contrast, unavailable under jsdom)', { timeout: 30_000 }, async () => {
     render(<TransonEditor host={{ engine: createFakeEngine() }} mode="sandbox" />);
     await waitFor(() => screen.getByTestId('toolbar'));
 

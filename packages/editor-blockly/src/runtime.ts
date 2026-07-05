@@ -159,27 +159,44 @@ type DynamicBlock = Blockly.Block & {
   removeField_?: () => void;
 };
 
-/** The dummy input that carries the on-canvas +/- mutator buttons (UI-only, never serialized). */
-const CONTROLS = 'TRANSON_CONTROLS';
+/** Field names of the on-canvas +/- mutator buttons (UI-only: FieldImage is non-serializable, so
+ *  they can never enter the workspace serialization). Named so the append is idempotent across
+ *  the mutator helper re-entering on loadExtraState. */
+const PLUS_FIELD = 'TRANSON_PLUS';
+const MINUS_FIELD = 'TRANSON_MINUS';
 
-/** Inline +/- icons as data-URI SVGs (no external assets, no btoa — URL-encoded).
- *  15px tall (not 16): Blockly's FieldImage adds a private 1px Y_PADDING (field_image.ts), so a
- *  15px image yields a 16px field row — a GRID_UNIT multiple (NFR-050c). At 16px the control row
- *  measured 17px, which propagated an odd height into EVERY ancestor of an array/object block and
- *  broke the corpus-wide height-quantization invariant. Display-only; the field is never
- *  serialized (UI-only control row). */
+/** Inline +/- buttons as data-URI SVGs (no external assets, no btoa — URL-encoded). The two
+ *  15×15 SQUARE buttons form one segmented control — red − on the left, green + on the right,
+ *  joined with NO gap (the renderer's CompactRenderInfo returns 0 in-row spacing between adjacent
+ *  image fields), outer corners rounded, inner edge flat. SIZE is 15px (not 16): Blockly's
+ *  FieldImage adds a private 1px Y_PADDING (field_image.ts), so a 15px image yields a 16px field
+ *  row — a GRID_UNIT multiple (NFR-050c); at 16px the row measured 17px and propagated an odd
+ *  height into every ancestor of an array/object block. Symbols are drawn as white RECTS (crisp
+ *  at any zoom, no font dependency); each button carries its symbol, so meaning never rests on
+ *  colour alone (NFR-045). Display-only presentation, same FieldImage primitive (NFR-046). */
 const GLYPH_SIZE = 15;
-function glyphIcon(glyph: string): string {
+/** One square segment. `side: 'left'` rounds the outer left corners (the −), `'right'` the outer
+ *  right corners (the +); the shared inner edge stays flat so the pair reads as one control. */
+function segmentIcon(side: 'left' | 'right', fill: string, symbol: string): string {
+  const s = GLYPH_SIZE;
+  const r = 3.5;
+  const path =
+    side === 'left'
+      ? `M ${r} 0 H ${s} V ${s} H ${r} A ${r} ${r} 0 0 1 0 ${s - r} V ${r} A ${r} ${r} 0 0 1 ${r} 0 Z`
+      : `M 0 0 H ${s - r} A ${r} ${r} 0 0 1 ${s} ${r} V ${s - r} A ${r} ${r} 0 0 1 ${s - r} ${s} H 0 Z`;
   return (
     'data:image/svg+xml,' +
     encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${GLYPH_SIZE}" height="${GLYPH_SIZE}">` +
-        `<text x="2" y="12" font-family="sans-serif" font-size="14">${glyph}</text></svg>`,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}">` +
+        `<path d="${path}" fill="${fill}"/>${symbol}</svg>`,
     )
   );
 }
-const PLUS_ICON = glyphIcon('+');
-const MINUS_ICON = glyphIcon('−'); // minus sign
+// symbols centered in the 15×15 square: bars 9 long, 3 thick (white, bold, symmetrical)
+const H_BAR = `<rect x="3" y="6" width="9" height="3" rx="1" fill="#ffffff"/>`;
+const V_BAR = `<rect x="6" y="3" width="3" height="9" rx="1" fill="#ffffff"/>`;
+const MINUS_ICON = segmentIcon('left', '#c9564c', H_BAR); // red −, left segment
+const PLUS_ICON = segmentIcon('right', '#54a957', H_BAR + V_BAR); // green +, right segment
 
 function removeInputs(block: Blockly.Block, prefix: string): void {
   const names = block.inputList.map((inp) => inp.name).filter((n) => n.startsWith(prefix));
@@ -196,14 +213,25 @@ function withMutationEvent(block: DynamicBlock, mutate: () => void): void {
   Blockly.Events.fire(new Blockly.Events.BlockChange(block, 'mutation', null, oldState, save()));
 }
 
-/** Append the +/- control row once (run from the mutator helper at block init, for fresh + loaded
- *  blocks alike). The buttons call the block's add/remove methods. */
+/** Append the +/- buttons once, INLINE on the title row (run from the mutator helper at block
+ *  init, for fresh + loaded blocks alike) — the blockly-samples plus-minus idiom, and one full row
+ *  denser per array/object block (NFR-049) than the previous dedicated controls row. The title
+ *  row is the implicit dummy input Blockly creates for the structural def's `message0` text; the
+ *  fallback append covers a def with no message (defensive — no current structural def hits it).
+ *  The buttons call the block's add/remove methods. */
 function appendControls(block: DynamicBlock, add: () => void, remove: () => void): void {
-  if (block.getInput(CONTROLS)) return;
-  block
-    .appendDummyInput(CONTROLS)
-    .appendField(new Blockly.FieldImage(PLUS_ICON, GLYPH_SIZE, GLYPH_SIZE, '+', () => add()))
-    .appendField(new Blockly.FieldImage(MINUS_ICON, GLYPH_SIZE, GLYPH_SIZE, '−', () => remove()));
+  if (block.getField(PLUS_FIELD)) return;
+  const title = block.inputList[0] ?? block.appendDummyInput();
+  // segmented-control order: red − on the left, green + on the right
+  title
+    .appendField(
+      new Blockly.FieldImage(MINUS_ICON, GLYPH_SIZE, GLYPH_SIZE, '−', () => remove()),
+      MINUS_FIELD,
+    )
+    .appendField(
+      new Blockly.FieldImage(PLUS_ICON, GLYPH_SIZE, GLYPH_SIZE, '+', () => add()),
+      PLUS_FIELD,
+    );
 }
 
 /** transon_array: ITEM{n} value inputs; count = extraState.items.length. Add/remove at the END so
