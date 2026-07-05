@@ -88,6 +88,14 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
     // UI-only state (§11.5) — never part of the exported template (§11.6).
     zoom: { controls: true, wheel: true, pinch: true, startScale: 0.9, minScale: 0.2, maxScale: 3 },
     move: { scrollbars: true, drag: true, wheel: true },
+    // FR-134 (§7.17, AC-041(b)): enables Blockly's native "Collapse Block"/"Expand Block" context
+    // menu on any block subtree. `collapsed` is UI-only state (§11.5) written by save() — the
+    // generated Transon JSON (codec decode()) reads inputs/fields by name and ignores it, so the
+    // output is byte-identical collapsed vs expanded. Explicit (not left to Blockly's toolbox-
+    // implied default, which happens to already be true whenever a non-empty toolbox is injected
+    // and the workspace is not read-only) so the contract holds regardless of toolbox shape or a
+    // future Blockly default change — matching the explicit `zoom`/`move` options above.
+    collapse: true,
   });
 
   // FR-133 zoom-to-fit — one-action framing of the whole template (@blockly/zoom-to-fit).
