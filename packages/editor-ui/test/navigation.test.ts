@@ -75,6 +75,34 @@ describe('Canvas navigation (FR-133)', () => {
     }
   });
 
+  it('minimap mirrors a programmatic loadDocument (events are suppressed, so the mirror must be resynced)', () => {
+    // The plugin mirrors the primary workspace by REPLAYING change events onto its own mini
+    // workspace. loadDocument()/clear() run with Blockly events disabled (no forward-flow feedback
+    // loop), so without an explicit resync the minimap stays empty and every later event replay
+    // ("collapse", move, delete) throws "The associated block is undefined" (seen live in the
+    // reference host). FR-133/AC-041(a): the minimap must reflect a programmatically loaded doc.
+    const c = makeContainer();
+    const mount = mountBlockly(c);
+    try {
+      mount.loadDocument({
+        type: 'transon_rule_attr__name',
+        inputs: { name: { block: { type: 'transon_literal', fields: { VALUE: 'x' } } } },
+      });
+      const mm = c.parentElement?.querySelector('.blockly-minimap') ?? c.querySelector('.blockly-minimap');
+      expect(mm).toBeTruthy();
+      expect(mm!.querySelectorAll('g.blocklyBlock').length).toBeGreaterThan(0);
+      // and a post-load event replay on the now-synced mirror must not throw (the live failure mode)
+      const top = mount.workspace.getTopBlocks(false)[0]!;
+      expect(() => top.setCollapsed(true)).not.toThrow();
+      // clear() must resync the mirror down to empty as well
+      mount.clear();
+      expect(mm!.querySelectorAll('g.blocklyBlock').length).toBe(0);
+    } finally {
+      mount.dispose();
+      c.remove();
+    }
+  });
+
   it('dispose() tears down the zoom-to-fit control and the minimap without throwing', () => {
     const c = makeContainer();
     const mount = mountBlockly(c);

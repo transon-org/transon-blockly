@@ -24,6 +24,27 @@ import { TRANSON_THEME, TRANSON_RENDERER } from './theme.js';
 /** Scoped root class applied to the host container (AD-018: light DOM, scoped CSS prefix). */
 export const TRANSON_ROOT_CLASS = 'transon-editor';
 
+/** FR-133 minimap that can resync its mirror from the primary workspace. The stock plugin mirrors
+ *  by replaying change EVENTS onto its own mini workspace and never copies existing state — but the
+ *  mount's programmatic mutations (loadDocument/clear) run with Blockly events disabled, so the
+ *  mirror would stay stale and every later replay against it ("collapse", move, delete) would throw
+ *  "The associated block is undefined". Subclassing gives clean access to the protected
+ *  `minimapWorkspace` for a full-state reload after each programmatic mutation. */
+class SyncablePositionedMinimap extends PositionedMinimap {
+  syncFrom(primary: Blockly.WorkspaceSvg): void {
+    const mirror = this.minimapWorkspace;
+    if (!mirror) return;
+    Blockly.Events.disable(); // the mirror is display-only; its own events go nowhere useful
+    try {
+      mirror.clear();
+      Blockly.serialization.workspaces.load(Blockly.serialization.workspaces.save(primary), mirror);
+      mirror.zoomToFit();
+    } finally {
+      Blockly.Events.enable();
+    }
+  }
+}
+
 let blocklyReady = false;
 /** Idempotently load the English messages (Blockly.inject needs Msg, e.g. WORKSPACE_ARIA_LABEL) and
  *  register the Transon block definitions + behavior runtime. */
@@ -103,7 +124,7 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
   zoomToFit.init();
 
   // FR-133 minimap — overview of large templates (OQ-020, @blockly/workspace-minimap).
-  const minimap = new PositionedMinimap(workspace);
+  const minimap = new SyncablePositionedMinimap(workspace);
   minimap.init();
 
   let suppress = false;
@@ -117,7 +138,8 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
   };
   workspace.addChangeListener(listener);
 
-  /** Run a programmatic mutation with change events suppressed (no forward-flow feedback loop). */
+  /** Run a programmatic mutation with change events suppressed (no forward-flow feedback loop).
+   *  The event-mirroring minimap can't see suppressed mutations, so resync it afterwards. */
   const programmatic = (fn: () => void): void => {
     suppress = true;
     Blockly.Events.disable();
@@ -127,6 +149,7 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
       Blockly.Events.enable();
       suppress = false;
     }
+    minimap.syncFrom(workspace);
   };
 
   return {

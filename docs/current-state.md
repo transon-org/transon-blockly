@@ -8,13 +8,59 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `da6d94c` — docs: record PR #6 in the working handoff |
-| Branch | `m6-canvas-density-spec` |
+| Repo HEAD | `b9d17fb` — feat(editor-ui): NFR-049 compact renderer + committed density ratchet |
+| Branch | `m6-canvas-density` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**M6 COMPLETE (`/run-milestone M6`) — ROADMAP ☑, `round-trip-reviewer`-signed-off, AC-041(a–e) green
+incl. the §19.4 real-browser pass; all DoD gates green (2026-07-05, branch `m6-canvas-density`,
+stacked on `m6-canvas-density-spec`/PR #6; NOT pushed).** Canvas density + navigation (RFC-003
+phases 1–3), display-only throughout (§21.12): round-trip corpus zero-diff, `G_palette.json`+
+`palette.json` the ONLY regenerated artifacts (byte-equal regen gate green). **Slices:**
+**FR-133 (`2a8f22f`)** — `Blockly.inject` `zoom` (controls/wheel/pinch, 0.2–3.0, start 0.9) +
+`move` (scrollbars/drag/wheel) in `mount.ts`; `@blockly/zoom-to-fit@13.1.0` +
+`@blockly/workspace-minimap@13.1.0` pinned exact (AD-021), init after inject / disposed with the
+mount. Both plugins ship UMD → treated as EXTERNAL runtime deps like `blockly` itself (external in
+editor-ui/react/element ESM builds, real deps of element/react; bundling them had broken the IIFE
+build via a synthesized `blockly/core` default-import). *Watch-out: plugins peer-require `^13.1.0`
+vs our `blockly@13.0.0` pin (non-fatal warning) — consider a 13.1.0 bump at the next pin review.*
+**FR-134 (`d5bafd9`)** — explicit `collapse: true` (native context-menu items; Blockly's
+categoryToolbox default already implied it — now contract, not accident); collapsed state UI-only
+(§11.5); byte-identical JSON collapsed vs expanded proven vs the real engine + committed decoder
+(`test/codec/collapse.test.ts`). **§12.5 labels (`875fc5a`)** — canvas `message0` = title only
+(OQ-018 supersedes OQ-008 on canvas); flyout dual label carried as display-only `flyoutLabel` def
+data + ONE shared `transon_flyout_label` extension keyed on `Block.isInFlyout` (title field is a
+non-serializable `FieldLabel` → can never leak into `save()`, reviewer-verified); ≤1-value-input
+variants drop the socket's param-name prefix (constant field/dropdown params KEEP labels);
+`presentation.json paramLabels` short display labels (contract §2.9; `check_presentation.py`
+validates + selftest; demo `attr.default → "fallback"`); `ruleTooltip` = `<rule> — <description>`
+(FR-078). Independent `round-trip-reviewer`: **SAFE TO MERGE** (all 6 adversarial concerns refuted;
+encoder/decoder/toolbox/blockmap byte-identical; placeholder/args parity across all 30 defs).
+**NFR-049 (`b9d17fb`)** — `CompactThrasosRenderer` (`transon-thrasos-compact`, thrasos-derived so
+AC-040 holds; vertical paddings/notch/tab/min-height tightened, font stays 12px per NFR-045);
+single-value-input block 26→**20px** (bound ≤28); §19.4 density harness = fast fixture bound test
+in editor-ui + full 121-example corpus sweep in `test/engine-node-adapter/test/ui/
+density-corpus.test.ts` (real engine + per-file jsdom; editor-ui has no engine and a dep cycle
+forbids one) ratcheting vs committed `packages/editor-ui/test/density-baseline.json`
+(`UPDATE_DENSITY=1` regen idiom); corpus median bbox height **−14.2%**, area −15.9%, zero
+regressions. **Browser pass (Playwright MCP, evidence `retro/evidence/m6-ac041-browser.jpeg` +
+`retro/sessions/M6.md`)** verified AC-041(a–d) live (zoom-to-fit 0.9→0.587; minimap mirrors all
+blocks; context-menu collapse → label+ellipsis, JSON byte-identical; canvas title-only/flyout dual;
+25px flyout blocks) **and caught one real bug fixed in the close-out commit:** the event-mirroring
+minimap never saw event-suppressed programmatic loads (empty mirror + "associated block is
+undefined" on every later event) → `SyncablePositionedMinimap.syncFrom()` resync after each
+programmatic mutation (red-first test in `navigation.test.ts`). Suites: editor-ui 132 · blockly 32
+· core 25 · adapter 1271 · element 12 · react 5 — all green; all 11 pre-commit gates green ×5
+commits. **Not in M6 (explicit):** P-E adaptive inline/external layout (OQ-019) → M7 after a
+corpus prototype; `inputsInline`/§13.10/FR-129/AC-040 untouched. **Next:** review/merge PR #6
+(spec) + open the M6 implementation PR off it; then M7 (P-E prototype) or the M5-era follow-ups
+(committed Playwright/axe CI job, structured engine error paths)._
+
+### Prior last action (M6 spec landing)
 
 _**RFC-003 phases 1–3 LANDED in the contract docs — SPEC v2.1 + ROADMAP v2.1 + milestone M6
 authored (2026-07-05, branch `m6-canvas-density-spec`, off `main` @ `6058e45`).** SPEC-first
