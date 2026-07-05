@@ -8,13 +8,36 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `262320b` — docs: add RFC-003 (canvas density + navigation); align RFC-001 naming |
-| Branch | `main` |
+| Repo HEAD | `6058e45` — docs: ratify RFC-003 open questions; add per-proposal/per-phase gains |
+| Branch | `m6-canvas-density-spec` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-003 phases 1–3 LANDED in the contract docs — SPEC v2.1 + ROADMAP v2.1 + milestone M6
+authored (2026-07-05, branch `m6-canvas-density-spec`, off `main` @ `6058e45`).** SPEC-first
+landing of the ratified RFC: **SPEC v2.1** — new §7.17 (FR-133 zoom controls/wheel+pinch/
+zoom-to-fit/**minimap**/pan; FR-134 subtree collapse, UI-only §11.5, generated JSON byte-identical
+collapsed vs expanded), NFR-049 (§8.5 density target: ≤28px single-value-input block @100% + a
+§19.4 density harness over the example corpus with committed no-regression numbers), AC-041
+(5-part acceptance: navigation · collapse · labels · harness · zero-diff corpus + byte-equal
+`G_palette` regen), §12.5 rewritten per OQ-018 (canvas title-only · flyout dual label · tooltip
+`<rule> — <description>` · single-value-input variants drop the param-name prefix · optional short
+param labels), FR-078 tooltip note, §12.6 ref updated, v2.1 header changelog. **ROADMAP v2.1** —
+M6 milestone section (goal/scope/3-phase deliverables/DoD additions/**explicit P-E exclusion**:
+do not touch `inputsInline`/§13.10/FR-129/AC-040 in M6), tracker row (☐), mermaid M5→M6,
+OQ-018…020 ratified rows, OQ-008 superseded-on-canvas note (deprecate in place, §21.1).
+**metadata-contract** §2.9 addendum: optional short param display labels (editor-owned
+presentation data; engine export unchanged; date note bumped). **traceability** — AC-041 row,
+§7.17 row, NFR-049 row, NFR-029 note (M6 = its realization path), OQ intro extended.
+**id-ledger** registered FR-133/134, NFR-49, AC-41, OQ-18/19/20 (`--update`; 293 IDs). RFC-003
+status flipped to phases-1–3-APPLIED (normative homes listed; **P-E stays PROPOSED** → M7, IDs
+assigned at next-free when it lands). Gates green: traceability, engine-parity, append-only IDs,
+snapshot `--check` (skip-note only). Prior commit on `main` (`6058e45`): OQ ratification + gain
+entries. **Next:** merge or review `m6-canvas-density-spec`, then `/run-milestone M6`
+(`milestone-planner` optional first)._
 
 _**Proposal naming aligned (2026-07-05, on `main`; UNCOMMITTED; housekeeping only).** Renamed
 `docs/proposals/template-driven-editor.md` → `docs/proposals/rfc-001-template-driven-editor.md`
@@ -550,20 +573,15 @@ living read of it.
    only: (i) context-sensitive examples (selected block → its rule's reference examples;
    `rule`/`tier`/`tags` joins already in place) — separate FR when wanted. (~~(ii) 0.1.6 pin
    bump~~ done in this tree — transon 0.1.6 is on PyPI.)
-0c. **RFC-003 — ratified, awaiting SPEC/ROADMAP landing (canvas density + navigation).** All three
-   open questions were put to the user (2026-07-05) and are recorded in the RFC: **OQ-018 =
-   title-only canvas labels (C1+C3, dual label stays in flyout, rule name in tooltip); OQ-019 =
-   adaptive layout + manual override (prototype pins threshold/damping only); OQ-020 = adopt
-   `@blockly/workspace-minimap` NOW in phase 1/M6** (user overrode the RFC's proposed defer —
-   minimap is now part of P-A/FR-133). Remaining work: land the SPEC/ARCHITECTURE/ROADMAP edits
-   SPEC-first (reserve FR-133…135, NFR-049, AC-041, AD-034 via `check_append_only_ids.py
-   --update`; OQ-018…020 rows into ROADMAP §"Open questions"), **author milestone M6 scoped to
-   phases 1–3 only** (P-A zoom/fit/minimap + P-D collapse, P-C labels, P-B compact renderer) with
-   tracker row + DoD (AC-041 green, NFR-049 met, round-trip corpus zero-diff), then drive it with
-   `/run-milestone M6` (optionally `milestone-planner` first). `/run-milestone` needs the IDs in
-   the SPEC and a cited ROADMAP milestone — it cannot run the RFC directly. P-E (adaptive layout)
-   is deliberately NOT in M6 — it prototypes on the largest corpus examples BEFORE FR-135/AD-034
-   are finalized, then becomes its own milestone (M7).
+0c. **RFC-003 → M6: SPEC landing DONE (branch `m6-canvas-density-spec`); next = run the
+   milestone.** The contract edits are landed and gated (see Last action): SPEC v2.1 (§7.17
+   FR-133/134, NFR-049, AC-041, §12.5/OQ-018 labels), ROADMAP v2.1 (M6 authored: 3 phases —
+   navigation+minimap+collapse → labels+`G_palette` regen → compact renderer+density harness),
+   OQ-018…020 ratified rows, ledger updated. Sequence: (a) review/merge `m6-canvas-density-spec`
+   into `main`; (b) `/run-milestone M6` (optionally `milestone-planner` first) — implementation
+   branch per the command's own convention; (c) after M6, prototype P-E adaptive layout on the
+   largest corpus examples, pin threshold/damping, then land FR/AD IDs at next-free and author
+   **M7**. Guardrail: M6 must NOT touch `inputsInline`/§13.10/FR-129/AC-040 (P-E surfaces).
 1. ~~Push the milestone branches + open PR(s)~~ **DONE / SUPERSEDED (verified 2026-07-03)** — the
    entire history (M0–M5 + `fix-editor-layout-css` + `fr-130` + `fr-131` + `r31-corpus-migration`)
    landed **linearly on `main`** and `main` is pushed (`origin/main` == `ca3a975`); no PRs were used.

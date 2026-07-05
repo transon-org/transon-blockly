@@ -1,6 +1,16 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 2.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-27
+> **Version:** 2.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-05
+
+> **v2.1 — canvas density + navigation (RFC-003 phases 1–3, M6).** Adds **§7.17 (FR-133, FR-134)**
+> — canvas zoom/fit/pan/minimap and subtree collapsing — **NFR-049** (measured density target) and
+> **AC-041**; revises **§12.5** per the ratified **OQ-018** (canvas blocks show the title only; the
+> flyout keeps the dual label; the tooltip carries the rule name — supersedes OQ-008's dual-label
+> answer *on the canvas*). OQ-018…OQ-020 are ratified ([`ROADMAP.md`](ROADMAP.md) §"Open
+> questions"; [RFC-003](proposals/rfc-003-canvas-density-and-navigation.md)). The RFC's P-E
+> (balanced adaptive inline/external layout) is **deliberately not in this version** — it lands
+> after its prototype, with its own IDs (ratified OQ-019 records the decision). All v2.1 items are
+> display-only (§21.12): codec, round-trip, and canonical JSON are unchanged.
 
 > **v2.0 — template-driven projection pivot.** The editor surface (palette, toolbox, encoder,
 > decoder) is **derived as Transon-template projections of the engine's editor-metadata**, not
@@ -508,7 +518,9 @@ itself (FR-121, AC-036).
 
 - **FR-077** The editor shall consume engine-owned metadata where available and handle missing
   metadata gracefully.
-- **FR-078** The editor should use metadata for rule and parameter labels and tooltips.
+- **FR-078** The editor should use metadata for rule and parameter labels and tooltips. Per
+  OQ-018 the rule-block tooltip carries the rule name ahead of the metadata description
+  (`<rule> — <description>`), since canvas labels are title-only (§12.5).
 - **FR-079** The editor should load examples from the generated example corpus where available.
 - **FR-080** The editor shall expose the engine and metadata schema versions in diagnostics.
 - **FR-081** The Transon library shall provide sufficient machine-readable metadata for generic
@@ -700,6 +712,23 @@ The Blockly **behavior** that JSON cannot express (field validators, custom fiel
 UI, connection rules, change events) is handled by a finite, **rule-agnostic** runtime that does not
 grow per rule (NFR-046, `ARCHITECTURE.md` AD-031); this is the structure/behavior boundary of §13.
 
+### 7.17 Canvas Navigation and Density
+
+Large templates must stay navigable and scannable (NFR-029). These requirements are
+**display-only** (§21.12): they never change canonical JSON, the codec, or round-trip behavior;
+all state they introduce is UI-only per the §11.5 canonical list (which already names `zoom` and
+`collapsed state`). Ratified via [RFC-003](proposals/rfc-003-canvas-density-and-navigation.md).
+
+- **FR-133** The canvas shall provide navigation for large templates: on-canvas **zoom controls**,
+  **wheel and pinch zoom**, a one-action **zoom-to-fit** that frames the whole template, a
+  **minimap** overview (OQ-020), and pan/scroll (drag + scrollbars + wheel). Zoom and scroll
+  position are UI-only state (§11.5) and never appear in the exported template (§11.6).
+- **FR-134** The canvas shall support **collapsing and expanding any block subtree** (context
+  menu). A collapsed block shows its block label with an ellipsis cue, and its **full subtree
+  remains in the workspace serialization and the generated JSON unchanged** — collapse is UI-only
+  state (§11.5) with no codec or round-trip effect. Custom fields and mutator controls
+  (`ARCHITECTURE.md` AD-031) must render sanely in the collapsed state.
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -768,6 +797,12 @@ grow per rule (NFR-046, `ARCHITECTURE.md` AD-031); this is the structure/behavio
 - **NFR-028** Where a host provides an engine runtime, the editor should surface its
   initialization/loading state (§10.4).
 - **NFR-029** Large templates should not make the canvas unusable within reasonable limits.
+- **NFR-049** The canvas shall meet a **measured density target**: at 100% zoom a
+  single-value-input rule block renders at most **28 px** tall, and a **density harness** (§19.4)
+  renders the example corpus into a fixed 1440×900 viewport and records blocks-visible + workspace
+  bounding box per example; the recorded numbers are committed and act as a **no-regression
+  ratchet**. Compact never means cramped: NFR-045 contrast/focus and drag-target usability are
+  preserved (the bound on how far the block surface may shrink).
 
 ### 8.6 Security
 
@@ -1081,17 +1116,32 @@ enabled.
 
 The palette shows block variants, not only raw rule names, grouped by the canonical categories
 (§12.4). Several palette blocks may generate the same rule with different parameter shapes. See
-§14 for the canonical `attr`/`object`/`map` variant examples. Block and palette labels show
-**both** the friendly title and the rule name, e.g. `Get attribute (attr)` (OQ-008); the rule
-name keeps developers oriented and reinforces the JSON mapping (NFR-016).
+§14 for the canonical `attr`/`object`/`map` variant examples.
+
+**Labels (OQ-018, ratified 2026-07-05; supersedes OQ-008's dual-label answer on the canvas).**
+Label placement splits by surface so the canvas stays dense while the rule↔JSON mapping (NFR-016)
+stays visible where it is *learned*:
+
+- **Canvas blocks show the friendly title only** (e.g. `Get attribute`).
+- **The flyout/palette keeps the dual label** — `Get attribute (attr)` — so the mapping is taught
+  at pick time.
+- **The tooltip carries the rule name**: `<rule> — <description>` (FR-078).
+- A variant with a **single value input omits the parameter-name prefix** on that socket (the
+  socket is unambiguous; the tooltip still names it); variants with several inputs keep per-input
+  labels. The committed presentation data may declare **short display labels** for long parameter
+  names (curated, display-only data per FR-127 / `metadata-contract.md` §2.9) — parameter *names*
+  in the JSON are always the metadata names.
+
+All of this is display-only (§21.12): the codec reads fields/inputs by name, never by label.
 
 ### 12.6 Progressive Disclosure
 
 Common beginner-friendly blocks are visible by default. Advanced blocks (`set`, `get`, `parent`,
 `zip`, `file`, `include`, custom rules) may be available under advanced categories or toggles.
 Because per-shape variants enlarge the palette, palette size is managed (OQ-009) with canonical
-categories (§12.4), a palette search/filter, an advanced-blocks toggle, and the clear dual labels
-of §12.5 — a clearer palette is preferred over hidden mode dropdowns (NFR-012, AD-015).
+categories (§12.4), a palette search/filter, an advanced-blocks toggle, and the flyout's clear
+dual labels (§12.5, OQ-018) — a clearer palette is preferred over hidden mode dropdowns
+(NFR-012, AD-015).
 
 ### 12.7 Generated JSON Panel
 
@@ -1748,6 +1798,18 @@ Version 1 is acceptable when all criteria below are met.
   body holds only fields + mutator controls. Block/category colours stay data-driven (FR-127) and the
   codec artifacts are unchanged. Verified deterministically (renderer + theme + external-input wiring)
   and visually in a real browser (FR-129, AD-033).
+- **AC-041 — Canvas density + navigation (M6, RFC-003 phases 1–3).** On the mounted workspace:
+  **(a)** zoom controls, wheel/pinch zoom, zoom-to-fit, minimap, and pan/scroll are present and
+  functional (FR-133); **(b)** collapsing a subtree round-trips its `collapsed` state through the
+  workspace serialization as UI-only (§11.5) while the generated JSON is **byte-identical**
+  collapsed vs expanded (FR-134), and custom fields/mutators render in the collapsed state;
+  **(c)** canvas block labels are title-only, the flyout shows the dual label, the tooltip is
+  `<rule> — <description>`, and single-value-input variants carry no parameter-name prefix
+  (§12.5, OQ-018); **(d)** the NFR-049 density harness runs over the example corpus and its
+  committed numbers meet the target with no regression; **(e)** the round-trip corpus and the
+  committed codec artifacts' regeneration gate stay green (`G_palette` regenerates byte-equal to
+  its committed artifact after the label change — AD-030). Verified deterministically (jsdom)
+  and visually in a real browser (§19.4).
 
 ---
 

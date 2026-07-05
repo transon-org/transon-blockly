@@ -1,10 +1,13 @@
 # RFC-003: Canvas density + navigation for large templates
 
-- **Status:** Proposed (2026-07-05); **open questions ratified by the maintainer 2026-07-05** —
+- **Status:** Phases 1–3 **APPLIED to the contract docs** (2026-07-05, SPEC v2.1 / ROADMAP v2.1 —
+  branch `m6-canvas-density-spec`); open questions ratified by the maintainer 2026-07-05 —
   OQ-018 = title-only on canvas (C1+C3), OQ-019 = adaptive layout + manual override, OQ-020 =
-  **adopt the minimap now** (overriding this RFC's proposed defer). Nothing here is normative until
-  the SPEC/ARCHITECTURE edits land (SPEC-first, §21.2); this document is the review artifact for
-  that change set.
+  **adopt the minimap now** (overriding this RFC's proposed defer). For phases 1–3 the normative
+  homes now win over this document: SPEC §7.17 (FR-133/FR-134), NFR-049 (§8.5), AC-041, §12.5
+  (labels), FR-078 (tooltip), `metadata-contract.md` §2.9 (short param labels), ROADMAP **M6**
+  (+ OQ-018…020 rows). **P-E (phase 4) remains PROPOSED** — it prototypes first and lands with M7
+  under its own next-free IDs (the FR-135/AD-034 numbers below are reservations, not landed).
 - **Type:** Presentation + navigation change set. Everything proposed is **display-only under
   §21.12 (UI ≠ semantics)** — no codec, round-trip, surface, or metadata-contract impact — but two
   proposals **revise ratified decisions** (OQ-008 dual labels; FR-129/§13.10 external-inputs
