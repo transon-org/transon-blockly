@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `6058e45` — docs: ratify RFC-003 open questions; add per-proposal/per-phase gains |
+| Repo HEAD | `6e263ff` — docs: land RFC-003 phases 1-3 (SPEC v2.1) + author milestone M6 |
 | Branch | `m6-canvas-density-spec` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -577,8 +577,11 @@ living read of it.
    milestone.** The contract edits are landed and gated (see Last action): SPEC v2.1 (§7.17
    FR-133/134, NFR-049, AC-041, §12.5/OQ-018 labels), ROADMAP v2.1 (M6 authored: 3 phases —
    navigation+minimap+collapse → labels+`G_palette` regen → compact renderer+density harness),
-   OQ-018…020 ratified rows, ledger updated. Sequence: (a) review/merge `m6-canvas-density-spec`
-   into `main`; (b) `/run-milestone M6` (optionally `milestone-planner` first) — implementation
+   OQ-018…020 ratified rows, ledger updated. **PR #6 opened
+   (https://github.com/transon-org/transon-blockly/pull/6)** — carries both commits (`6058e45`
+   ratification + `6e263ff` landing); local `main` deliberately NOT pushed, the PR supersedes it.
+   Sequence: (a) review/merge PR #6; (b) `/run-milestone M6` (optionally `milestone-planner`
+   first) — implementation
    branch per the command's own convention; (c) after M6, prototype P-E adaptive layout on the
    largest corpus examples, pin threshold/damping, then land FR/AD IDs at next-free and author
    **M7**. Guardrail: M6 must NOT touch `inputsInline`/§13.10/FR-129/AC-040 (P-E surfaces).
