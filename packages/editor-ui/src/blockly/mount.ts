@@ -148,20 +148,22 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
     suppress = true;
     Blockly.Events.disable();
     let mutationFailed = false;
+    let mutationError: unknown;
     try {
       fn();
     } catch (error) {
       mutationFailed = true;
-      throw error;
+      mutationError = error;
     } finally {
       Blockly.Events.enable();
       suppress = false;
-      try {
-        minimap.syncFrom(workspace);
-      } catch (syncError) {
-        if (!mutationFailed) throw syncError;
-      }
     }
+    try {
+      minimap.syncFrom(workspace);
+    } catch (syncError) {
+      if (!mutationFailed) throw syncError;
+    }
+    if (mutationFailed) throw mutationError;
   };
 
   return {
