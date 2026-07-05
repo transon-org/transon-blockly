@@ -70,13 +70,72 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
     }
   });
 
-  it('label shows the friendly title and the rule name (OQ-008, §12.5)', () => {
+  it('canvas face (message0) shows the title only — no (<rule>) suffix (§12.5, OQ-018, AC-041(c))', () => {
     for (const rule of editorMetadata.catalog.rules) {
       const title = PRESENTATION.rules[rule.name]!.title;
       for (const v of rule.variants as Array<{ id: string }>) {
         const b = byType.get(ruleBlockType(rule.name, v.id))!;
-        expect(b.message0.startsWith(`${title} (${rule.name})`), `${b.type} label`).toBe(true);
+        expect(b.message0.startsWith(title), `${b.type} canvas label starts with title`).toBe(true);
+        expect(b.message0.includes(`(${rule.name})`), `${b.type} canvas label must NOT carry (<rule>)`).toBe(false);
       }
+    }
+  });
+
+  it('the projected def carries the flyout dual label "<title> (<rule>)" as display-only data (§12.5, OQ-018)', () => {
+    for (const rule of editorMetadata.catalog.rules) {
+      const title = PRESENTATION.rules[rule.name]!.title;
+      for (const v of rule.variants as Array<{ id: string }>) {
+        const b = byType.get(ruleBlockType(rule.name, v.id))! as BlockDef & { flyoutLabel?: string };
+        expect(b.flyoutLabel, `${b.type} flyoutLabel`).toBe(`${title} (${rule.name})`);
+      }
+    }
+  });
+
+  it('single-value-input variants drop the raw param-name prefix on the socket; multi-input variants keep it (§12.5, OQ-018, FR-078)', () => {
+    for (const rule of editorMetadata.catalog.rules) {
+      const kindOf = new Map((rule.params as Array<{ name: string; kind?: string }>).map((p) => [p.name, p.kind ?? 'dynamic']));
+      for (const v of rule.variants as Array<{ id: string; params: Array<{ name: string }> }>) {
+        const dynamicCount = v.params.filter((p) => kindOf.get(p.name) !== 'constant').length;
+        const b = byType.get(ruleBlockType(rule.name, v.id))!;
+        const msgText = [b.message0, b.message1].filter((m): m is string => typeof m === 'string').join(' ');
+        if (dynamicCount <= 1) {
+          // No raw param-name text should appear as a label segment — the socket carries only the
+          // placeholder (%N). A dynamic param's name should not appear as standalone label prose.
+          for (const p of v.params) {
+            const label = PRESENTATION.paramLabels[rule.name]?.[p.name];
+            if (kindOf.get(p.name) !== 'constant' && !label) {
+              const re = new RegExp(`(^|\\s)${p.name}(\\s|$)`);
+              expect(re.test(msgText), `${b.type} single-input socket must not show raw param name '${p.name}'`).toBe(false);
+            }
+          }
+        } else {
+          // multi-input: every dynamic param's display text (declared short label, else metadata
+          // name) appears in the message text.
+          for (const p of v.params) {
+            if (kindOf.get(p.name) === 'constant') continue;
+            const label = PRESENTATION.paramLabels[rule.name]?.[p.name] ?? p.name;
+            expect(msgText.includes(label), `${b.type} multi-input keeps '${label}' for param '${p.name}'`).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
+  it('declared short param labels substitute the metadata name on multi-input sockets (§12.5, OQ-018, metadata-contract §2.9)', () => {
+    // attr.default has a declared short label ("fallback") and attr__name/attr__names are
+    // multi-input variants (name/names + default, both dynamic) — the declared label must render,
+    // the codec input `name` must stay the metadata name.
+    const label = PRESENTATION.paramLabels.attr?.default;
+    expect(label).toBe('fallback');
+    for (const variantId of ['name', 'names']) {
+      const b = byType.get(ruleBlockType('attr', variantId))!;
+      const args = [...(b.args0 ?? []), ...(b.args1 ?? [])];
+      const defaultArg = args.find((a) => a.name === 'default')!;
+      expect(defaultArg, `${b.type} default input keeps the metadata name as its codec key`).toBeTruthy();
+      expect(defaultArg.name).toBe('default');
+      const msgText = [b.message0, b.message1].filter((m): m is string => typeof m === 'string').join(' ');
+      expect(msgText.includes('fallback'), `${b.type} shows the declared short label`).toBe(true);
+      expect(new RegExp(`(^|\\s)default(\\s|$)`).test(msgText), `${b.type} must not show the raw metadata name`).toBe(false);
     }
   });
 

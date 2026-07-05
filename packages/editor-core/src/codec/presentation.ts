@@ -53,6 +53,14 @@ export interface Presentation {
    * A rule/param absent here keeps the full metadata `options` domain as its menu (FR-058).
    */
   dropdownMenus: Record<string, Record<string, DropdownMenuEntry[]>>;
+  /**
+   * Optional short display labels for long parameter names (SPEC §12.5, OQ-018;
+   * metadata-contract.md §2.9), keyed by rule name then param name. Display-only: substitutes the
+   * metadata parameter name on the block's socket/field row; the codec's field/input key (the
+   * param's metadata `name`) and the JSON parameter name are untouched. A rule/param absent here
+   * falls back to the metadata parameter name (FR-127).
+   */
+  paramLabels: Record<string, Record<string, string>>;
 }
 
 const raw = presentation as unknown as Presentation & { $doc?: string };
@@ -66,4 +74,5 @@ export const PRESENTATION: Presentation = {
   unsupportedColour: raw.unsupportedColour,
   rules: raw.rules,
   dropdownMenus: raw.dropdownMenus ?? {},
+  paramLabels: raw.paramLabels ?? {},
 };
