@@ -157,6 +157,20 @@ class CompactRenderInfo extends Blockly.thrasos.RenderInfo {
     }
     return super.getElemCenterline_(row, elem);
   }
+
+  /** Adjacent image fields join FLUSH (zero in-row spacing): the only FieldImages in the transon
+   *  surface are the +/- mutator buttons (editor-blockly runtime.ts), which form one segmented
+   *  control — red − | green + — whose halves must butt together. All other element pairs keep
+   *  thrasos's own spacing. */
+  override getInRowSpacing_(
+    prev: Blockly.blockRendering.Measurable | null,
+    next: Blockly.blockRendering.Measurable | null,
+  ): number {
+    const isImageField = (e: Blockly.blockRendering.Measurable | null): boolean =>
+      !!e && (e as { field?: unknown }).field instanceof Blockly.FieldImage;
+    if (isImageField(prev) && isImageField(next)) return 0;
+    return super.getInRowSpacing_(prev, next);
+  }
 }
 
 /** thrasos-derived renderer (AD-033/FR-129/AC-040): thrasos's own drawing/measurement ALGORITHM
