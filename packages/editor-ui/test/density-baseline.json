@@ -1,23 +1,23 @@
 {
   "WorkedExampleNestedArithmetic": {
     "blocksVisible": 10,
-    "width": 710,
-    "height": 312
+    "width": 822,
+    "height": 264
   },
   "WorkedExampleReshapeRecords": {
     "blocksVisible": 15,
-    "width": 844,
-    "height": 432
+    "width": 1010,
+    "height": 360
   },
   "WorkedExampleRenameAndFlatten": {
     "blocksVisible": 17,
-    "width": 694,
-    "height": 600
+    "width": 844,
+    "height": 504
   },
   "WorkedExampleFilterAndProject": {
     "blocksVisible": 8,
-    "width": 406,
-    "height": 192
+    "width": 462,
+    "height": 168
   },
   "WorkedExampleIndexByKey": {
     "blocksVisible": 5,
@@ -26,18 +26,18 @@
   },
   "WorkedExampleOptionalFieldsAndDefaults": {
     "blocksVisible": 11,
-    "width": 388,
-    "height": 336
+    "width": 444,
+    "height": 312
   },
   "WorkedExampleConditionalEnrichmentInsideMap": {
     "blocksVisible": 23,
-    "width": 850,
-    "height": 648
+    "width": 1074,
+    "height": 528
   },
   "RecipeReadNestedValue": {
     "blocksVisible": 4,
-    "width": 274,
-    "height": 144
+    "width": 330,
+    "height": 120
   },
   "RecipeDefaultForMissingField": {
     "blocksVisible": 3,
@@ -71,28 +71,28 @@
   },
   "RecipeMapCodeToLabel": {
     "blocksVisible": 8,
-    "width": 284,
-    "height": 240
+    "width": 308,
+    "height": 216
   },
   "RecipeBucketValueByRanges": {
     "blocksVisible": 15,
-    "width": 614,
-    "height": 408
+    "width": 782,
+    "height": 312
   },
   "RecipeComputeOnceUseTwice": {
     "blocksVisible": 18,
-    "width": 638,
-    "height": 528
+    "width": 750,
+    "height": 456
   },
   "RecipePairUpTwoLists": {
     "blocksVisible": 15,
-    "width": 536,
-    "height": 432
+    "width": 648,
+    "height": 360
   },
   "RecipeKeepItemsMatchingCondition": {
     "blocksVisible": 6,
-    "width": 542,
-    "height": 144
+    "width": 598,
+    "height": 120
   },
   "AttrSimpleFixedName": {
     "blocksVisible": 2,
@@ -106,13 +106,13 @@
   },
   "AttrSimplePathDoesNotExist1": {
     "blocksVisible": 5,
-    "width": 226,
-    "height": 168
+    "width": 282,
+    "height": 144
   },
   "AttrSimplePathDoesNotExist2": {
     "blocksVisible": 5,
-    "width": 226,
-    "height": 168
+    "width": 282,
+    "height": 144
   },
   "AttrSimpleFixedIndex": {
     "blocksVisible": 2,
@@ -141,8 +141,8 @@
   },
   "AttrSimpleFixedNames": {
     "blocksVisible": 21,
-    "width": 290,
-    "height": 720
+    "width": 402,
+    "height": 600
   },
   "AttrDynamicReferenceNames": {
     "blocksVisible": 3,
@@ -151,28 +151,28 @@
   },
   "AttrDynamicReferenceMultipleNames": {
     "blocksVisible": 13,
-    "width": 558,
-    "height": 336
+    "width": 670,
+    "height": 288
   },
   "ChainWithAttr": {
     "blocksVisible": 20,
-    "width": 414,
-    "height": 624
+    "width": 526,
+    "height": 552
   },
   "CondFirstTruthyArm": {
     "blocksVisible": 11,
-    "width": 476,
-    "height": 288
+    "width": 588,
+    "height": 216
   },
   "CondDefaultBranch": {
     "blocksVisible": 11,
-    "width": 476,
-    "height": 288
+    "width": 588,
+    "height": 216
   },
   "ConvertValues": {
     "blocksVisible": 4,
-    "width": 338,
-    "height": 96
+    "width": 394,
+    "height": 72
   },
   "ConvertValue": {
     "blocksVisible": 3,
@@ -211,33 +211,33 @@
   },
   "ExprSimpleMonads2": {
     "blocksVisible": 5,
-    "width": 460,
-    "height": 96
+    "width": 516,
+    "height": 72
   },
   "ExprMonadsComplex": {
     "blocksVisible": 16,
-    "width": 736,
-    "height": 360
+    "width": 848,
+    "height": 288
   },
   "ExprSimpleValues1": {
     "blocksVisible": 4,
-    "width": 356,
-    "height": 96
+    "width": 412,
+    "height": 72
   },
   "ExprSimpleValues2": {
     "blocksVisible": 4,
-    "width": 356,
-    "height": 96
+    "width": 412,
+    "height": 72
   },
   "ExprValuesComplex": {
     "blocksVisible": 14,
-    "width": 710,
-    "height": 432
+    "width": 822,
+    "height": 360
   },
   "ExprValuesIgnoresThis": {
     "blocksVisible": 5,
-    "width": 308,
-    "height": 120
+    "width": 364,
+    "height": 96
   },
   "ExprLogicalAnd": {
     "blocksVisible": 2,
@@ -251,8 +251,8 @@
   },
   "ExprOrNoContentFallback": {
     "blocksVisible": 5,
-    "width": 444,
-    "height": 144
+    "width": 500,
+    "height": 120
   },
   "ExprUnary1": {
     "blocksVisible": 1,
@@ -266,28 +266,28 @@
   },
   "FileWriteViaMap": {
     "blocksVisible": 9,
-    "width": 646,
-    "height": 240
+    "width": 702,
+    "height": 216
   },
   "FilterDict": {
     "blocksVisible": 5,
-    "width": 444,
-    "height": 96
+    "width": 500,
+    "height": 72
   },
   "FilterList": {
     "blocksVisible": 5,
-    "width": 436,
-    "height": 96
+    "width": 492,
+    "height": 72
   },
   "FilterListByOddIndex": {
     "blocksVisible": 5,
-    "width": 444,
-    "height": 96
+    "width": 500,
+    "height": 72
   },
   "FilterListNoContent": {
     "blocksVisible": 15,
-    "width": 444,
-    "height": 312
+    "width": 500,
+    "height": 288
   },
   "FormatFromSingleValue": {
     "blocksVisible": 3,
@@ -306,8 +306,8 @@
   },
   "FormatWithValue": {
     "blocksVisible": 9,
-    "width": 652,
-    "height": 240
+    "width": 764,
+    "height": 192
   },
   "FormatWithDynamicPattern": {
     "blocksVisible": 3,
@@ -336,68 +336,68 @@
   },
   "JoinWithStaticNoOverrides": {
     "blocksVisible": 5,
-    "width": 300,
-    "height": 216
+    "width": 412,
+    "height": 168
   },
   "JoinWithStaticWithOverrides": {
     "blocksVisible": 5,
-    "width": 300,
-    "height": 216
+    "width": 412,
+    "height": 168
   },
   "JoinTwoDictsNoCommonKeys": {
     "blocksVisible": 6,
-    "width": 348,
-    "height": 264
+    "width": 404,
+    "height": 240
   },
   "JoinTwoDictsWithCommonKeys": {
     "blocksVisible": 6,
-    "width": 348,
-    "height": 264
+    "width": 404,
+    "height": 240
   },
   "JoinTwoStrings": {
     "blocksVisible": 6,
-    "width": 348,
-    "height": 264
+    "width": 404,
+    "height": 240
   },
   "JoinTwoStringsWithDynamicSep": {
     "blocksVisible": 8,
-    "width": 348,
-    "height": 312
+    "width": 404,
+    "height": 288
   },
   "JoinManyDynamicDicts": {
     "blocksVisible": 15,
-    "width": 592,
-    "height": 528
+    "width": 648,
+    "height": 504
   },
   "JoinSkipsMissingStringFields": {
     "blocksVisible": 9,
-    "width": 348,
-    "height": 336
+    "width": 404,
+    "height": 312
   },
   "JoinEmptyReturnsNoContent": {
     "blocksVisible": 2,
-    "width": 146,
-    "height": 120
+    "width": 202,
+    "height": 96
   },
   "JoinEmptyWithDefaultDict": {
     "blocksVisible": 3,
-    "width": 154,
-    "height": 144
+    "width": 210,
+    "height": 96
   },
   "MapListToNestedListWithItem": {
     "blocksVisible": 5,
-    "width": 378,
-    "height": 168
+    "width": 546,
+    "height": 96
   },
   "MapListToList": {
     "blocksVisible": 16,
-    "width": 520,
-    "height": 504
+    "width": 686,
+    "height": 384
   },
   "MapDictToList": {
     "blocksVisible": 4,
-    "width": 250,
-    "height": 96
+    "width": 306,
+    "height": 72
   },
   "MapDictToDictItems": {
     "blocksVisible": 3,
@@ -406,18 +406,18 @@
   },
   "MapDictToListItems": {
     "blocksVisible": 4,
-    "width": 242,
-    "height": 96
+    "width": 298,
+    "height": 72
   },
   "MapListsToDict": {
     "blocksVisible": 13,
-    "width": 446,
-    "height": 408
+    "width": 558,
+    "height": 360
   },
   "NoContentForAttr": {
     "blocksVisible": 6,
-    "width": 308,
-    "height": 192
+    "width": 364,
+    "height": 168
   },
   "NoContentForObjectKey": {
     "blocksVisible": 4,
@@ -431,18 +431,18 @@
   },
   "NoContentForObjectFields": {
     "blocksVisible": 6,
-    "width": 382,
-    "height": 192
+    "width": 428,
+    "height": 168
   },
   "NoContentForMappingList": {
     "blocksVisible": 13,
-    "width": 372,
-    "height": 408
+    "width": 484,
+    "height": 336
   },
   "NoContentForMappingDict": {
     "blocksVisible": 23,
-    "width": 444,
-    "height": 840
+    "width": 612,
+    "height": 720
   },
   "ObjectDynamicKeyValue": {
     "blocksVisible": 5,
@@ -451,13 +451,13 @@
   },
   "ObjectFieldsLiteralMarker": {
     "blocksVisible": 4,
-    "width": 266,
-    "height": 144
+    "width": 322,
+    "height": 120
   },
   "ObjectFieldsMultipleLiteralKeys": {
     "blocksVisible": 6,
-    "width": 380,
-    "height": 192
+    "width": 436,
+    "height": 168
   },
   "OperatorLessThan": {
     "blocksVisible": 2,
@@ -511,48 +511,48 @@
   },
   "SetVisibleToLaterSiblingKey": {
     "blocksVisible": 5,
-    "width": 262,
-    "height": 144
+    "width": 316,
+    "height": 120
   },
   "SetInvisibleToEarlierSiblingKey": {
     "blocksVisible": 6,
-    "width": 276,
-    "height": 144
+    "width": 330,
+    "height": 120
   },
   "SetInFirstChainFuncVisibleToSibling": {
     "blocksVisible": 8,
-    "width": 408,
-    "height": 216
+    "width": 502,
+    "height": 168
   },
   "SetInLaterChainFuncNotVisibleToSibling": {
     "blocksVisible": 9,
-    "width": 408,
-    "height": 216
+    "width": 502,
+    "height": 168
   },
   "SetInFirstChainFuncVisibleToLaterFunc": {
     "blocksVisible": 6,
-    "width": 318,
-    "height": 144
+    "width": 374,
+    "height": 120
   },
   "SetBeforeMapVisibleInsideIteration": {
     "blocksVisible": 7,
-    "width": 358,
-    "height": 144
+    "width": 414,
+    "height": 120
   },
   "SetInsideMapNotVisibleAfterLoop": {
     "blocksVisible": 8,
-    "width": 392,
-    "height": 144
+    "width": 448,
+    "height": 120
   },
   "SwitchDispatchOnKey": {
     "blocksVisible": 6,
-    "width": 268,
-    "height": 216
+    "width": 284,
+    "height": 192
   },
   "SwitchDefaultBranch": {
     "blocksVisible": 6,
-    "width": 268,
-    "height": 192
+    "width": 276,
+    "height": 168
   },
   "TypeOfObject": {
     "blocksVisible": 1,
@@ -592,16 +592,16 @@
   "TypeDispatchWithSwitch": {
     "blocksVisible": 7,
     "width": 364,
-    "height": 168
+    "height": 144
   },
   "ZipLists": {
     "blocksVisible": 10,
-    "width": 212,
-    "height": 288
+    "width": 324,
+    "height": 216
   },
   "ZipStrings": {
     "blocksVisible": 4,
-    "width": 156,
-    "height": 96
+    "width": 212,
+    "height": 72
   }
 }

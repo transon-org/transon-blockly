@@ -43,6 +43,11 @@ export const TRANSON_CSS = `
 .transon-editor-shell .transon-match[data-match="differ"] { color: var(--transon-error); }
 .transon-editor-shell .transon-statusbar [data-mismatch] { color: var(--transon-error); font-weight: 600; }
 
+/* The on-canvas +/- mutator buttons (editor-blockly runtime.ts) are Blockly FieldImages — the
+   only <image> fields in the transon surface — rendered as button chips. A pointer cursor gives
+   them click affordance (FieldImage has no hover/CSS state of its own). */
+.transon-editor .blocklyDraggable image { cursor: pointer; }
+
 /* Visible focus for keyboard users on every interactive control (NFR-045). */
 .transon-editor-shell button:focus-visible,
 .transon-editor-shell select:focus-visible,

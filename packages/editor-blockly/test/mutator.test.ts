@@ -104,3 +104,38 @@ describe('AC-038 — object mutator (on-canvas add/remove with editable keys)', 
     ws.dispose();
   });
 });
+
+describe('AC-038 / §13.13 — +/- controls live on the TITLE row (density: no separate controls row)', () => {
+  // The controls previously occupied their own dummy input row (TRANSON_CONTROLS), costing a full
+  // row per array/object block. They now sit inline on the title row (the blockly-samples
+  // plus-minus idiom), UI-only as before (FieldImage is non-serializable — never in save()).
+  for (const type of ['transon_array', 'transon_object_literal'] as const) {
+    it(`${type}: +/- fields sit on the first (title) input; no separate controls row`, () => {
+      const { ws, b } = fresh(type);
+      // no dedicated controls input row
+      expect(b.inputList.filter((i) => i.name === 'TRANSON_CONTROLS')).toEqual([]);
+      // the +/- fields exist, named, on the FIRST input (the implicit title dummy row)
+      const plus = b.getField('TRANSON_PLUS');
+      const minus = b.getField('TRANSON_MINUS');
+      expect(plus).toBeTruthy();
+      expect(minus).toBeTruthy();
+      const titleFields = b.inputList[0]!.fieldRow;
+      expect(titleFields).toContain(plus);
+      expect(titleFields).toContain(minus);
+      // the title label stays first on the row — "<Title> [+] [−]"
+      expect(titleFields[0]!.getText()).toMatch(/Array|Object/);
+      // UI-only: neither button is serializable (can never leak into workspace serialization)
+      expect(plus!.isSerializable()).toBe(false);
+      expect(minus!.isSerializable()).toBe(false);
+      ws.dispose();
+    });
+  }
+
+  it('re-running the mutator helper does not duplicate the buttons (idempotent guard)', () => {
+    const { ws, b } = fresh<ArrayBlock>('transon_array');
+    b.loadExtraState({ items: [0] }); // loadExtraState path re-enters the helper machinery
+    const plusFields = b.inputList.flatMap((i) => i.fieldRow).filter((f) => f.name === 'TRANSON_PLUS');
+    expect(plusFields.length).toBe(1);
+    ws.dispose();
+  });
+});
