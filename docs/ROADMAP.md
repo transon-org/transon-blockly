@@ -1,6 +1,12 @@
 # ROADMAP.md — Implementation Roadmap
 
-> **Version:** 2.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-27
+> **Version:** 2.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-05
+
+> **v2.1 — M6 canvas density + navigation (RFC-003 phases 1–3).** New milestone **M6** (SPEC v2.1:
+> §7.17 FR-133/FR-134, NFR-049, AC-041, the §12.5 OQ-018 label revision). **OQ-018…OQ-020
+> ratified** (see §"Open questions"). The RFC's P-E (balanced adaptive inline/external layout,
+> ratified in principle by OQ-019) is **not** in M6 — it prototypes first and lands as its own
+> milestone (M7) with its own SPEC IDs.
 
 > **v2.0 — template-driven projection pivot.** Milestones are resequenced around the projection
 > model (`SPEC.md` §7.16, `ARCHITECTURE.md` AD-026…AD-031): (M0) engine `switch`/`cond` +
@@ -117,7 +123,8 @@ flowchart LR
     M2["M2 full catalog: per-rule include fragments, all rules round-trip"] --> M3
     M3["M3 editor-blockly: G_palette/G_toolbox + Zelos + behavior runtime"] --> M4
     M4["M4 editor-ui + element: shell + host execution + bidirectional sync"] --> M5
-    M5["M5 editor-react + examples + embedding + accessibility + self-hosting"]
+    M5["M5 editor-react + examples + embedding + accessibility + self-hosting"] --> M6
+    M6["M6 canvas density + navigation: zoom/fit/minimap + collapse + labels + compact surface"]
 ```
 
 ---
@@ -429,6 +436,39 @@ self-hosting demonstration.
 
 ---
 
+## M6 — Canvas density + navigation (RFC-003 phases 1–3)
+
+**Goal:** large templates become navigable and the canvas ~2× denser at full legibility, with
+zero codec/round-trip impact (`SPEC.md` §21.12). Makes NFR-029 checkable via the NFR-049 harness.
+Design + rationale + per-phase gains: [RFC-003](proposals/rfc-003-canvas-density-and-navigation.md).
+
+- Scope: **FR-133** (zoom controls / wheel+pinch / zoom-to-fit / minimap / pan, OQ-020),
+  **FR-134** (subtree collapse, UI-only per §11.5), the **§12.5 label revision** (OQ-018:
+  canvas title-only, flyout dual label, tooltip `<rule> — <description>` per FR-078,
+  single-input variants drop the param-name prefix, optional short param labels in presentation
+  data per `metadata-contract.md` §2.9), **NFR-049** (density target + measurement harness),
+  **NFR-029**; **AC-041**. Display-only throughout — codec artifacts change only by `G_palette`
+  regeneration (byte-equal regen gate, AD-030).
+- Deliverables, in phase order (RFC-003 sequencing):
+  1. **Navigation (P-A + P-D):** `zoom`/`move` inject options + zoom-to-fit + the pinned
+     `@blockly/workspace-minimap` plugin (AD-021 pin) + `collapse` enabled with context menu;
+     collapsed custom fields/mutators verified.
+  2. **Labels (P-C):** `G_palette` label projection change (title-only `message0`, conditional
+     param-name prefix) + flyout dual label + tooltip prefix + presentation short-label key;
+     regenerate committed artifacts (AD-030).
+  3. **Compact surface (P-B):** thrasos-derived renderer constants tuned against the example
+     corpus + the NFR-049 density harness with committed baseline numbers.
+- **Explicitly out of scope:** P-E adaptive inline/external layout (ratified OQ-019) — it
+  requires a prototype on the largest corpus examples before its SPEC revision (new FR/AD IDs at
+  next-free when it lands) and becomes **M7**. Do not change `inputsInline`, §13.10, FR-129, or
+  AC-040 in M6.
+- DoD additions (beyond the standard Definition of Done): AC-041 green including the real-browser
+  layer (§19.4); NFR-049 harness numbers committed; round-trip corpus **zero-diff**; `G_palette`
+  regen byte-equal after the label change.
+- **Status: ☐ pending.**
+
+---
+
 ## Milestone tracker
 
 | Milestone | Focus | Key IDs | Status |
@@ -439,6 +479,7 @@ self-hosting demonstration.
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☑ |
 | M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-001/012…017/023…025/031…033/038; NFR-028/046; AD-017/018/019/020/024/025/030/031 | ☑ |
 | M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110/128, 058, 121, NFR-045, AC-018…022/026/036/039, AD-019 | ☑ |
+| M6 | Canvas density + navigation: zoom/fit/minimap + collapse + labels + compact surface | FR-133/134, NFR-029/049, AC-041, §12.5 (OQ-018…020), AD-021/030 | ☐ |
 
 ## Readiness assessment
 
@@ -480,11 +521,12 @@ conflict.
 
 ## Open questions
 
-OQ-001…OQ-009 were ratified at v1.1 and OQ-010…OQ-017 at v2.0; all are folded into requirements.
-Earlier-resolved questions had already become architecture decisions: two metadata-ownership
-questions → AD-012, equivalence-testing → AD-011, framework choice → AD-019. (The former
-generic/specialized questions resolved into the now-superseded AD-014, and are re-expressed by the
-projection model AD-026/AD-031.)
+OQ-001…OQ-009 were ratified at v1.1, OQ-010…OQ-017 at v2.0, and OQ-018…OQ-020 at v2.1
+(2026-07-05, [RFC-003](proposals/rfc-003-canvas-density-and-navigation.md)); all are folded into
+requirements. Earlier-resolved questions had already become architecture decisions: two
+metadata-ownership questions → AD-012, equivalence-testing → AD-011, framework choice → AD-019.
+(The former generic/specialized questions resolved into the now-superseded AD-014, and are
+re-expressed by the projection model AD-026/AD-031.)
 
 | ID | Question | Ratified decision | Status | Folded into |
 |----|----------|-------------------|:------:|-------------|
@@ -495,7 +537,7 @@ projection model AD-026/AD-031.)
 | OQ-005 | Max template size / block count supported comfortably? | Defer; set targets after the M3 Zelos-rendering benchmarks (NFR-025/029). | ☑ | this file (M3) |
 | OQ-006 | How do users provide include-able templates in v1? | Host-provided include resolution (examples + embedding config, AD-010); full manager later. | ☑ | SPEC §16.6; AD-010 |
 | OQ-007 | How to display captured `file` writes? | Separate "Files produced" panel with name + content preview. | ☑ | SPEC §12.11, §17.11 |
-| OQ-008 | Rule names vs friendly labels on blocks? | Show both, e.g. "Get attribute (`attr`)". | ☑ | SPEC §12.5 |
+| OQ-008 | Rule names vs friendly labels on blocks? | Show both, e.g. "Get attribute (`attr`)". **Superseded on the canvas by OQ-018 (2026-07-05)**: dual label now flyout-only. | ☑ | SPEC §12.5 (revised at v2.1) |
 | OQ-009 | Palette size management with per-shape variants? | Categories + search + advanced toggle + clear labels; prefer a clearer palette over hidden modes. | ☑ | SPEC §12.6 |
 | OQ-010 | Compiler vs interpreter as the shipped model? | **Compiler only** — generators `G_*` emit specialized codecs; no interpreter codec ships. | ☑ | SPEC §7.16 FR-115; AD-026 |
 | OQ-011 | Where do projections run — build-time, runtime, or both? | **Both**: build-time codegen of committed codec artifacts + runtime execution via the host. | ☑ | SPEC §7.16 FR-119; AD-030 |
@@ -505,6 +547,9 @@ projection model AD-026/AD-031.)
 | OQ-015 | Metadata leanness — split structural vs examples? | **Split**: lean structural catalog + separate examples/docs payload. | ☑ | SPEC NFR-047; metadata-contract §2.7 |
 | OQ-016 | How does the host run projections? | Same `EngineProvider` as validate/execute, via the **two-pass generate-then-run** model. | ☑ | SPEC §7.16 FR-119, §10.4; AD-030; ARCH §5.2 |
 | OQ-017 | Toolbox/category source? | **Projected from metadata categories** by `G_toolbox`. | ☑ | SPEC §7.16 FR-114; ARCH §5.5 |
+| OQ-018 | Block label form on canvas vs flyout vs tooltip (re-answers OQ-008)? | **Title-only on canvas; dual label in the flyout; tooltip `<rule> — <description>`; single-input variants drop the param-name prefix.** | ☑ | SPEC §12.5 (v2.1), FR-078; RFC-003 P-C |
+| OQ-019 | Inline/external layout split for value inputs? | **Adaptive + manual override** (runtime flips on connection changes, damped; per-block override wins) — ratified in principle; the prototype pins the multiline threshold + damping **before** the SPEC revision lands (M7, not M6). | ☑ | RFC-003 P-E (SPEC IDs assigned at M7) |
+| OQ-020 | Minimap: adopt now or defer? | **Adopt now** — `@blockly/workspace-minimap` ships in M6 phase 1 (overrides RFC-003's proposed defer). | ☑ | SPEC §7.17 FR-133; RFC-003 P-A |
 
 ## Future considerations
 

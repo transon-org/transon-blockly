@@ -1,6 +1,6 @@
 # metadata-contract.md — Editor Metadata Contract
 
-> **Version:** 2.1 · **Status:** Active · **Last updated:** 2026-07-02
+> **Version:** 2.1 · **Status:** Active · **Last updated:** 2026-07-05 (§2.9: optional short param display labels, SPEC v2.1 §12.5/OQ-018 — editor-owned presentation data only; engine export unchanged)
 
 > **v2.1 — normalized example corpus (engine `metadata_version` `3.0`; engine RFC
 > `../transon/docs/proposals/example-corpus-normalization.md`, roadmap R-31).** The examples/docs
@@ -210,6 +210,12 @@ alias tokens the entry covers. Curation is **display-only**: the validity domain
 resolved `options` (§2.6), every metadata token remains accepted and round-trips verbatim, and the
 FR-127 completeness gate additionally checks curated tokens against the metadata domain (valid,
 non-duplicated, and jointly covering it).
+
+The same file may declare **short display labels for parameters** (`SPEC.md` §12.5, OQ-018):
+per rule/parameter, an optional label shown on the block row in place of the metadata parameter
+name when that name is long. Display-only, like dropdown curation: parameter *names* in the JSON,
+the codec's field/input keys, and the metadata domain are untouched — only the rendered text on
+the block changes.
 
 ---
 

@@ -1,7 +1,13 @@
 # RFC-003: Canvas density + navigation for large templates
 
-- **Status:** Proposed (2026-07-05). Nothing here is normative until the SPEC/ARCHITECTURE edits
-  land (SPEC-first, §21.2); this document is the review artifact for that change set.
+- **Status:** Phases 1–3 **APPLIED to the contract docs** (2026-07-05, SPEC v2.1 / ROADMAP v2.1 —
+  branch `m6-canvas-density-spec`); open questions ratified by the maintainer 2026-07-05 —
+  OQ-018 = title-only on canvas (C1+C3), OQ-019 = adaptive layout + manual override, OQ-020 =
+  **adopt the minimap now** (overriding this RFC's proposed defer). For phases 1–3 the normative
+  homes now win over this document: SPEC §7.17 (FR-133/FR-134), NFR-049 (§8.5), AC-041, §12.5
+  (labels), FR-078 (tooltip), `metadata-contract.md` §2.9 (short param labels), ROADMAP **M6**
+  (+ OQ-018…020 rows). **P-E (phase 4) remains PROPOSED** — it prototypes first and lands with M7
+  under its own next-free IDs (the FR-135/AD-034 numbers below are reservations, not landed).
 - **Type:** Presentation + navigation change set. Everything proposed is **display-only under
   §21.12 (UI ≠ semantics)** — no codec, round-trip, surface, or metadata-contract impact — but two
   proposals **revise ratified decisions** (OQ-008 dual labels; FR-129/§13.10 external-inputs
@@ -63,6 +69,9 @@ Enable Blockly's built-in navigation on the mounted workspace (`mount.ts` inject
 - `move: { scrollbars: true, drag: true, wheel: true }`
 - **Zoom-to-fit** affordance (the official `@blockly/zoom-to-fit` plugin, or the equivalent
   `workspace.zoomToFit()` control) so one click frames the whole template.
+- **Minimap** (`@blockly/workspace-minimap`) — **ratified into P-A by OQ-020 (2026-07-05: adopt
+  now, phase 1/M6)**, so spatial orientation on huge canvases ships together with zoom rather than
+  waiting on user feedback.
 
 Zoom/scroll state stays **UI-only** exactly as §11.5 already specifies (`zoom` is listed there as
 preserved workspace UI metadata, not canonical for execution). Embedders get the same treatment as
@@ -70,8 +79,17 @@ other canvas affordances: on by default, no new host API surface in v1 (a future
 knob is possible but out of scope here).
 
 - **Contract edits:** new **FR-133** (§12, canvas navigation: zoom controls, wheel/pinch zoom,
-  zoom-to-fit, pan/scroll); AC covered by **AC-041** (below). §11.5 unchanged (already anticipates it).
-- **Code:** `mount.ts` only. No projection, no artifacts.
+  zoom-to-fit, **minimap**, pan/scroll); AC covered by **AC-041** (below). §11.5 unchanged (already
+  anticipates it).
+- **Code:** `mount.ts` + the `@blockly/workspace-minimap` dependency (pinned per AD-021). No
+  projection, no artifacts.
+- **Gain:** the hard ~50-block viewport cap disappears — visible-block count becomes a
+  user-chosen legibility trade instead of a fixed ceiling. Blocks visible scale with 1/s²:
+  `startScale 0.9` alone shows ~1.2× more at near-full legibility; 0.5× shows ~4×; `minScale 0.2`
+  gives up to ~25× the area — a whole-template overview for any corpus example. Zoom-to-fit turns
+  "where is that branch?" from blind scroll-hunting into a one-click overview → spot → zoom-in
+  loop (seconds, not minutes). This is the largest single usability win per line of code changed
+  in the RFC.
 
 ### P-B — Compact block surface (renderer constants + type scale) — *inside FR-129*
 
@@ -90,8 +108,11 @@ connection targets draggable at desktop DPI, and validate against the example co
   scrolling*; exact numbers to be pinned during review). FR-129 needs **no text change** (rename of
   the registered renderer is an implementation detail under AD-017).
 - **Code:** `editor-ui` theme/renderer module only.
-- **Expected yield:** ~15–25% linear density ⇒ ~40–50% more blocks per screen combined with
-  `startScale: 0.9`.
+- **Gain:** ~15–25% linear shrink ⇒ **~1.4–1.7× more blocks per screen at unchanged zoom**
+  (density scales with the square of the linear cut). Unlike zooming out, this costs no per-block
+  legibility — it removes padding whitespace, not glyph size (the optional 11px font is the only
+  legibility trade, separable). The gain multiplies with every other proposal: a compact block is
+  also a smaller collapsed block (P-D), a shorter label row (P-C), and a tighter inline row (P-E).
 
 ### P-C — Label diet — *revises OQ-008 / §12.5*
 
@@ -113,6 +134,11 @@ Rejected alternative **C2** (rule-name-only on blocks, `attr`): most compact and
 signal, but hostile to the §12.6 beginner path; recorded here so the decision trail shows it was
 considered.
 
+**Ratified (OQ-018, 2026-07-05): C1 + C3 as proposed** — canvas blocks title-only, flyout keeps
+the dual label, tooltip carries `"<rule> — <description>"`. The drafting-stage fallback (dual
+label nowhere on blocks) is **rejected**: if flyout and canvas can't share one `message0`, the
+flyout-specific label is the implementation cost we accept.
+
 - **Contract edits:** new **OQ-018** re-answering OQ-008 (deprecate OQ-008's answer in place, ROADMAP
   §"Open questions"); revise **§12.5** (canvas = title-only, flyout = dual label, tooltip carries
   the rule name — cite NFR-016 as satisfied by tooltip + flyout); note in FR-078 (tooltip) that the
@@ -121,11 +147,14 @@ considered.
   artifacts (`G_palette.json`, `palette.json`) under the strict regen gate (AD-030);
   `presentation.json` short-label key (metadata-contract §2.9 addendum); flyout label needs a
   palette/flyout-specific label field or a flyout-only `labelKey` — the one place P-C touches more
-  than the projection, since today flyout and canvas share one `message0`. If keeping them identical
-  proves cheaper, fallback: dual label nowhere on blocks, rule name in tooltip + category docs only
-  — decide during review (folded into OQ-018).
-- **Expected yield:** `Get attribute (attr) name ⧉` → `Get attribute ⧉` — roughly 35–45% narrower
-  for typical single-input blocks; `Build object (object)` stops saying "object" twice.
+  than the projection, since today flyout and canvas share one `message0`.
+- **Gain:** `Get attribute (attr) name ⧉` → `Get attribute ⧉` — the label shrinks ~48%
+  (25 → 13 characters) on the typical single-input block; canvas-average width drops an estimated
+  **20–30%**. The saving **compounds with nesting depth**: in the external-inputs staircase each
+  level's horizontal offset includes its parent's label width, so every level of a deep template
+  starts that much further left — total staircase width shrinks roughly proportionally at *every*
+  depth. Secondary but real: reading cost drops (`Build object (object)` stops saying "object"
+  twice; blocks read by function, not by taxonomy).
 
 ### P-D — Subtree collapsing — *additive*
 
@@ -140,6 +169,13 @@ a collapsed block still serializes its full subtree.
   collapsed state preserved per §11.5; collapsed blocks show the block label + an ellipsis cue).
 - **Code:** `mount.ts` config; verify the custom fields/mutators (AD-031 runtime) render sanely
   when collapsed (test in the AC-041 suite).
+- **Gain:** a collapsed subtree's footprint goes from **O(subtree size) to O(1)** — a 200-block
+  template reads as ~10 section-sized blocks, so the *effective* template-size ceiling disappears
+  entirely: density becomes user-managed detail, not a property of the template. This is
+  *semantic* zoom complementing P-A's *geometric* zoom (P-A shrinks everything uniformly; P-D
+  hides what you're not working on at full size). It also gives an editing-focus workflow — expand
+  only the branch under edit — and, unlike every density proposal, its gain **grows** with
+  template size: the bigger the template, the more it wins.
 
 ### P-E — Balanced adaptive layout — *revises FR-129 / §13.10 (updates AD-033)*
 
@@ -164,15 +200,31 @@ the most invasive visual change; it ships behind the AC-041 visual suite and an 
 before/after gallery, and only after A/B/C/D have landed (they may already relieve enough pressure
 to shrink E's scope to E-default + E-override).
 
+**Ratified (OQ-019, 2026-07-05): adaptive + manual override** — E-adaptive is the model (with
+E-default as a block's initial disposition before anything is connected) and E-override always
+wins. The static-hybrid-only fallback is rejected. The phase-4 prototype remains mandatory, but
+its job narrows: it no longer chooses *between* static and adaptive, it pins the adaptive
+parameters (the "multiline child" threshold and the damping feel) before FR-135/AD-034 are
+finalized.
+
 - **Contract edits:** new **AD-034** (updates AD-033 the way AD-033 updated AD-017 — append-only);
   revise **FR-129 + §13.10 + AC-040** (external-inputs wording → balanced adaptive layout; AC-040's
   "all value parameters are external" assertion is replaced by AC-041's mode-dependent assertions);
   new **FR-135** (adaptive inline/external behavior, damping, manual override); new **OQ-019**
-  (ratify the heuristic: static hybrid vs adaptive vs both, and the "multiline child" threshold).
+  (ratified: adaptive + override; the prototype pins the threshold + damping numbers).
 - **Code:** `G_palette` (initial dispositions + regen under AD-030), behavior runtime
   (`packages/editor-blockly/src/runtime.ts`) for the adaptive flip, `mount.ts` for the context-menu
   item. Maker ≠ checker: although §21.12-neutral, the runtime touch sits next to mutator/codec
   surfaces — run the `review-gate` workflow on the branch anyway.
+- **Gain:** every inlined leaf eliminates one block outline + one connector + (usually) one row —
+  and one full staircase level of horizontal offset. Real templates are leaf-heavy (a large share
+  of value sockets hold literals or single-row expressions), so the estimate is a **25–40% total
+  footprint cut** on typical corpus examples, on top of everything above; simple expressions like
+  `attr "name"` collapse from a two-block staircase to one readable row. This is the only proposal
+  that attacks the *structural* space consumer (cause #2, the dominant one) rather than trimming
+  around it — and the estimate is deliberately labeled speculative: the phase-4 prototype plus the
+  NFR-049 measurement harness replace it with a measured before/after number before the SPEC
+  revision is finalized.
 
 ## What does NOT change
 
@@ -194,22 +246,31 @@ to shrink E's scope to E-default + E-override).
 | NFR-049 | P-B | Canvas density target (pinned px numbers; corpus-validated) |
 | AC-041 | all | Density + navigation acceptance: mounted-workspace suite asserting zoom/fit/minimap-or-collapse behavior, label forms, and adaptive-layout mode flips over corpus examples (§19.4 Playwright + headless) |
 | AD-034 | P-E | Balanced adaptive layout (updates AD-033; append-only) |
-| OQ-018 | P-C | Label form on canvas vs flyout vs tooltip (re-answers OQ-008) |
-| OQ-019 | P-E | Adaptive-layout heuristic + multiline threshold + static-vs-adaptive scope |
-| OQ-020 | P-A | Minimap: adopt `@blockly/workspace-minimap` now, or defer until after A+D land? |
+| OQ-018 | P-C | Label form (re-answers OQ-008) — **ratified 2026-07-05: title-only canvas, dual-label flyout, rule name in tooltip (C1+C3)** |
+| OQ-019 | P-E | Adaptive-layout scope — **ratified 2026-07-05: adaptive + manual override; prototype pins threshold + damping** |
+| OQ-020 | P-A | Minimap — **ratified 2026-07-05: adopt `@blockly/workspace-minimap` now (phase 1/M6)**, overriding this RFC's proposed defer |
 
-(OQ-020 exists because zoom-to-fit + collapse may make a minimap redundant for v1; the plugin adds
-a dependency and permanent viewport chrome. Proposed default answer: **defer**, revisit with user
-feedback.)
+All three open questions were put to the maintainer and ratified on 2026-07-05 (the ROADMAP
+§"Open questions" table gets these rows when the SPEC edits land). OQ-020's original rationale for
+deferring (zoom-to-fit + collapse might make a minimap redundant; dependency + viewport chrome) is
+recorded above; the maintainer chose immediate spatial orientation over dependency thrift.
 
 ## Sequencing
 
-| Phase | Content | Risk | Gate |
-|-------|---------|------|------|
-| 1 | **P-A + P-D** (zoom/fit/pan + collapse) | None — additive config | AC-041 subset; corpus round-trip unchanged |
-| 2 | **P-C** (labels; SPEC §12.5 + OQ-018 first, then `G_palette` + regen) | Low | AD-030 regen gate; AC-041 label assertions |
-| 3 | **P-B** (compact renderer, tuned against corpus) | Low | NFR-049 numbers; NFR-045 a11y intact |
-| 4 | **P-E** (prototype E-adaptive on the largest corpus examples → ratify OQ-019 → SPEC revision → implement) | Medium (visual churn) | `review-gate` workflow; AC-041 full suite |
+| Phase | Content | Risk | Gate | Gain when it lands |
+|-------|---------|------|------|--------------------|
+| 1 | **P-A + P-D** (zoom/fit/pan + minimap + collapse) | None — additive config + one pinned plugin dep | AC-041 subset; corpus round-trip unchanged | **Navigation solved outright.** Any-size template becomes traversable (fit → overview → zoom-in, minimap for spatial orientation; collapse = O(1) sections). Visible blocks become user-controlled (~4× at 0.5× zoom, ~25× at fit scale) instead of capped at ~50. |
+| 2 | **P-C** (labels; SPEC §12.5 + OQ-018 first, then `G_palette` + regen) | Low | AD-030 regen gate; AC-041 label assertions | ~20–30% average width cut **at full legibility**, compounding with staircase depth; redundancy gone from every label. ~50 baseline → roughly **60–70** legible blocks at 100%. |
+| 3 | **P-B** (compact renderer, tuned against corpus) | Low | NFR-049 numbers; NFR-045 a11y intact | ×1.4–1.7 blocks per screen at unchanged zoom, no legibility cost. Cumulative: roughly **85–120** legible blocks at 100%. |
+| 4 | **P-E** (prototype E-adaptive on the largest corpus examples → ratify OQ-019 → SPEC revision → implement) | Medium (visual churn) | `review-gate` workflow; AC-041 full suite | Structural fix: ~25–40% footprint cut on leaf-heavy templates; trivial-child staircase hops gone; simple expressions read as one row. Cumulative: roughly **110–170** legible blocks at 100%. |
+
+**Cumulative picture.** Phases 2–4 multiply only approximately (width and height gains overlap),
+but the honest envelope is: from **~50 blocks at 100% and no way out** to **~2–3.5× that at 100%
+with full legibility**, while phase 1 independently makes even a 500-block template navigable
+(overview + collapse) regardless of raw density. Phase 1 delivers the majority of the *complaint
+relief* for days of work; phases 2–4 deliver the *density* in increasing cost order. All figures
+are pre-measurement estimates — the NFR-049 density harness (below) turns them into tracked
+before/after numbers per phase, so each phase's actual gain gets recorded, not assumed.
 
 Phases 1–3 are each a normal `/implement-requirement` slice once the SPEC edits land. Phase 4
 starts with a throwaway prototype **before** its SPEC revision is finalized — the heuristic's feel
