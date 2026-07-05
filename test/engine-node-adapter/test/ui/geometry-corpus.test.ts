@@ -99,7 +99,33 @@ function makeContainer(): HTMLElement {
 /** Check every NFR-050 public-geometry invariant on one loaded workspace; return violations. */
 function checkWorkspace(mount: TransonMount, exampleName: string): string[] {
   const violations: string[] = [];
+  const renderer = mount.workspace.getRenderer() as unknown as {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    makeRenderInfo_(block: Blockly.BlockSvg): any;
+  };
+  const tabHeight = mount.workspace.getRenderer().getConstants().TAB_HEIGHT;
   for (const block of mount.workspace.getAllBlocks(false) as Blockly.BlockSvg[]) {
+    // (b) label↔connection anchoring: on every external-value-input row, field/icon centerlines
+    // anchor to the drawn tab (row.yPos + TAB_HEIGHT/2) — a tall child stretches the row but must
+    // never re-center the label across the stretched height. White-box via the SAME RenderInfo
+    // Blockly uses to measure this block (matches packages/editor-ui/test/geometry.test.ts).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const info = renderer.makeRenderInfo_(block);
+    info.measure();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const row of (info.rows as any[]).filter((r) => r.hasExternalInput)) {
+      const anchor = row.yPos + tabHeight / 2;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const elem of (row.elements as any[]).filter(
+        (e) => e.field !== undefined || e.icon !== undefined,
+      )) {
+        if (Math.abs((elem.centerline as number) - anchor) > 0.5) {
+          violations.push(
+            `${exampleName}: ${block.type} field centerline ${elem.centerline} not anchored to tab (${anchor}) on a row of height ${row.height}`,
+          );
+        }
+      }
+    }
     const parentXY = block.getRelativeToSurfaceXY();
     const parentTop = parentXY.y;
     const parentBottom = parentXY.y + block.height;

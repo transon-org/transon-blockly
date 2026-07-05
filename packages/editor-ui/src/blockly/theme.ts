@@ -135,11 +135,40 @@ export class CompactConstantProvider extends Blockly.blockRendering.ConstantProv
   }
 }
 
-/** thrasos-derived renderer (AD-033/FR-129/AC-040): identical drawing/measurement ALGORITHM, only
- *  the constant provider's vertical geometry is overridden (`makeConstants_`). */
+/** NFR-050(b) label↔connection anchoring. Stock thrasos centers a row's fields across the row's
+ *  FINAL measured height (`getElemCenterline_` → `row.yPos + row.height/2`) — when a tall child
+ *  stretches an external-value-input row, the label drifts to the middle of the stretched region
+ *  while the connection tab stays at the row top ("Expression op"/"Build object" floating in a
+ *  huge blank interior). This RenderInfo replaces ONE placement rule: on a row with an external
+ *  value input, field/icon centerlines anchor to the drawn connection tab —
+ *  `row.yPos + TAB_HEIGHT/2` (the interlocked tab glyph spans [row.yPos, row.yPos + TAB_HEIGHT]:
+ *  the child's top sits TAB_OFFSET_FROM_TOP above the row top, its output tab drawn
+ *  TAB_OFFSET_FROM_TOP below its own top). For a minimal-height row this EQUALS the stock
+ *  row-center placement, so short rows render identically; only stretched rows change. Everything
+ *  else is thrasos's own algorithm (AD-033-conformant per the NFR-050(b) sanction in SPEC §8.5). */
+class CompactRenderInfo extends Blockly.thrasos.RenderInfo {
+  override getElemCenterline_(
+    row: Blockly.blockRendering.Row,
+    elem: Blockly.blockRendering.Measurable,
+  ): number {
+    const { Types } = Blockly.blockRendering;
+    if (row.hasExternalInput && (Types.isField(elem) || Types.isIcon(elem))) {
+      return row.yPos + this.constants_.TAB_HEIGHT / 2;
+    }
+    return super.getElemCenterline_(row, elem);
+  }
+}
+
+/** thrasos-derived renderer (AD-033/FR-129/AC-040): thrasos's own drawing/measurement ALGORITHM
+ *  with the constant provider's vertical geometry overridden (`makeConstants_`) plus the single
+ *  NFR-050(b) field-anchoring placement rule (`makeRenderInfo_` → CompactRenderInfo above). */
 class CompactThrasosRenderer extends Blockly.thrasos.Renderer {
   protected override makeConstants_(): Blockly.blockRendering.ConstantProvider {
     return new CompactConstantProvider();
+  }
+
+  protected override makeRenderInfo_(block: Blockly.BlockSvg): Blockly.thrasos.RenderInfo {
+    return new CompactRenderInfo(this, block);
   }
 }
 

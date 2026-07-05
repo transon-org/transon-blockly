@@ -221,35 +221,55 @@ describe('NFR-050(a) zero-gap stacking + shared left edge', () => {
   });
 });
 
-describe('NFR-050(b) label/field ↔ connected-child alignment', () => {
-  // The specified quantity is what is DRAWN, not the internal connection-point coordinate:
-  // thrasos anchors the connection at the row TOP by its own convention
-  // (`common/drawer.ts#positionExternalValueConnection_`) while the row's label/field sits at the
-  // row CENTER (`getElemCenterline_`) — that coordinate offset is stock-thrasos and untunable via
-  // constants. Visually, though, label-center == child-center holds EXACTLY for any child height
-  // whenever `TAB_OFFSET_FROM_TOP == MEDIUM_PADDING` (the child's top sits TAB_OFFSET_FROM_TOP
-  // above the row top, and the row's height is childHeight − TAB_OFFSET_FROM_TOP − MEDIUM_PADDING,
-  // so the ±halves cancel iff the two constants are equal — which the GRID_UNIT quantization in
-  // theme.ts guarantees). The drawn puzzle-tab glyph (TAB_OFFSET_FROM_TOP below the child's top,
-  // TAB_HEIGHT tall) additionally centers on both for a minimal-height (pill) child.
-  it('the row label/field center coincides with the connected child center (any child height), and the drawn tab glyph centers on a minimal pill child', () => {
+/** Measured field/icon centerlines of a RenderInfo row (the values the drawer actually places
+ *  fields at — NOT the default `row.yPos + row.height/2` formula, which is exactly what the
+ *  NFR-050(b) anchoring override replaces for external-input rows). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function fieldCenterlines(row: any): number[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (row.elements as any[])
+    .filter((e) => e.field !== undefined || e.icon !== undefined)
+    .map((e) => e.centerline as number);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function measuredExternalRows(mount: TransonMountLike, parent: Blockly.BlockSvg): any[] {
+  const renderer = mount.workspace.getRenderer() as unknown as {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    makeRenderInfo_(block: Blockly.BlockSvg): any;
+  };
+  // White-box introspection (NOT a reimplementation): ask the SAME RenderInfo class Blockly itself
+  // uses to measure this exact block, then read the real rows/centerlines it computed.
+  const info = renderer.makeRenderInfo_(parent);
+  info.measure();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (info.rows as any[]).filter((r) => r.hasExternalInput);
+}
+interface TransonMountLike {
+  workspace: Blockly.WorkspaceSvg;
+}
+
+describe('NFR-050(b) label/field ↔ connection anchoring', () => {
+  // The specified quantity is what is DRAWN: every external-value-input row's label/field anchors
+  // to the drawn connection tab — centerline == row.yPos + TAB_HEIGHT/2 (the interlocked tab glyph
+  // spans [row.yPos, row.yPos + TAB_HEIGHT] because the child's top sits TAB_OFFSET_FROM_TOP above
+  // the row top and its output tab is drawn TAB_OFFSET_FROM_TOP below its own top). For a
+  // minimal-height row this equals the stock row-center placement, so short rows are unchanged;
+  // for a row STRETCHED by a tall child, stock thrasos re-centers the label across the stretched
+  // height (the reported "label floats in the middle of a huge blank interior" defect) while the
+  // anchoring override keeps it at the tab. Implemented in theme.ts's CompactRenderInfo
+  // (`getElemCenterline_`), sanctioned by NFR-050(b).
+  const anchorOf = (row: { yPos: number }, constants: CompactConstantProvider): number =>
+    row.yPos + constants.TAB_HEIGHT / 2;
+
+  it('short rows: label centerline == drawn tab center == connected pill center (unchanged behavior)', () => {
     const c = makeContainer();
     const mount = mountBlockly(c);
     try {
       mount.workspace.setScale(1);
       mount.loadDocument(ATTR_NAME);
       const parent = mount.workspace.getTopBlocks(false)[0] as Blockly.BlockSvg;
-      const renderer = mount.workspace.getRenderer() as unknown as {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        makeRenderInfo_(block: Blockly.BlockSvg): any;
-      };
-      // White-box introspection (NOT a reimplementation): ask the SAME RenderInfo class Blockly
-      // itself uses to measure this exact block, then read the real `row.yPos`/`row.height`.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const info = renderer.makeRenderInfo_(parent);
-      info.measure();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const externalRows = (info.rows as any[]).filter((r) => r.hasExternalInput);
+      const externalRows = measuredExternalRows(mount, parent);
       const rows = valueInputRows(parent);
       expect(rows.length).toBe(2);
       expect(externalRows.length).toBe(rows.length);
@@ -266,41 +286,38 @@ describe('NFR-050(b) label/field ↔ connected-child alignment', () => {
         const row = externalRows[i];
         const child = rows[i]!.child;
         expect(child).not.toBeNull();
-        const childXY = child!.getRelativeToSurfaceXY();
-        const childTop = childXY.y - parentXY.y; // child top in parent-block coordinates
-        const labelCenterY = row.yPos + row.height / 2;
-        const childCenterY = childTop + child!.height / 2;
-        // (b) core invariant: label/field center == connected child center, ≤0.5px, ANY height.
-        expect(Math.abs(labelCenterY - childCenterY)).toBeLessThanOrEqual(0.5);
-        // For a minimal-height pill child, the drawn tab glyph centers on both.
+        const centerlines = fieldCenterlines(row);
+        expect(centerlines.length).toBeGreaterThan(0);
+        for (const cl of centerlines) {
+          // (b) core invariant: label/field centerline anchors to the drawn tab.
+          expect(Math.abs(cl - anchorOf(row, constants))).toBeLessThanOrEqual(0.5);
+        }
+        // For a minimal pill child the anchor also coincides with the pill's own center.
         if (child!.height === pillHeight) {
-          const tabGlyphCenterY =
-            childTop + constants.TAB_OFFSET_FROM_TOP + constants.TAB_HEIGHT / 2;
-          expect(Math.abs(tabGlyphCenterY - childCenterY)).toBeLessThanOrEqual(0.5);
-          expect(Math.abs(tabGlyphCenterY - labelCenterY)).toBeLessThanOrEqual(0.5);
+          const childTop = child!.getRelativeToSurfaceXY().y - parentXY.y;
+          expect(
+            Math.abs(anchorOf(row, constants) - (childTop + child!.height / 2)),
+          ).toBeLessThanOrEqual(0.5);
         }
       }
-      // Sanity: at least one of the two attr children really is a minimal pill (else the tab-glyph
-      // branch above proved nothing).
+      // Sanity: at least one of the two attr children really is a minimal pill.
       expect(rows.some((r) => r.child!.height === pillHeight)).toBe(true);
-      // The two structural preconditions the exact centering depends on — pinned so a future
-      // retune that breaks either fails HERE with a named reason, not as a mystery misalignment:
-      // label↔child cancellation (any height) needs TAB_OFFSET_FROM_TOP == MEDIUM_PADDING;
-      // tab-glyph centering on a pill needs 2*TAB_OFFSET_FROM_TOP + TAB_HEIGHT == pillHeight.
+      // Structural precondition pinned by name: the zero-gap derivation and the child-top offset
+      // both assume TAB_OFFSET_FROM_TOP == MEDIUM_PADDING.
       expect(constants.TAB_OFFSET_FROM_TOP).toBe(constants.MEDIUM_PADDING);
-      expect(2 * constants.TAB_OFFSET_FROM_TOP + constants.TAB_HEIGHT).toBe(pillHeight);
     } finally {
       mount.dispose();
       c.remove();
     }
   });
 
-  it('label↔child centering holds for a TALLER-than-minimal child too (nested subtree)', () => {
+  it('STRETCHED rows: the label stays anchored at the tab, not re-centered across a tall child', () => {
     const c = makeContainer();
     const mount = mountBlockly(c);
     try {
       mount.workspace.setScale(1);
-      // attr whose `name` child is itself an attr with two inputs — guaranteed taller than minimal.
+      // attr whose `name` child is itself an attr with two inputs — guaranteed taller than
+      // minimal, so its row is stretched well beyond the label height.
       mount.loadDocument({
         type: 'transon_rule_attr__name',
         inputs: {
@@ -309,28 +326,23 @@ describe('NFR-050(b) label/field ↔ connected-child alignment', () => {
         },
       });
       const parent = mount.workspace.getTopBlocks(false)[0] as Blockly.BlockSvg;
-      const renderer = mount.workspace.getRenderer() as unknown as {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        makeRenderInfo_(block: Blockly.BlockSvg): any;
-      };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const info = renderer.makeRenderInfo_(parent);
-      info.measure();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const externalRows = (info.rows as any[]).filter((r) => r.hasExternalInput);
+      const externalRows = measuredExternalRows(mount, parent);
       const rows = valueInputRows(parent);
       const constants = new CompactConstantProvider();
-      const parentXY = parent.getRelativeToSurfaceXY();
       const tallRowIndex = rows.findIndex(
-        (r) => r.child !== null && r.child.height > constants.MIN_BLOCK_HEIGHT,
+        (r) => r.child !== null && r.child.height > 2 * constants.TAB_HEIGHT,
       );
       expect(tallRowIndex).toBeGreaterThanOrEqual(0); // the fixture really produced a tall child
       const row = externalRows[tallRowIndex];
-      const child = rows[tallRowIndex]!.child!;
-      const childTop = child.getRelativeToSurfaceXY().y - parentXY.y;
-      expect(
-        Math.abs(row.yPos + row.height / 2 - (childTop + child.height / 2)),
-      ).toBeLessThanOrEqual(0.5);
+      // Sanity: the row really is stretched — its height far exceeds the anchor band, so anchored
+      // and re-centered placements are DISTINGUISHABLE (else this test proves nothing).
+      expect(row.height).toBeGreaterThan(2 * constants.TAB_HEIGHT);
+      for (const cl of fieldCenterlines(row)) {
+        // Anchored at the tab (NFR-050(b)) …
+        expect(Math.abs(cl - anchorOf(row, constants))).toBeLessThanOrEqual(0.5);
+        // … and demonstrably NOT re-centered across the stretched row.
+        expect(Math.abs(cl - (row.yPos + row.height / 2))).toBeGreaterThan(0.5);
+      }
     } finally {
       mount.dispose();
       c.remove();

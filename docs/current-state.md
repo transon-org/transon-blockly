@@ -8,13 +8,24 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `7c58944` — fix(renderer): NFR-050 geometry invariants — zero-gap, centered tabs, grid |
+| Repo HEAD | `183feda` — review: hoist minimap resync out of finally (Biome noUnsafeFinally) |
 | Branch | `m6-canvas-density` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**NFR-050(b) anchoring hardening LANDED (2nd user feedback round; 2026-07-05, on PR #7):** on
+rows stretched by a tall child, labels re-centered across the stretched height (the first (b)
+formulation had specified exactly that — superseded). Amended in place (unmerged PR): label/field
+centerline anchors to the DRAWN connection tab (`row.yPos + TAB_HEIGHT/2`) for every
+external-value-input row, any child height; short rows provably unchanged. Implemented via the
+previously-STOPped, now user-sanctioned single placement override — `CompactRenderInfo extends
+Blockly.thrasos.RenderInfo`, `getElemCenterline_` only (`theme.ts`). Red-first stretched-row test
++ corpus-wide anchoring assertions (121 examples, RenderInfo introspection). Density baseline
+byte-identical (no row-height change; ratchet green). Browser-verified + screenshot
+`retro/evidence/m6-nfr050b-anchoring.jpeg`. Traceability (b) clause rewritten._
 
 _**M6 pushed — PR #7 OPEN (`m6-canvas-density` → `main`, 2026-07-05):** the full milestone
 (FR-133/134, §12.5 labels, NFR-049 density, NFR-050 geometry hardening, AC-041) in one PR;

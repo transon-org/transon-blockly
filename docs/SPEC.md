@@ -818,13 +818,19 @@ all state they introduce is UI-only per the §11.5 canonical list (which already
   consecutive value inputs of one parent, which stack visually under external inputs §13.10), no
   background seam separates the rendered edges beyond the row spacing the renderer itself
   declares (overlap only by the notch/tab), and **such stacked siblings share the same left
-  edge** (all start at the same x); **(b) label↔child alignment** — for every value input, the
-  vertical center of the row's label/field coincides with the vertical center of the connected
-  child block (within 0.5 px in workspace units, for any child height), and for a minimal-height
-  child (the common scalar/pill case) the **drawn puzzle-tab glyph** centers on both; a child
-  never protrudes above its row's top or below its parent's bottom edge. (The renderer's internal
-  connection-point *coordinate* keeps its own convention — thrasos anchors it at the row top —
-  and is not the specified quantity; the invariant is about what is drawn.) **(c) quantized
+  edge** (all start at the same x); **(b) label↔connection anchoring** — for every value input,
+  the vertical center of the row's label/field coincides with the vertical center of the **drawn
+  connection tab** (within 0.5 px in workspace units), **regardless of the attached child's
+  height**: a tall child stretches the row, but the label stays anchored at the connection near
+  the row top instead of re-centering across the stretched row (for a minimal-height child the
+  two placements coincide, so short rows are unchanged). Statement-input labels, were the
+  surface to use statement inputs, anchor to the top of the statement region the same way. A
+  child never protrudes above its row's top or below its parent's bottom edge. (The renderer's
+  internal connection-point *coordinate* keeps its own convention — thrasos anchors it at the
+  row top — and is not the specified quantity; the invariant is about what is drawn. Anchoring
+  requires overriding the renderer's field-placement pass — `getElemCenterline_` — in the
+  thrasos-derived subclass; sanctioned here as part of this NFR, still AD-033-conformant: the
+  drawing algorithm is thrasos's own, with one measured-placement rule replaced.) **(c) quantized
   heights** — every vertical renderer constant derives from a single base grid unit and every
   rendered block height lands on a multiple of it (no hand-picked odd values producing
   fractional centering or sub-pixel seams at non-integer zoom). Renderer-constant changes (e.g.
