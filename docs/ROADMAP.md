@@ -465,7 +465,7 @@ Design + rationale + per-phase gains: [RFC-003](proposals/rfc-003-canvas-density
 - DoD additions (beyond the standard Definition of Done): AC-041 green including the real-browser
   layer (§19.4); NFR-049 harness numbers committed; round-trip corpus **zero-diff**; `G_palette`
   regen byte-equal after the label change.
-- **Status: ☐ pending.**
+- **Status: ☑ complete (2026-07-05, branch `m6-canvas-density`).** All three phases landed test-first; AC-041(a–e) green incl. the §19.4 real-browser pass (evidence `retro/evidence/m6-ac041-browser.jpeg`); NFR-049 baseline committed (`packages/editor-ui/test/density-baseline.json`); round-trip corpus zero-diff; `G_palette`/`palette.json` the only regenerated artifacts (byte-equal regen gate green); independent `round-trip-reviewer` verdict on the label slice: SAFE TO MERGE.
 
 ---
 
@@ -479,7 +479,7 @@ Design + rationale + per-phase gains: [RFC-003](proposals/rfc-003-canvas-density
 | M3 | `editor-blockly`: `G_palette`/`G_toolbox` + Zelos + behavior runtime | FR-012…018, 084/088…090, 121, 125/126/127, NFR-046/048, AC-036/037, AD-017/018/026/031/032 | ☑ |
 | M4 | UI + element: shell + host execution + bidirectional sync | FR-001…011, 005, 064…076, 091…095, 111…113; AC-001/012…017/023…025/031…033/038; NFR-028/046; AD-017/018/019/020/024/025/030/031 | ☑ |
 | M5 | React + examples + embedding + accessibility + self-hosting | FR-077…082, 096…110/128, 058, 121, NFR-045, AC-018…022/026/036/039, AD-019 | ☑ |
-| M6 | Canvas density + navigation: zoom/fit/minimap + collapse + labels + compact surface | FR-133/134, NFR-029/049, AC-041, §12.5 (OQ-018…020), AD-021/030 | ☐ |
+| M6 | Canvas density + navigation: zoom/fit/minimap + collapse + labels + compact surface | FR-133/134, NFR-029/049, AC-041, §12.5 (OQ-018…020), AD-021/030 | ☑ |
 
 ## Readiness assessment
 

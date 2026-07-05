@@ -12,6 +12,10 @@ import dts from 'vite-plugin-dts';
 // published, so they are BUNDLED IN — editor-react is the publishable React distribution of them.
 // Blockly stays external (a real npm dependency) so a single Blockly instance is shared (its
 // registries are singletons). Ships no engine (AD-008) — nothing here imports one.
+//
+// FR-133: @blockly/zoom-to-fit and @blockly/workspace-minimap stay external too, same reasoning as
+// `blockly` (real npm deps, not editor internals) — see editor-ui/vite.config.ts for why bundling
+// their UMD dist is best avoided.
 export default defineConfig({
   plugins: [react(), dts({ include: ['src/**/*.ts', 'src/**/*.tsx'], rollupTypes: true })],
   build: {
@@ -22,9 +26,18 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      // React is the PEER (external); Blockly is an external runtime dependency. Everything else
-      // (@transon/*) is bundled into this package.
-      external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'blockly', /^blockly\//],
+      // React is the PEER (external); Blockly (+ its two navigation plugins, FR-133) are external
+      // runtime dependencies. Everything else (@transon/*) is bundled into this package.
+      external: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-runtime',
+        'blockly',
+        /^blockly\//,
+        '@blockly/zoom-to-fit',
+        '@blockly/workspace-minimap',
+      ],
     },
   },
   test: {

@@ -3,48 +3,54 @@
     {
       "args0": [],
       "colour": 210,
+      "flyoutLabel": "This (this)",
       "inputsInline": false,
-      "message0": "This (this)",
+      "message0": "This",
       "output": null,
       "type": "transon_rule_this__base"
     },
     {
       "args0": [],
       "colour": 210,
+      "flyoutLabel": "Parent scope (parent)",
       "inputsInline": false,
-      "message0": "Parent scope (parent)",
+      "message0": "Parent scope",
       "output": null,
       "type": "transon_rule_parent__base"
     },
     {
       "args0": [],
       "colour": 210,
+      "flyoutLabel": "Current item (item)",
       "inputsInline": false,
-      "message0": "Current item (item)",
+      "message0": "Current item",
       "output": null,
       "type": "transon_rule_item__base"
     },
     {
       "args0": [],
       "colour": 210,
+      "flyoutLabel": "Current key (key)",
       "inputsInline": false,
-      "message0": "Current key (key)",
+      "message0": "Current key",
       "output": null,
       "type": "transon_rule_key__base"
     },
     {
       "args0": [],
       "colour": 210,
+      "flyoutLabel": "Current index (index)",
       "inputsInline": false,
-      "message0": "Current index (index)",
+      "message0": "Current index",
       "output": null,
       "type": "transon_rule_index__base"
     },
     {
       "args0": [],
       "colour": 210,
+      "flyoutLabel": "Current value (value)",
       "inputsInline": false,
-      "message0": "Current value (value)",
+      "message0": "Current value",
       "output": null,
       "type": "transon_rule_value__base"
     },
@@ -56,8 +62,9 @@
         }
       ],
       "colour": 330,
+      "flyoutLabel": "Set variable (set)",
       "inputsInline": false,
-      "message0": "Set variable (set) name %1",
+      "message0": "Set variable %1",
       "output": null,
       "type": "transon_rule_set__base"
     },
@@ -78,8 +85,9 @@
         }
       ],
       "colour": 330,
+      "flyoutLabel": "Get variable (get)",
       "inputsInline": false,
-      "message0": "Get variable (get) %1",
+      "message0": "Get variable %1",
       "message1": " name %1 default %2",
       "output": null,
       "type": "transon_rule_get__base"
@@ -101,9 +109,10 @@
         }
       ],
       "colour": 285,
+      "flyoutLabel": "Get attribute (attr)",
       "inputsInline": false,
-      "message0": "Get attribute (attr) %1",
-      "message1": " name %1 default %2",
+      "message0": "Get attribute %1",
+      "message1": " name %1 fallback %2",
       "output": null,
       "type": "transon_rule_attr__name"
     },
@@ -124,9 +133,10 @@
         }
       ],
       "colour": 285,
+      "flyoutLabel": "Get attribute (attr)",
       "inputsInline": false,
-      "message0": "Get attribute (attr) %1",
-      "message1": " names %1 default %2",
+      "message0": "Get attribute %1",
+      "message1": " names %1 fallback %2",
       "output": null,
       "type": "transon_rule_attr__names"
     },
@@ -147,8 +157,9 @@
         }
       ],
       "colour": 255,
+      "flyoutLabel": "Build object (object)",
       "inputsInline": false,
-      "message0": "Build object (object) %1",
+      "message0": "Build object %1",
       "message1": " key %1 value %2",
       "output": null,
       "type": "transon_rule_object__key+value"
@@ -161,8 +172,9 @@
         }
       ],
       "colour": 255,
+      "flyoutLabel": "Build object (object)",
       "inputsInline": false,
-      "message0": "Build object (object) fields %1",
+      "message0": "Build object %1",
       "output": null,
       "type": "transon_rule_object__fields"
     },
@@ -174,8 +186,9 @@
         }
       ],
       "colour": 120,
+      "flyoutLabel": "Map (map)",
       "inputsInline": false,
-      "message0": "Map (map) item %1",
+      "message0": "Map %1",
       "output": null,
       "type": "transon_rule_map__item"
     },
@@ -187,8 +200,9 @@
         }
       ],
       "colour": 120,
+      "flyoutLabel": "Map (map)",
       "inputsInline": false,
-      "message0": "Map (map) items %1",
+      "message0": "Map %1",
       "output": null,
       "type": "transon_rule_map__items"
     },
@@ -209,8 +223,9 @@
         }
       ],
       "colour": 120,
+      "flyoutLabel": "Map (map)",
       "inputsInline": false,
-      "message0": "Map (map) %1",
+      "message0": "Map %1",
       "message1": " key %1 value %2",
       "output": null,
       "type": "transon_rule_map__key+value"
@@ -223,8 +238,9 @@
         }
       ],
       "colour": 120,
+      "flyoutLabel": "Filter (filter)",
       "inputsInline": false,
-      "message0": "Filter (filter) cond %1",
+      "message0": "Filter %1",
       "output": null,
       "type": "transon_rule_filter__base"
     },
@@ -236,8 +252,9 @@
         }
       ],
       "colour": 165,
+      "flyoutLabel": "Zip (zip)",
       "inputsInline": false,
-      "message0": "Zip (zip) items %1",
+      "message0": "Zip %1",
       "output": null,
       "type": "transon_rule_zip__base"
     },
@@ -258,8 +275,9 @@
         }
       ],
       "colour": 0,
+      "flyoutLabel": "Write file (file)",
       "inputsInline": false,
-      "message0": "Write file (file) %1",
+      "message0": "Write file %1",
       "message1": " name %1 content %2",
       "output": null,
       "type": "transon_rule_file__base"
@@ -285,8 +303,9 @@
         }
       ],
       "colour": 165,
+      "flyoutLabel": "Join (join)",
       "inputsInline": false,
-      "message0": "Join (join) %1",
+      "message0": "Join %1",
       "message1": " items %1 sep %2 default %3",
       "output": null,
       "type": "transon_rule_join__base"
@@ -299,8 +318,9 @@
         }
       ],
       "colour": 165,
+      "flyoutLabel": "Chain (chain)",
       "inputsInline": false,
-      "message0": "Chain (chain) funcs %1",
+      "message0": "Chain %1",
       "output": null,
       "type": "transon_rule_chain__base"
     },
@@ -400,8 +420,9 @@
         }
       ],
       "colour": 30,
+      "flyoutLabel": "Expression (expr)",
       "inputsInline": false,
-      "message0": "Expression (expr) op %1",
+      "message0": "Expression op %1",
       "output": null,
       "type": "transon_rule_expr__base"
     },
@@ -505,8 +526,9 @@
         }
       ],
       "colour": 30,
+      "flyoutLabel": "Expression (expr)",
       "inputsInline": false,
-      "message0": "Expression (expr) op %1 value %2",
+      "message0": "Expression op %1 %2",
       "output": null,
       "type": "transon_rule_expr__value"
     },
@@ -610,8 +632,9 @@
         }
       ],
       "colour": 30,
+      "flyoutLabel": "Expression (expr)",
       "inputsInline": false,
-      "message0": "Expression (expr) op %1 values %2",
+      "message0": "Expression op %1 %2",
       "output": null,
       "type": "transon_rule_expr__values"
     },
@@ -647,8 +670,9 @@
         }
       ],
       "colour": 30,
+      "flyoutLabel": "Call function (call)",
       "inputsInline": false,
-      "message0": "Call function (call) name %1",
+      "message0": "Call function name %1",
       "output": null,
       "type": "transon_rule_call__base"
     },
@@ -688,8 +712,9 @@
         }
       ],
       "colour": 30,
+      "flyoutLabel": "Call function (call)",
       "inputsInline": false,
-      "message0": "Call function (call) name %1 value %2",
+      "message0": "Call function name %1 %2",
       "output": null,
       "type": "transon_rule_call__value"
     },
@@ -729,8 +754,9 @@
         }
       ],
       "colour": 30,
+      "flyoutLabel": "Call function (call)",
       "inputsInline": false,
-      "message0": "Call function (call) name %1 values %2",
+      "message0": "Call function name %1 %2",
       "output": null,
       "type": "transon_rule_call__values"
     },
@@ -755,8 +781,9 @@
         }
       ],
       "colour": 90,
+      "flyoutLabel": "Format string (format)",
       "inputsInline": false,
-      "message0": "Format string (format) %1",
+      "message0": "Format string %1",
       "message1": " pattern %1 value %2 default %3",
       "output": null,
       "type": "transon_rule_format__base"
@@ -778,8 +805,9 @@
         }
       ],
       "colour": 195,
+      "flyoutLabel": "Include template (include)",
       "inputsInline": false,
-      "message0": "Include template (include) %1",
+      "message0": "Include template %1",
       "message1": " name %1 default %2",
       "output": null,
       "type": "transon_rule_include__base"
@@ -805,8 +833,9 @@
         }
       ],
       "colour": 60,
+      "flyoutLabel": "Switch (switch)",
       "inputsInline": false,
-      "message0": "Switch (switch) %1",
+      "message0": "Switch %1",
       "message1": " key %1 cases %2 default %3",
       "output": null,
       "type": "transon_rule_switch__base"
@@ -828,8 +857,9 @@
         }
       ],
       "colour": 60,
+      "flyoutLabel": "Condition (cond)",
       "inputsInline": false,
-      "message0": "Condition (cond) %1",
+      "message0": "Condition %1",
       "message1": " cases %1 default %2",
       "output": null,
       "type": "transon_rule_cond__base"

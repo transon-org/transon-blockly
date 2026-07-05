@@ -130,6 +130,7 @@ def completeness(
     presentation: dict,
     rule_names: List[str],
     rule_param_options: "Dict[str, Dict[str, List[str]]] | None" = None,
+    rule_param_names: "Dict[str, List[str]] | None" = None,
 ) -> List[str]:
     """Every metadata rule has an entry; categories are declared + coloured; order==colour keys.
 
@@ -137,6 +138,11 @@ def completeness(
     the metadata snapshot's resolved enum domains; every ``presentation["dropdownMenus"]`` entry
     is validated against it. ``None`` (the default) skips the curation checks entirely, so
     existing completeness-only callers/tests are unaffected.
+
+    ``rule_param_names`` (SPEC §12.5, OQ-018; metadata-contract.md §2.9), when given, is
+    ``{rule: [param, ...]}`` built from the metadata snapshot's full per-rule parameter list;
+    every ``presentation["paramLabels"]`` entry is validated against it (non-empty label,
+    known rule, known param). ``None`` skips the check entirely.
     """
     problems: List[str] = []
     rules: Dict[str, dict] = presentation.get("rules", {})
@@ -180,6 +186,21 @@ def completeness(
                     )
                     continue
                 problems.extend(_curation_problems(rule, param, menu, options))
+
+    if rule_param_names is not None:
+        param_labels: Dict[str, Dict[str, str]] = presentation.get("paramLabels", {})
+        for rule, labels in param_labels.items():
+            if rule not in rule_param_names:
+                problems.append(f"paramLabels rule '{rule}' is not in the metadata catalog (§12.5, OQ-018)")
+                continue
+            known = set(rule_param_names[rule])
+            for param, label in labels.items():
+                if param not in known:
+                    problems.append(
+                        f"paramLabels.{rule}.{param} is not a parameter of rule '{rule}' (§12.5, OQ-018)"
+                    )
+                if not label:
+                    problems.append(f"paramLabels.{rule}.{param} has no label (§12.5, OQ-018)")
     return problems
 
 
@@ -196,13 +217,25 @@ def _rule_param_options(snapshot: dict) -> Dict[str, Dict[str, List[str]]]:
     return result
 
 
+def _rule_param_names(snapshot: dict) -> Dict[str, List[str]]:
+    """Build ``{rule: [param, ...]}`` (the full per-rule parameter list) from the pinned metadata
+    snapshot (§12.5, OQ-018 — validates ``paramLabels`` keys)."""
+    return {
+        rule["name"]: [p["name"] for p in rule.get("params", [])]
+        for rule in snapshot["catalog"]["rules"]
+    }
+
+
 def check() -> List[str]:
     presentation = _load_json(PRESENTATION)
     snapshot = _load_json(SNAPSHOT)
     rule_names = [r["name"] for r in snapshot["catalog"]["rules"]]
     categories = presentation.get("categoryOrder", [])
     rule_param_options = _rule_param_options(snapshot)
-    return scan(REPO, categories) + completeness(presentation, rule_names, rule_param_options)
+    rule_param_names = _rule_param_names(snapshot)
+    return scan(REPO, categories) + completeness(
+        presentation, rule_names, rule_param_options, rule_param_names
+    )
 
 
 def _selftest() -> int:
@@ -270,6 +303,45 @@ def _selftest() -> int:
     skip_problems = completeness(pres_bad, ["expr"])
     assert not any("dropdownMenus" in p for p in skip_problems), (
         f"completeness without rule_param_options should skip curation checks: {skip_problems}"
+    )
+
+    # (4) §12.5/OQ-018 paramLabels: a passing case and failing cases (unknown rule, unknown
+    # param, empty label), gated only when a rule_param_names map is supplied.
+    pres_param_labels_ok = {
+        "categoryOrder": ["Data Access"],
+        "categoryColour": {"Data Access": 285},
+        "rules": {"attr": {"title": "Get attribute", "category": "Data Access", "advanced": False}},
+        "paramLabels": {"attr": {"default": "fallback"}},
+    }
+    names = {"attr": ["name", "default"]}
+    ok_problems = completeness(pres_param_labels_ok, ["attr"], None, names)
+    label_problems = [p for p in ok_problems if "paramLabels" in p]
+    assert not label_problems, f"a complete, valid paramLabels should not fail: {label_problems}"
+
+    pres_param_labels_bad = {
+        "categoryOrder": ["Data Access"],
+        "categoryColour": {"Data Access": 285},
+        "rules": {"attr": {"title": "Get attribute", "category": "Data Access", "advanced": False}},
+        "paramLabels": {
+            "attr": {"nonexistent": "x", "name": ""},
+            "not_a_rule": {"foo": "bar"},
+        },
+    }
+    bad_label_problems = completeness(pres_param_labels_bad, ["attr"], None, names)
+    assert any("nonexistent" in p for p in bad_label_problems), (
+        f"paramLabels missed the unknown param: {bad_label_problems}"
+    )
+    assert any("not_a_rule" in p for p in bad_label_problems), (
+        f"paramLabels missed the unknown rule: {bad_label_problems}"
+    )
+    assert any("attr.name" in p and "no label" in p for p in bad_label_problems), (
+        f"paramLabels missed the empty label: {bad_label_problems}"
+    )
+
+    # rule_param_names=None (default) skips the paramLabels check entirely — unaffected callers.
+    skip_label_problems = completeness(pres_param_labels_bad, ["attr"])
+    assert not any("paramLabels" in p for p in skip_label_problems), (
+        f"completeness without rule_param_names should skip paramLabels checks: {skip_label_problems}"
     )
 
     print("check_presentation selftest: OK")

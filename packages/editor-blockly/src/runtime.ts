@@ -162,13 +162,19 @@ type DynamicBlock = Blockly.Block & {
 /** The dummy input that carries the on-canvas +/- mutator buttons (UI-only, never serialized). */
 const CONTROLS = 'TRANSON_CONTROLS';
 
-/** Inline +/- icons as data-URI SVGs (no external assets, no btoa — URL-encoded). */
+/** Inline +/- icons as data-URI SVGs (no external assets, no btoa — URL-encoded).
+ *  15px tall (not 16): Blockly's FieldImage adds a private 1px Y_PADDING (field_image.ts), so a
+ *  15px image yields a 16px field row — a GRID_UNIT multiple (NFR-050c). At 16px the control row
+ *  measured 17px, which propagated an odd height into EVERY ancestor of an array/object block and
+ *  broke the corpus-wide height-quantization invariant. Display-only; the field is never
+ *  serialized (UI-only control row). */
+const GLYPH_SIZE = 15;
 function glyphIcon(glyph: string): string {
   return (
     'data:image/svg+xml,' +
     encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">` +
-        `<text x="2" y="13" font-family="sans-serif" font-size="15">${glyph}</text></svg>`,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${GLYPH_SIZE}" height="${GLYPH_SIZE}">` +
+        `<text x="2" y="12" font-family="sans-serif" font-size="14">${glyph}</text></svg>`,
     )
   );
 }
@@ -196,8 +202,8 @@ function appendControls(block: DynamicBlock, add: () => void, remove: () => void
   if (block.getInput(CONTROLS)) return;
   block
     .appendDummyInput(CONTROLS)
-    .appendField(new Blockly.FieldImage(PLUS_ICON, 16, 16, '+', () => add()))
-    .appendField(new Blockly.FieldImage(MINUS_ICON, 16, 16, '−', () => remove()));
+    .appendField(new Blockly.FieldImage(PLUS_ICON, GLYPH_SIZE, GLYPH_SIZE, '+', () => add()))
+    .appendField(new Blockly.FieldImage(MINUS_ICON, GLYPH_SIZE, GLYPH_SIZE, '−', () => remove()));
 }
 
 /** transon_array: ITEM{n} value inputs; count = extraState.items.length. Add/remove at the END so

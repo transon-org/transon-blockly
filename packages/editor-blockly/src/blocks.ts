@@ -5,7 +5,7 @@
 // reads a block's inputs/fields/extraState).
 
 import * as Blockly from 'blockly/core';
-import { PALETTE_BLOCKS, TOOLBOX, editorMetadata } from '@transon/editor-core';
+import { PALETTE_BLOCKS, TOOLBOX, editorMetadata, type Json } from '@transon/editor-core';
 import { registerTransonRuntime } from './runtime.js';
 
 let blocksRegistered = false;
@@ -27,31 +27,76 @@ function ruleDescriptionMap(): Map<string, string> {
 }
 
 /**
- * The metadata tooltip for a palette block type (FR-078, AC-020), or `undefined` when the type is not
- * a rule block or its rule has no metadata description (FR-077, graceful). A rule block type is
+ * The tooltip for a palette block type: `"<rule> — <description>"` (§12.5, OQ-018, FR-078) — the
+ * rule name ahead of the metadata description, since the canvas label is title-only and no longer
+ * teaches the rule↔JSON mapping (§12.5). Falls back to the rule name ALONE when the rule has no
+ * metadata description (FR-077, graceful) — still names the rule rather than showing nothing.
+ * Returns `undefined` when the type is not a rule block at all. A rule block type is
  * `transon_rule_<rule>__<variant>`; the rule name has no `__`, so it is the segment before it.
  */
 export function ruleTooltip(blockType: string): string | undefined {
   if (!blockType.startsWith(RULE_TYPE_PREFIX)) return undefined;
   const rule = blockType.slice(RULE_TYPE_PREFIX.length).split('__')[0];
-  return rule ? ruleDescriptionMap().get(rule) : undefined;
+  if (!rule) return undefined;
+  const desc = ruleDescriptionMap().get(rule);
+  return desc ? `${rule} — ${desc}` : rule;
+}
+
+// ---- flyout dual label (§12.5, OQ-018) ----
+//
+// The canvas face shows the title alone (message0/message1 project title-only, codegen.ts); the
+// flyout/palette keeps the dual label "<title> (<rule>)" so the rule↔JSON mapping is taught at
+// pick time. G_palette carries that dual label as a display-only `flyoutLabel` top-level key on
+// the projected def (Blockly's `jsonInit` ignores unknown top-level keys, so it is otherwise
+// inert). Rather than duplicating whole block defs per surface, ONE shared Blockly extension
+// retargets the block's title field's text at init time, based on `Block.isInFlyout` (the
+// standard Blockly signal for "this instance lives in a flyout workspace" — set from
+// `Workspace.isFlyout`, true for the palette's flyout workspace and false for the canvas). The
+// title is always the first field in message0 (every projected def's message starts with the
+// title token, both the single-row and title-own-row/multi-input layouts), so no per-rule field
+// name is needed.
+const FLYOUT_LABEL_EXTENSION = 'transon_flyout_label';
+let flyoutLabelsByType: Map<string, string> | undefined;
+
+/** Registers the shared flyout-label extension once. Looks up each block's dual label from the
+ *  committed palette defs by block `type` (never per-rule TS — AD-012). */
+function ensureFlyoutLabelExtension(): void {
+  if (Blockly.Extensions.isRegistered(FLYOUT_LABEL_EXTENSION)) return;
+  flyoutLabelsByType = new Map(
+    PALETTE_BLOCKS.filter((d) => typeof d.flyoutLabel === 'string').map((d) => [d.type, d.flyoutLabel as unknown as string]),
+  );
+  Blockly.Extensions.register(FLYOUT_LABEL_EXTENSION, function (this: Blockly.Block) {
+    if (!this.isInFlyout) return;
+    const label = flyoutLabelsByType?.get(this.type);
+    if (!label) return;
+    const title = [...this.getFields()][0];
+    if (title instanceof Blockly.FieldLabel) title.setValue(label);
+  });
 }
 
 /**
  * Register the behavior runtime + every committed palette block definition into Blockly. Idempotent.
  * Rule-variant blocks use built-in Blockly field/input types; the structural blocks reference the
  * runtime's custom field + mutators, so the runtime is registered first. Each rule block is enriched
- * with a metadata-derived `tooltip` (FR-078) when the def does not already carry one.
+ * with a metadata-derived `tooltip` (FR-078) when the def does not already carry one, and — when the
+ * def carries a `flyoutLabel` (§12.5, OQ-018) — the shared flyout-label extension that shows it only
+ * inside a flyout workspace, leaving the canvas face title-only.
  */
 export function registerTransonBlocks(): void {
   registerTransonRuntime();
   if (blocksRegistered) return;
   blocksRegistered = true;
+  ensureFlyoutLabelExtension();
   for (const def of PALETTE_BLOCKS) {
     if (!Blockly.Blocks[def.type]) {
       const tip = ruleTooltip(def.type);
-      const enriched =
-        tip && !(def as { tooltip?: unknown }).tooltip ? { ...def, tooltip: tip } : def;
+      let enriched: typeof def = def;
+      if (tip && !(def as { tooltip?: unknown }).tooltip) enriched = { ...enriched, tooltip: tip };
+      if (typeof enriched.flyoutLabel === 'string') {
+        const existing = (enriched as { extensions?: string[] }).extensions ?? [];
+        const extensions = [...existing, FLYOUT_LABEL_EXTENSION] as unknown as Json;
+        enriched = { ...enriched, extensions };
+      }
       Blockly.defineBlocksWithJsonArray([enriched as unknown as { [k: string]: unknown }]);
     }
   }

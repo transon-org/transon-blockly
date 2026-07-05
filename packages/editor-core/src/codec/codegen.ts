@@ -494,18 +494,30 @@ const G_TOOLBOX: Json = {
 // Blockly, not executed over user data), so G_palette runs single-stage under the meta marker `@`.
 // generatePalette enriches each rule entry with the variant params' `kind`/`options` (FR-118), a
 // curated `menu` for constant+options params (FR-130, from presentation.json — no TS literals,
-// FR-127), and the rule's presentation title + category colour, then this projection emits, per
-// variant, a Blockly (Zelos) block definition. The FR-118 widget decision is made here in the
-// projection via `@:cond` (never baked into metadata):
+// FR-127), a declared short display `label` per param (§12.5, OQ-018, metadata-contract §2.9 —
+// falls back to the metadata name), and the rule's presentation title + category colour, then
+// this projection emits, per variant, a Blockly (Zelos) block definition. The FR-118 widget
+// decision is made here in the projection via `@:cond` (never baked into metadata):
 //   - dynamic param    → `input_value` (a value input)                          (§13.5)
 //   - constant+options → `field_transon_dropdown` (curated or identity menu,
 //                         full metadata domain accepted verbatim)      (§13.6, FR-058, FR-130)
 //   - constant         → `field_input` (verbatim scalar field)                  (§13.6)
-// Label = "<title> (<rule>)" (OQ-008, §12.5); colour = the rule's category colour (NFR-048).
+//
+// Labels split by surface (§12.5, OQ-018 — supersedes OQ-008's dual-label answer on the canvas):
+//   - canvas face (message0/message1): the friendly TITLE ONLY, no "(<rule>)" suffix (AC-041(c)).
+//   - flyout/palette: the dual label "<title> (<rule>)", carried as the display-only `flyoutLabel`
+//     top-level key on the projected def (consumed by @transon/editor-blockly's flyout-only
+//     extension — Blockly ignores unknown top-level def keys, so this is inert to Blockly itself).
+//   - a variant with ≤1 value (dynamic) input omits the raw param-name prefix on that socket (the
+//     socket is unambiguous; the tooltip still names the rule, FR-078); constant/field params keep
+//     their label in both layouts (a bare dropdown/field would otherwise be unlabeled); variants
+//     with ≥2 value inputs (the `multiInput`/message1 branch) keep every per-input label.
+// colour = the rule's category colour (NFR-048).
 //
 // `this` of the projection is the enriched entry { name, title, colour, variants:[{id, params}] };
 // each constant+options param already carries `menu` (curated `[[label,value],...]` pairs or the
-// identity menu), computed in `enrichForPalette` (TS, not this projection).
+// identity menu); every param carries `label` (declared short label or metadata name) — both
+// computed in `enrichForPalette` (TS, not this projection).
 const pGet = (name: string): Json => ({ '@': 'chain', funcs: [{ '@': 'get', name: 'pentry' }, { '@': 'attr', name }] });
 const P_NAME = pGet('name');
 const P_TITLE = pGet('title');
@@ -513,11 +525,28 @@ const P_COLOUR = pGet('colour');
 const pAt = (name: string): Json => ({ '@': 'attr', name });
 // "%<index+1>" — the Blockly message placeholder for the param at this position.
 const P_PCT_INDEX: Json = { '@': 'format', pattern: '%{}', value: { '@': 'expr', op: 'add', values: [{ '@': 'index' }, 1] } };
-// per-param message segment: " <paramName> %<n>"
-const P_PARAM_SEG: Json = { '@': 'join', sep: '', items: [' ', pAt('name'), ' ', P_PCT_INDEX] };
-// "<title> (<rule>)" label + the " <param> %n" segments (one per param) — shared by both layouts.
-const P_LABEL: Json = { '@': 'join', sep: '', items: [P_TITLE, ' (', P_NAME, ')'] };
-const P_PARAM_SEGS: Json = { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG }] } };
+// per-param message segment: " <displayLabel> %<n>" (the socket/field's placeholder, labelled).
+const P_PARAM_SEG: Json = { '@': 'join', sep: '', items: [' ', pAt('label'), ' ', P_PCT_INDEX] };
+// per-param message segment with NO label — just the bare placeholder (single-value-input socket,
+// §12.5 rule 4): " %<n>".
+const P_PARAM_SEG_BARE: Json = { '@': 'join', sep: '', items: [' ', P_PCT_INDEX] };
+// canvas face label: the friendly title ALONE (§12.5, OQ-018, AC-041(c)) — no "(<rule>)" suffix.
+const P_LABEL: Json = P_TITLE;
+// flyout/palette dual label: "<title> (<rule>)" (§12.5, OQ-018) — display-only projected data, not
+// part of message0/message1; @transon/editor-blockly applies it only inside a real flyout.
+const P_FLYOUT_LABEL: Json = { '@': 'join', sep: '', items: [P_TITLE, ' (', P_NAME, ')'] };
+// @-time: constant (field) params always keep their label in the default (≤1 value-input) branch
+// — dropping it would leave an unlabeled dropdown/field; only the dynamic param's segment (the
+// branch guarantees at most one) drops to a bare placeholder (§12.5 rule 4).
+const P_IS_CONSTANT_PARAM: Json = { '@': 'expr', op: '==', values: [pAt('kind'), 'constant'] };
+// The default (≤1 value input) branch's per-param segment: bare placeholder for a dynamic param
+// (the single socket), labelled segment for a constant param (field/dropdown).
+const P_PARAM_SEG_DEFAULT: Json = { '@': 'cond',
+  cases: [{ when: P_IS_CONSTANT_PARAM, then: P_PARAM_SEG }],
+  default: P_PARAM_SEG_BARE,
+};
+const P_PARAM_SEGS_MULTI: Json = { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG }] } };
+const P_PARAM_SEGS_DEFAULT: Json = { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG_DEFAULT }] } };
 // @-time predicates on a param: constant? has a resolved enum domain (`options`)?
 const P_IS_CONSTANT: Json = { '@': 'expr', op: '==', values: [pAt('kind'), 'constant'] };
 const P_HAS_OPTIONS: Json = { '@': 'expr', op: '!=', values: [
@@ -549,20 +578,22 @@ const P_VARIANT_DEF: Json = { '@': 'cond',
       type: P_TYPE,
       message0: { '@': 'join', sep: '', items: [P_LABEL, ' %1'] },
       args0: [{ type: 'input_dummy' }],
-      message1: P_PARAM_SEGS,
+      message1: P_PARAM_SEGS_MULTI,
       args1: P_ARGS,
       output: null,
       colour: P_COLOUR,
       inputsInline: false,
+      flyoutLabel: P_FLYOUT_LABEL,
     },
   }],
   default: {
     type: P_TYPE,
-    message0: { '@': 'join', sep: '', items: [P_LABEL, P_PARAM_SEGS] },
+    message0: { '@': 'join', sep: '', items: [P_LABEL, P_PARAM_SEGS_DEFAULT] },
     args0: P_ARGS,
     output: null,
     colour: P_COLOUR,
     inputsInline: false,
+    flyoutLabel: P_FLYOUT_LABEL,
   },
 };
 const G_PALETTE: Json = { '@': 'chain', funcs: [
@@ -751,18 +782,21 @@ function menuFor(ruleName: string, paramName: string, options: string[], present
   return curated.map((entry): [string, string] => [entry.label, entry.value]);
 }
 
-// ---- enrich a rule entry for the palette projection (FR-118, FR-058, FR-130) ----
+// ---- enrich a rule entry for the palette projection (FR-118, FR-058, FR-130, §12.5/OQ-018) ----
 // Join the variant params' `kind` + resolved enum `options` from the rule-level params (the
 // metadata carries `kind`/`options` only at rule level, like `enrichEntry` for the codec), attach
-// the curated/identity dropdown `menu` (FR-130), and attach the rule's presentation title +
-// category colour (from presentation.json — not TS). A new rule with complete metadata + a
-// presentation entry folds in with no code change (AC-037).
+// the curated/identity dropdown `menu` (FR-130), attach a display `label` per param (the declared
+// short label from `presentation.paramLabels`, else the metadata name — §12.5, OQ-018,
+// metadata-contract §2.9: display-only, the codec's field/input key stays the metadata name), and
+// attach the rule's presentation title + category colour (from presentation.json — not TS). A new
+// rule with complete metadata + a presentation entry folds in with no code change (AC-037).
 function enrichForPalette(entry: unknown, presentation: Presentation): Json {
   const e = entry as CatalogRuleEntry;
   const kindMap = new Map(e.params.map((p) => [p.name, p.kind ?? 'dynamic']));
   const optMap = new Map(e.params.map((p) => [p.name, p.options]));
   const pres = presentation.rules[e.name];
   if (!pres) throw new Error(`palette: rule '${e.name}' has no presentation entry (FR-127)`);
+  const paramLabels = presentation.paramLabels[e.name] ?? {};
   return {
     name: e.name,
     title: pres.title,
@@ -775,6 +809,7 @@ function enrichForPalette(entry: unknown, presentation: Presentation): Json {
           name: p.name,
           required: p.required,
           kind: kindMap.get(p.name) ?? 'dynamic',
+          label: paramLabels[p.name] ?? p.name,
           ...(options ? { options, menu } : {}),
         };
       });

@@ -156,3 +156,38 @@ describe('dropdown-menu curation (FR-130, metadata-contract §2.9)', () => {
     }
   });
 });
+
+// §12.5 (OQ-018) / metadata-contract §2.9 — optional short display labels for long parameter
+// names, keyed by rule then param. Display-only: substitutes the metadata name on a multi-input
+// socket row; the codec field/input key is untouched (proven at the codec layer in
+// test/engine-node-adapter/test/codec/palette.test.ts — this file only proves the presentation
+// DATA is well-formed against the metadata catalog).
+describe('short param display labels (§12.5, OQ-018, metadata-contract §2.9)', () => {
+  it('declares a short label for attr.default', () => {
+    expect(PRESENTATION.paramLabels.attr?.default).toBe('fallback');
+  });
+
+  it('every declared rule/param exists in the metadata catalog', () => {
+    for (const [rule, labels] of Object.entries(PRESENTATION.paramLabels)) {
+      const entry = editorMetadata.catalog.rules.find((r) => r.name === rule);
+      expect(entry, `paramLabels rule '${rule}' not in metadata`).toBeTruthy();
+      const paramNames = new Set((entry?.params as Array<{ name: string }> | undefined)?.map((p) => p.name));
+      for (const paramName of Object.keys(labels)) {
+        expect(paramNames.has(paramName), `paramLabels.${rule}.${paramName} not a real parameter`).toBe(true);
+      }
+    }
+  });
+
+  it('every declared label is a non-empty string', () => {
+    for (const [rule, labels] of Object.entries(PRESENTATION.paramLabels)) {
+      for (const [paramName, label] of Object.entries(labels)) {
+        expect(typeof label, `paramLabels.${rule}.${paramName}`).toBe('string');
+        expect(label.length, `paramLabels.${rule}.${paramName} non-empty`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('a rule/param absent from paramLabels has no declared entry (falls back to the metadata name at the codec layer)', () => {
+    expect(PRESENTATION.paramLabels.attr?.name).toBeUndefined();
+  });
+});

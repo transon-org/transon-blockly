@@ -136,43 +136,56 @@
                       }
                     ]
                   },
+                  "flyoutLabel": {
+                    "@": "join",
+                    "items": [
+                      {
+                        "@": "chain",
+                        "funcs": [
+                          {
+                            "@": "get",
+                            "name": "pentry"
+                          },
+                          {
+                            "@": "attr",
+                            "name": "title"
+                          }
+                        ]
+                      },
+                      " (",
+                      {
+                        "@": "chain",
+                        "funcs": [
+                          {
+                            "@": "get",
+                            "name": "pentry"
+                          },
+                          {
+                            "@": "attr",
+                            "name": "name"
+                          }
+                        ]
+                      },
+                      ")"
+                    ],
+                    "sep": ""
+                  },
                   "inputsInline": false,
                   "message0": {
                     "@": "join",
                     "items": [
                       {
-                        "@": "join",
-                        "items": [
+                        "@": "chain",
+                        "funcs": [
                           {
-                            "@": "chain",
-                            "funcs": [
-                              {
-                                "@": "get",
-                                "name": "pentry"
-                              },
-                              {
-                                "@": "attr",
-                                "name": "title"
-                              }
-                            ]
+                            "@": "get",
+                            "name": "pentry"
                           },
-                          " (",
                           {
-                            "@": "chain",
-                            "funcs": [
-                              {
-                                "@": "get",
-                                "name": "pentry"
-                              },
-                              {
-                                "@": "attr",
-                                "name": "name"
-                              }
-                            ]
-                          },
-                          ")"
-                        ],
-                        "sep": ""
+                            "@": "attr",
+                            "name": "title"
+                          }
+                        ]
                       },
                       " %1"
                     ],
@@ -195,7 +208,7 @@
                               " ",
                               {
                                 "@": "attr",
-                                "name": "name"
+                                "name": "label"
                               },
                               " ",
                               {
@@ -362,43 +375,56 @@
                   }
                 ]
               },
+              "flyoutLabel": {
+                "@": "join",
+                "items": [
+                  {
+                    "@": "chain",
+                    "funcs": [
+                      {
+                        "@": "get",
+                        "name": "pentry"
+                      },
+                      {
+                        "@": "attr",
+                        "name": "title"
+                      }
+                    ]
+                  },
+                  " (",
+                  {
+                    "@": "chain",
+                    "funcs": [
+                      {
+                        "@": "get",
+                        "name": "pentry"
+                      },
+                      {
+                        "@": "attr",
+                        "name": "name"
+                      }
+                    ]
+                  },
+                  ")"
+                ],
+                "sep": ""
+              },
               "inputsInline": false,
               "message0": {
                 "@": "join",
                 "items": [
                   {
-                    "@": "join",
-                    "items": [
+                    "@": "chain",
+                    "funcs": [
                       {
-                        "@": "chain",
-                        "funcs": [
-                          {
-                            "@": "get",
-                            "name": "pentry"
-                          },
-                          {
-                            "@": "attr",
-                            "name": "title"
-                          }
-                        ]
+                        "@": "get",
+                        "name": "pentry"
                       },
-                      " (",
                       {
-                        "@": "chain",
-                        "funcs": [
-                          {
-                            "@": "get",
-                            "name": "pentry"
-                          },
-                          {
-                            "@": "attr",
-                            "name": "name"
-                          }
-                        ]
-                      },
-                      ")"
-                    ],
-                    "sep": ""
+                        "@": "attr",
+                        "name": "title"
+                      }
+                    ]
                   },
                   {
                     "@": "join",
@@ -412,30 +438,69 @@
                         {
                           "@": "map",
                           "item": {
-                            "@": "join",
-                            "items": [
-                              " ",
+                            "@": "cond",
+                            "cases": [
                               {
-                                "@": "attr",
-                                "name": "name"
-                              },
-                              " ",
-                              {
-                                "@": "format",
-                                "pattern": "%{}",
-                                "value": {
+                                "then": {
+                                  "@": "join",
+                                  "items": [
+                                    " ",
+                                    {
+                                      "@": "attr",
+                                      "name": "label"
+                                    },
+                                    " ",
+                                    {
+                                      "@": "format",
+                                      "pattern": "%{}",
+                                      "value": {
+                                        "@": "expr",
+                                        "op": "add",
+                                        "values": [
+                                          {
+                                            "@": "index"
+                                          },
+                                          1
+                                        ]
+                                      }
+                                    }
+                                  ],
+                                  "sep": ""
+                                },
+                                "when": {
                                   "@": "expr",
-                                  "op": "add",
+                                  "op": "==",
                                   "values": [
                                     {
-                                      "@": "index"
+                                      "@": "attr",
+                                      "name": "kind"
                                     },
-                                    1
+                                    "constant"
                                   ]
                                 }
                               }
                             ],
-                            "sep": ""
+                            "default": {
+                              "@": "join",
+                              "items": [
+                                " ",
+                                {
+                                  "@": "format",
+                                  "pattern": "%{}",
+                                  "value": {
+                                    "@": "expr",
+                                    "op": "add",
+                                    "values": [
+                                      {
+                                        "@": "index"
+                                      },
+                                      1
+                                    ]
+                                  }
+                                }
+                              ],
+                              "sep": ""
+                            }
                           }
                         }
                       ]

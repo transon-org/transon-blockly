@@ -50,8 +50,11 @@ describe('AC-037 — a new rule is projected from data with no editor code chang
       unknown as { blocks: BlockDef[] }).blocks;
     const greet = palette.find((b) => b.type === ruleBlockType('greet', 'base'));
     expect(greet, 'greet block projected into the palette').toBeTruthy();
-    // title + rule name from the presentation data (OQ-008); colour = its category's colour.
-    expect(greet!.message0.startsWith('Greet (greet)')).toBe(true);
+    // canvas face shows the title alone (§12.5, OQ-018 — supersedes OQ-008's canvas answer); the
+    // flyout dual label "<title> (<rule>)" is carried as display-only projected data.
+    expect(greet!.message0.startsWith('Greet')).toBe(true);
+    expect(greet!.message0.includes('(greet)')).toBe(false);
+    expect((greet as unknown as { flyoutLabel?: string }).flyoutLabel).toBe('Greet (greet)');
     expect(greet!.colour).toEqual(PRESENTATION.categoryColour['Formatting']);
   });
 

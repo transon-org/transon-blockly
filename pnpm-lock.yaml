@@ -94,6 +94,12 @@ importers:
 
   packages/editor-element:
     dependencies:
+      '@blockly/workspace-minimap':
+        specifier: 13.1.0
+        version: 13.1.0(blockly@13.0.0(jsdom@27.4.0))
+      '@blockly/zoom-to-fit':
+        specifier: 13.1.0
+        version: 13.1.0(blockly@13.0.0(jsdom@27.4.0))
       '@transon/editor-blockly':
         specifier: workspace:*
         version: link:../editor-blockly
@@ -140,6 +146,12 @@ importers:
 
   packages/editor-react:
     dependencies:
+      '@blockly/workspace-minimap':
+        specifier: 13.1.0
+        version: 13.1.0(blockly@13.0.0(jsdom@27.4.0))
+      '@blockly/zoom-to-fit':
+        specifier: 13.1.0
+        version: 13.1.0(blockly@13.0.0(jsdom@27.4.0))
       blockly:
         specifier: 13.0.0
         version: 13.0.0(jsdom@27.4.0)
@@ -195,6 +207,12 @@ importers:
 
   packages/editor-ui:
     dependencies:
+      '@blockly/workspace-minimap':
+        specifier: 13.1.0
+        version: 13.1.0(blockly@13.0.0(jsdom@27.4.0))
+      '@blockly/zoom-to-fit':
+        specifier: 13.1.0
+        version: 13.1.0(blockly@13.0.0(jsdom@27.4.0))
       '@transon/editor-blockly':
         specifier: workspace:*
         version: link:../editor-blockly
@@ -266,6 +284,9 @@ importers:
       blockly:
         specifier: 13.0.0
         version: 13.0.0(jsdom@27.4.0)
+      jsdom:
+        specifier: 27.4.0
+        version: 27.4.0
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -376,6 +397,16 @@ packages:
   '@babel/types@7.29.7':
     resolution: {integrity: sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA==}
     engines: {node: '>=6.9.0'}
+
+  '@blockly/workspace-minimap@13.1.0':
+    resolution: {integrity: sha512-BK2iTGl79ysXoEFuxo5+95wUfAcuXIY5AfeYEFbzDRIRrMgDmjFRFwNQRNpaz1bybTgGCkBRTTp3X8HryaaniQ==}
+    peerDependencies:
+      blockly: ^13.1.0
+
+  '@blockly/zoom-to-fit@13.1.0':
+    resolution: {integrity: sha512-ch5C4Z+53kLujocgbyTAb4FZQptaQPJV2nSHlmpoP0O2C7ABRB14IR9/25FEMx4SZBkKv9N4cN/AFTipZvwPKw==}
+    peerDependencies:
+      blockly: ^13.1.0
 
   '@changesets/apply-release-plan@7.1.1':
     resolution: {integrity: sha512-9qPCm/rLx/xoOFXIHGB229+4GOL76S4MC+7tyOuTsR6+1jYlfFDQORdvwR5hDA6y4FL2BPt3qpbcQIS+dW85LA==}
@@ -2253,6 +2284,14 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
+
+  '@blockly/workspace-minimap@13.1.0(blockly@13.0.0(jsdom@27.4.0))':
+    dependencies:
+      blockly: 13.0.0(jsdom@27.4.0)
+
+  '@blockly/zoom-to-fit@13.1.0(blockly@13.0.0(jsdom@27.4.0))':
+    dependencies:
+      blockly: 13.0.0(jsdom@27.4.0)
 
   '@changesets/apply-release-plan@7.1.1':
     dependencies:

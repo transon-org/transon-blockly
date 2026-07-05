@@ -28,6 +28,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@blockly/workspace-minimap": "13.1.0",
+    "@blockly/zoom-to-fit": "13.1.0",
     "@transon/editor-blockly": "workspace:*",
     "@transon/editor-core": "workspace:*",
     "@transon/editor-ui": "workspace:*",
