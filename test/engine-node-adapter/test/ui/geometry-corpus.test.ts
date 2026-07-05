@@ -112,6 +112,19 @@ function checkWorkspace(mount: TransonMount, exampleName: string): string[] {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const info = renderer.makeRenderInfo_(block);
     info.measure();
+    // Scoping guard: the anchoring rule (CompactRenderInfo.getElemCenterline_) covers EXTERNAL
+    // value-input rows only — the complete set for this surface (§13.10: external inputs, no
+    // statement connections). If a future block ever renders a statement or inline-input row, its
+    // labels would re-center silently; fail HERE so the rule (and NFR-050(b)) gets extended
+    // deliberately instead.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const row of info.rows as any[]) {
+      if (row.hasStatement || row.hasInlineInput) {
+        violations.push(
+          `${exampleName}: ${block.type} renders a ${row.hasStatement ? 'statement' : 'inline-input'} row — outside the NFR-050(b) anchoring rule's coverage (extend CompactRenderInfo.getElemCenterline_)`,
+        );
+      }
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     for (const row of (info.rows as any[]).filter((r) => r.hasExternalInput)) {
       const anchor = row.yPos + tabHeight / 2;
