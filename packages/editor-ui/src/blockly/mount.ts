@@ -139,7 +139,9 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
   workspace.addChangeListener(listener);
 
   /** Run a programmatic mutation with change events suppressed (no forward-flow feedback loop).
-   *  The event-mirroring minimap can't see suppressed mutations, so resync it afterwards. */
+   *  The event-mirroring minimap can't see suppressed mutations, so resync it in the `finally` —
+   *  even a mutation that THROWS partway leaves the workspace changed, and a stale mirror would
+   *  throw "The associated block is undefined" on every later event replay. */
   const programmatic = (fn: () => void): void => {
     suppress = true;
     Blockly.Events.disable();
@@ -148,8 +150,8 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
     } finally {
       Blockly.Events.enable();
       suppress = false;
+      minimap.syncFrom(workspace);
     }
-    minimap.syncFrom(workspace);
   };
 
   return {

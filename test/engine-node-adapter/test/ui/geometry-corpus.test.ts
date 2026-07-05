@@ -11,12 +11,11 @@
 //   (a) zero-gap stacking — consecutive connected value-input children of one parent are FLUSH
 //       (next.top == prev.bottom) and share the same left edge;
 //       no child protrudes above its parent's top or below its parent's bottom edge;
-//   (c) grid quantization — every rendered rule/literal block height is a GRID_UNIT multiple.
-//       (transon_array / transon_object_literal / transon_unsupported are excluded from the
-//       quantization check only: their +/- mutator-control row embeds a Blockly.FieldImage whose
-//       17px height comes from a private Y_PADDING hardcoded in Blockly core's field_image.ts —
-//       outside renderer-constant scope, documented in geometry.test.ts. Their stacking/protrusion
-//       behaviour IS still asserted.)
+//   (c) grid quantization — every rendered block height is a GRID_UNIT multiple, with NO
+//       exemptions: the +/- mutator-control row's Blockly.FieldImage is sized GLYPH_SIZE=15 in
+//       editor-blockly's runtime.ts so its height (icon + Blockly's private 1px Y_PADDING in
+//       field_image.ts) lands on the grid — transon_array / transon_object_literal /
+//       transon_unsupported quantize like every other block type (see geometry.test.ts).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type * as Blockly from 'blockly/core';
 import type { EngineProvider, Json } from '@transon/editor-core';
