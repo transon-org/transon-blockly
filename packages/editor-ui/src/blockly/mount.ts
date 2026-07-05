@@ -8,6 +8,8 @@
 
 import * as Blockly from 'blockly/core';
 import * as En from 'blockly/msg/en';
+import { ZoomToFitControl } from '@blockly/zoom-to-fit';
+import { PositionedMinimap } from '@blockly/workspace-minimap';
 import type { Json } from '@transon/editor-core';
 import { registerTransonBlocks, getTransonToolbox, loadCodecOutput } from '@transon/editor-blockly';
 import {
@@ -82,7 +84,19 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
     theme: TRANSON_THEME, // block-surface theme: font + surface; colours stay data-driven (FR-127)
     readOnly: opts.readOnly ?? false,
     trashcan: true,
+    // FR-133 (§7.17, AC-041(a), NFR-029): canvas navigation for large templates. Zoom/scroll are
+    // UI-only state (§11.5) — never part of the exported template (§11.6).
+    zoom: { controls: true, wheel: true, pinch: true, startScale: 0.9, minScale: 0.2, maxScale: 3 },
+    move: { scrollbars: true, drag: true, wheel: true },
   });
+
+  // FR-133 zoom-to-fit — one-action framing of the whole template (@blockly/zoom-to-fit).
+  const zoomToFit = new ZoomToFitControl(workspace);
+  zoomToFit.init();
+
+  // FR-133 minimap — overview of large templates (OQ-020, @blockly/workspace-minimap).
+  const minimap = new PositionedMinimap(workspace);
+  minimap.init();
 
   let suppress = false;
   const serialize = (): Json => Blockly.serialization.workspaces.save(workspace) as Json;
@@ -126,6 +140,8 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
       workspace.setIsReadOnly(readOnly);
     },
     dispose() {
+      minimap.dispose(); // FR-133 — tear down the navigation plugins before the workspace itself
+      zoomToFit.dispose();
       workspace.removeChangeListener(listener);
       workspace.dispose();
     },

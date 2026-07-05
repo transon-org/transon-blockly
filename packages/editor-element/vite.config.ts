@@ -43,6 +43,8 @@ export default defineConfig(
               'react/jsx-runtime',
               'blockly',
               /^blockly\//,
+              '@blockly/zoom-to-fit', // FR-133 — external, same as `blockly` (editor-ui keeps it external too)
+              '@blockly/workspace-minimap', // FR-133
               '@transon/editor-core',
               '@transon/editor-blockly',
               '@transon/editor-ui',
