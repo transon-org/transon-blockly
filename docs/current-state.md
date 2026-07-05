@@ -8,13 +8,39 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `b9d17fb` — feat(editor-ui): NFR-049 compact renderer + committed density ratchet |
+| Repo HEAD | `3db7497` — Merge commit '96d36940015a1cda7a05de147ea789393b5f96aa' into m6-canvas-density |
 | Branch | `m6-canvas-density` |
 | Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**NFR-050 geometry hardening LANDED (user feedback on the M6 compact renderer; 2026-07-05, branch
+`m6-canvas-density`).** User reported 5 visual defects (seams between stacked blocks, off-center
+tabs, child protrusion, unshared left edges, near-colliding rows). SPEC-first: **NFR-050** (§8.5,
+SPEC **v2.2**, id-ledger 294) — zero-gap stacking + shared left edge · label↔child **visual**
+alignment (drawn-glyph invariant; the connection *coordinate* sits at the row top by thrasos
+convention and is explicitly not the specified quantity) · `GRID_UNIT`-quantized heights.
+**Root causes** (verified against `blockly-v13.0.0` sources): the density pass never shrank
+`LARGE_PADDING`/`TAB_OFFSET_FROM_TOP` — seam = `LARGE_PADDING − TAB_OFFSET_FROM_TOP −
+MEDIUM_PADDING` = exactly 2px, any child height. **Fix (theme.ts):** `GRID_UNIT = 4`; every
+vertical constant derived from it; `LARGE_PADDING = TAB_OFFSET_FROM_TOP + MEDIUM_PADDING` (zero
+gap, child bottom flush with parent bottom); two pinned preconditions give exact visual centering —
+`TAB_OFFSET_FROM_TOP == MEDIUM_PADDING` (label↔child centers cancel, ANY height) and
+`2·TAB_OFFSET_FROM_TOP + TAB_HEIGHT == pillHeight` (`TAB_HEIGHT` 12→16); mutator +/- glyphs
+`GLYPH_SIZE=15` in editor-blockly runtime.ts (15 + Blockly's private 1px `Y_PADDING` = 16 → the
+17px odd-height propagation into array/object ancestors is gone; quantization holds with ZERO
+exemptions). **Harnesses:** `packages/editor-ui/test/geometry.test.ts` (7, red-first: 5 failed
+pre-fix) + `test/engine-node-adapter/test/ui/geometry-corpus.test.ts` (all 121 examples; an
+unconnected socket legitimately breaks a stacked run). **Density trade (honest):** median bbox
+height 109→120px (pre-M6 127 → net −5.5% instead of −14.2%), blocksVisible unchanged 721,
+`set__base` 20→24px (≤28 ✓), baseline regenerated. **Browser-verified** on the exact reported
+workspace shape: zero gaps/left-edge deltas/protrusions programmatically + screenshot
+`retro/evidence/m6-nfr050-geometry.jpeg`. All 20 turbo tasks green; traceability/parity/
+presentation/behavior-size gates green. NFR-049/NFR-050/AC-041 traceability rows updated._
+
+### Prior last action (M6 milestone)
 
 _**M6 COMPLETE (`/run-milestone M6`) — ROADMAP ☑, `round-trip-reviewer`-signed-off, AC-041(a–e) green
 incl. the §19.4 real-browser pass; all DoD gates green (2026-07-05, branch `m6-canvas-density`,

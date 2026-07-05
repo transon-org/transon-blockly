@@ -47,6 +47,10 @@ export type { EditorController, EditorControllerOptions } from './session/contro
 export { mountBlockly, ensureBlocklyReady, TRANSON_ROOT_CLASS } from './blockly/mount.js';
 export type { TransonMount, TransonMountOptions } from './blockly/mount.js';
 
+// NFR-050: the renderer's base grid unit, exported for the corpus geometry harness
+// (test/engine-node-adapter/test/ui/geometry-corpus.test.ts) — display-only geometry data.
+export { GRID_UNIT } from './blockly/theme.js';
+
 // ---- runtime toolbox config (M5 D1 FR-109 + D4 §12.6 progressive disclosure) ----
 export { filterToolbox, progressiveToolbox } from './blockly/toolbox.js';
 export type { ToolboxCategoryConfig, ToolboxView } from './blockly/toolbox.js';

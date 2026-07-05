@@ -1,6 +1,14 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 2.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-05
+> **Version:** 2.2 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-05
+
+> **v2.2 — renderer geometry invariants (M6 hardening).** Adds **NFR-050** (§8.5): the rendered
+> block geometry must satisfy checkable invariants — zero-gap statement stacking with a shared
+> left edge, value-connection ↔ row-label vertical alignment, and grid-quantized vertical
+> constants — verified by a geometry harness alongside the NFR-049 density harness. Motivated by
+> visual defects found in the M6 compact renderer (seams between stacked blocks, off-center
+> puzzle tabs, child protrusion): density tuning changed renderer constants without a gate on the
+> *derived* geometry. Display-only (§21.12): codec, round-trip, and canonical JSON are unchanged.
 
 > **v2.1 — canvas density + navigation (RFC-003 phases 1–3, M6).** Adds **§7.17 (FR-133, FR-134)**
 > — canvas zoom/fit/pan/minimap and subtree collapsing — **NFR-049** (measured density target) and
@@ -803,6 +811,25 @@ all state they introduce is UI-only per the §11.5 canonical list (which already
   bounding box per example; the recorded numbers are committed and act as a **no-regression
   ratchet**. Compact never means cramped: NFR-045 contrast/focus and drag-target usability are
   preserved (the bound on how far the block surface may shrink).
+- **NFR-050** The rendered block geometry shall satisfy, at any zoom, the following **checkable
+  invariants**, verified by a **geometry harness** (§19.4) alongside the NFR-049 density harness:
+  **(a) zero-gap stacking** — for every pair of vertically adjacent connected blocks (a
+  previous/next-connected pair where the surface uses statement connections, and the children of
+  consecutive value inputs of one parent, which stack visually under external inputs §13.10), no
+  background seam separates the rendered edges beyond the row spacing the renderer itself
+  declares (overlap only by the notch/tab), and **such stacked siblings share the same left
+  edge** (all start at the same x); **(b) label↔child alignment** — for every value input, the
+  vertical center of the row's label/field coincides with the vertical center of the connected
+  child block (within 0.5 px in workspace units, for any child height), and for a minimal-height
+  child (the common scalar/pill case) the **drawn puzzle-tab glyph** centers on both; a child
+  never protrudes above its row's top or below its parent's bottom edge. (The renderer's internal
+  connection-point *coordinate* keeps its own convention — thrasos anchors it at the row top —
+  and is not the specified quantity; the invariant is about what is drawn.) **(c) quantized
+  heights** — every vertical renderer constant derives from a single base grid unit and every
+  rendered block height lands on a multiple of it (no hand-picked odd values producing
+  fractional centering or sub-pixel seams at non-integer zoom). Renderer-constant changes (e.g.
+  NFR-049 density tuning) must keep this harness green — density gains never buy geometry
+  defects.
 
 ### 8.6 Security
 
