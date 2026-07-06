@@ -30,6 +30,7 @@ export {
   runCodecArtifact,
   CodecError,
   CODEC_MARKER,
+  CODEC_MAX_INCLUDE_DEPTH,
   STRUCTURAL_BLOCK_TYPES,
   ruleBlockType,
   isRuleBlockType,

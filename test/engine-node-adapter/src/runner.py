@@ -22,6 +22,15 @@ import json
 import os
 import sys
 
+# Host recursion budget (AD-035/RFC-004, metadata-contract §6.5). Opening the editor's deepest
+# committed codec file (G_encode) through the generated codec peaks at ~1113 Python frames
+# (engine ≥ 0.1.7, R-32) — above CPython's default 1000-frame limit. Raise the limit with
+# bounded headroom; the Pyodide reference host sets the same value in its glue. A pathological
+# document past even this budget raises RecursionError, which the bridge guard below returns as
+# a clean error response (the editor maps it to `runtime_transformation`, SPEC §16.4).
+HOST_RECURSION_LIMIT = 1400
+sys.setrecursionlimit(max(sys.getrecursionlimit(), HOST_RECURSION_LIMIT))
+
 
 def _ensure_engine_importable():
     try:

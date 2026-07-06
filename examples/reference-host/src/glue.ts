@@ -7,6 +7,16 @@
 
 export const GLUE_PY = String.raw`
 import json
+import sys
+
+# Host recursion budget (AD-035/RFC-004, metadata-contract §6.5): opening the editor's deepest
+# committed codec file (G_encode) peaks at ~1113 Python frames (engine >= 0.1.7, R-32) — above
+# the default 1000-frame limit. Mirror the Node runner.py value; browser-verified (§19.4). A
+# pathological document past even this budget raises RecursionError, caught by the handlers
+# below and returned as an error result (mapped to runtime_transformation, SPEC §16.4).
+HOST_RECURSION_LIMIT = 1400
+sys.setrecursionlimit(max(sys.getrecursionlimit(), HOST_RECURSION_LIMIT))
+
 from transon import Transformer, DefinitionError, TransformationError
 try:
     from transon.metadata import get_editor_metadata
@@ -54,7 +64,7 @@ def _make_loader(includes, marker, js_loader):
     return loader
 
 
-def transon_transform(template_json, input_json, marker, includes_json, js_loader):
+def transon_transform(template_json, input_json, marker, includes_json, js_loader, max_include_depth=None):
     template = json.loads(template_json)
     data = json.loads(input_json)
     includes = json.loads(includes_json) if includes_json else {}
@@ -67,6 +77,11 @@ def transon_transform(template_json, input_json, marker, includes_json, js_loade
     kwargs = {"marker": marker, "file_writer": file_writer}
     if loader is not None:
         kwargs["template_loader"] = loader
+    if max_include_depth is not None:
+        # The codec's include ceiling (CODEC_MAX_INCLUDE_DEPTH, metadata-contract §6.5) — mirror
+        # the Node runner.py plumbing so deep nesting trips the engine's clean depth-limit guard
+        # at the EDITOR's ceiling, not the engine default (AD-035/RFC-004).
+        kwargs["max_include_depth"] = int(max_include_depth)
     try:
         output = Transformer(template, **kwargs).transform(data, copy_output=True)
     except Exception as exc:  # _error_fields discriminates engine vs unexpected; never escapes Pyodide

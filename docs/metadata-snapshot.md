@@ -9,10 +9,10 @@ built against a fixed, reproducible metadata contract rather than a moving engin
 
 | Field | Value |
 |---|---|
-| Engine commit | `unknown` |
-| Engine describe | `v0.1.6 (pip wheel)` |
+| Engine commit | `f8541f6db7f6d17455bc3102b21f3ad0f33eec0a` |
+| Engine describe | `v0.1.7` |
 | `metadata_version` | `3.0` |
-| `engine_version` | `0.1.6` |
+| `engine_version` | `0.1.7` |
 | Catalog rules | 22 |
 
 **Regenerate** (requires the engine importable — `pip install transon` or

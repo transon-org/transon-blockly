@@ -424,6 +424,47 @@ Renderer stays configurable (AD-017); geras is a drop-in alternative. Font/surfa
 and round-trip are unchanged (only `palette.json` regenerates).
 **SPEC link.** `SPEC.md` FR-129, AC-040, §13.10; AD-017 (renderer), FR-127 (data-driven colours), FR-128 (chrome CSS vars).
 
+> *AD-034 is reserved by RFC-003 P-E (balanced adaptive layout, not landed) and intentionally
+> skipped here (§21.1 append-only).*
+
+### AD-035 — Codec depth ceiling 55 + host recursion budget 1400, gated on the engine recursion budget (RFC-004)
+**Decision.** Raise the codec's `include`-recursion ceiling (`CODEC_MAX_INCLUDE_DEPTH`,
+`editor-core` codec runtime) from 25 to **55**, require **engine ≥ 0.1.7** (engine Roadmap R-32:
+bounded per-level recursion budget — the `walk`/`_walk` frame doubling removed), and set a **host
+recursion budget of 1400 frames** in both reference hosts (`sys.setrecursionlimit(max(cur, 1400))`
+in the Node adapter's `runner.py` and the Pyodide glue). The engine floor is enforced as data, not
+runtime branching: the committed `metadata-snapshot.json` pins `engine_version ≥ 0.1.7`, the
+engine-parity gate fails on drift, and the reference host's `PINNED_ENGINE_VERSION` tracks the
+snapshot (smoke-tested against it). Why all three knobs: opening the deepest committed file
+(`G_encode`, structural depth 41) through the marker-substituted codec walk needs include depth
+**52** and peaks at **~1113 Python frames** — above CPython's default 1000 limit — so no include
+cap alone suffices (structural depth is only a *lower bound*: rule-dense nodes cost ~2 include
+levels each). At the 1400 budget the walk has ~290 frames of headroom and the literal-nesting
+wall (~68) stays **above** the 55 ceiling, so ordinary deep nesting still trips the engine's
+clean depth-limit guard first. Result: **every** committed projection generator and artifact
+opens and round-trips (SPEC AC-042, closing FR-121's D5 gap).
+**Error contract.** The §6.5 clean-failure property: guard-first is preserved for literal
+nesting; a pathological rule-per-level document (~36+ at the 1400 budget) can still overflow the
+host stack inside the engine call. Both reference hosts (Node runner bridge guard; Pyodide glue
+handlers) catch the raw `RecursionError` at the `EngineProvider` boundary and return it as an
+error result, and the editor maps **both** failure paths — guard `"depth limit"` *and* caught
+recursion overflow — to `runtime_transformation` (SPEC §16.4, extending the D5 `1cf0be6` fix).
+No committed codec file has the pathological shape.
+**Trade-off.** A host-side prerequisite (the recursion budget) joins the engine floor — accepted
+because it is bounded, host-owned, additive (`max()`, never lowers), and the only alternative
+reaching the AC-042 goal was restructuring `G_encode` (kept as the RFC-004 fallback). "Guard
+always trips first" is given up only for inputs no real template exhibits; the property that
+mattered — *no uncaught crash, no mislabel* — is preserved everywhere.
+**Alternatives.** Cap-only raise — measured insufficient (the `G_encode` walk exceeds the default
+interpreter limit at any cap). Runtime engine-version gating (cap 25 on older engines) —
+deferred; the pin + parity gate covers the shipped hosts, and NFR-040 already surfaces version
+mismatch to embedders. Engine-side `RecursionError`→`TransformationError` catching (would-be
+engine R-33) — the designated follow-up if a host is ever found that cannot contain the overflow
+at the provider boundary.
+**SPEC link.** `SPEC.md` AC-042, §16.4; `metadata-contract.md` §6.5; FR-121/UC-016/AC-036;
+[RFC-004](proposals/rfc-004-codec-depth-ceiling-raise.md); engine R-32
+(`../transon/docs/proposals/transformer-recursion-depth-budget.md`).
+
 ---
 
 ## 4. System overview (ports & adapters)
