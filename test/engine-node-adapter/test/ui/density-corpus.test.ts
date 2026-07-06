@@ -156,9 +156,14 @@ describe('NFR-049 density harness over the docs example corpus (§19.4, AC-041(d
     expect(corpus.length).toBeGreaterThanOrEqual(121);
   });
 
+  // Both mounts use an empty palette (all-filtering search): the §12.6 flat flyout renders EVERY
+  // palette block at mount, costing seconds of jsdom rendering this harness doesn't need — it
+  // measures CANVAS blocks only (measure() reads the main workspace, never the flyout).
+  const NO_PALETTE = { view: { search: 'no-palette (harness measures canvas only)' } };
+
   it('a representative single-value-input rule block (set) renders at most 28px tall at 100% zoom', async () => {
     const c = makeContainer();
-    const mount = mountBlockly(c);
+    const mount = mountBlockly(c, NO_PALETTE);
     try {
       const block = (await encode(engine, { $: 'set', name: 'x' })) as Json;
       const rec = measure(mount, block);
@@ -174,7 +179,7 @@ describe('NFR-049 density harness over the docs example corpus (§19.4, AC-041(d
     'records blocks-visible + bounding box per example and compares to the committed baseline (no regression)',
     async () => {
       const c = makeContainer();
-      const mount = mountBlockly(c);
+      const mount = mountBlockly(c, NO_PALETTE);
       const recorded: DensityBaseline = {};
       try {
         for (const example of corpus) {
@@ -210,6 +215,8 @@ describe('NFR-049 density harness over the docs example corpus (§19.4, AC-041(d
       }
       expect(regressions, regressions.join('\n')).toEqual([]);
     },
-    60_000,
+    // CI runners took ~55s pre-§12.6 and hit the old 60s ceiling after — headroom, not license
+    // to slow down: the empty-palette mount above restores the old per-run cost.
+    120_000,
   );
 });

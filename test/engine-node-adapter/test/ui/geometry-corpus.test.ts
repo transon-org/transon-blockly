@@ -209,7 +209,11 @@ describe('NFR-050 geometry invariants over the docs example corpus (§19.4)', ()
     'zero-gap stacking, shared left edge, no protrusion, and grid-quantized heights hold for every corpus example',
     async () => {
       const c = makeContainer();
-      const mount = mountBlockly(c);
+      // Empty palette: the §12.6 flat flyout renders EVERY palette block at mount (the old
+      // category toolbox rendered none until a category opened), which costs seconds of jsdom
+      // rendering this harness doesn't need — it measures CANVAS blocks only. An all-filtering
+      // search term keeps the mount cheap without touching what is measured.
+      const mount = mountBlockly(c, { view: { search: 'no-palette (harness measures canvas only)' } });
       const violations: string[] = [];
       try {
         for (const example of corpus) {
@@ -225,6 +229,8 @@ describe('NFR-050 geometry invariants over the docs example corpus (§19.4)', ()
       }
       expect(violations, violations.join('\n')).toEqual([]);
     },
-    60_000,
+    // CI runners took ~55s pre-§12.6 and hit the old 60s ceiling after — headroom, not license
+    // to slow down: the empty-palette mount above restores the old per-run cost.
+    120_000,
   );
 });
