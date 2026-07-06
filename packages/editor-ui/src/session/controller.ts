@@ -18,8 +18,11 @@ import { highlightErrors, clearHighlights } from '../blockly/highlight.js';
 import { createLatestGuard } from './latest.js';
 import type { TransonEditorHost, ExampleCase } from './host.js';
 
-/** The toolbar actions an embedder can hide (FR-136). Hidden = not rendered (vs read-only = disabled). */
-export type ToolbarActionId = 'new' | 'import' | 'copy' | 'download' | 'validate' | 'run';
+/** The toolbar actions an embedder can hide (FR-136). Hidden = not rendered (vs read-only = disabled).
+ *  Canonical runtime list — the `ToolbarActionId` type derives from it, so a new action id is added
+ *  in exactly one place and consumers (e.g. the `<transon-editor>` attribute parser) stay in sync. */
+export const TOOLBAR_ACTION_IDS = ['new', 'import', 'copy', 'download', 'validate', 'run'] as const;
+export type ToolbarActionId = (typeof TOOLBAR_ACTION_IDS)[number];
 
 export interface EditorControllerOptions {
   host: TransonEditorHost;
@@ -249,6 +252,7 @@ export function createEditorController(
       includeLoader: host.includeLoader,
       includes: host.includes,
     });
+    if (disposed) return; // teardown won the race: don't touch the destroyed workspace / fire callbacks
     highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
     if (result) opts.onExecute?.(result);
   }
@@ -385,6 +389,7 @@ export function createEditorController(
     },
     async validate() {
       const result = await validateTemplate(store, engine, marker);
+      if (disposed) return; // teardown won the race: don't touch the destroyed workspace / fire callbacks
       highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
       if (result) opts.onValidate?.(result);
     },

@@ -5,6 +5,7 @@
 // execute callbacks as DOM CustomEvents (FR-010/011). Ships no engine (AD-008).
 
 import type { Json } from '@transon/editor-core';
+import { TOOLBAR_ACTION_IDS } from '@transon/editor-ui';
 import type { EditorMode, ToolbarActionId, TransonEditorHost } from '@transon/editor-ui';
 import { createTransonEditor, type TransonEditorHandle } from './create.js';
 
@@ -19,22 +20,14 @@ function parseAttr(value: string | null): Json | undefined {
   }
 }
 
-const TOOLBAR_ACTIONS: readonly ToolbarActionId[] = [
-  'new',
-  'import',
-  'copy',
-  'download',
-  'validate',
-  'run',
-];
-
-/** Parse the space/comma-separated `hide-actions` attribute into known toolbar action ids (FR-136). */
+/** Parse the space/comma-separated `hide-actions` attribute into known toolbar action ids (FR-136).
+ *  Validates against the canonical `TOOLBAR_ACTION_IDS` from `@transon/editor-ui` (single source). */
 function parseHideActions(value: string | null): ToolbarActionId[] | undefined {
   if (value == null) return undefined;
   const ids = value
     .split(/[\s,]+/)
     .filter(Boolean)
-    .filter((v): v is ToolbarActionId => (TOOLBAR_ACTIONS as readonly string[]).includes(v));
+    .filter((v): v is ToolbarActionId => (TOOLBAR_ACTION_IDS as readonly string[]).includes(v));
   return ids.length ? ids : undefined;
 }
 
