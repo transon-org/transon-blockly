@@ -8,13 +8,76 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `014964d` — Merge pull request #9 from transon-org/rfc-004-codec-depth-ceiling |
-| Branch | `palette-flat-list` |
+| Repo HEAD | `ff1dab7` — chore(make): add ccusage target for Claude Code token usage |
+| Branch | `main` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**Planning proposal written — embed the visual editor inside the docs-site (2026-07-06, on
+`main`, UNCOMMITTED; DISCUSSION/PLANNING only, no behavior code).** User wants a visual Blockly
+editor mode in `transon-org.github.io` reusing that site's EXISTING PyScript runtime (no second
+Pyodide). Read the controller, engine port, reference `provider.ts`/`glue.ts`, SPEC §7.14/§12.3 +
+NFR-027, `host.ts`, `Toolbar` (panels.tsx), and docs-site `index.html`/`config.toml`/`script.py`/
+`App.tsx`/`ExampleEditor.tsx`. Verified the split: reqs 1/2/3/4/7 are docs-site glue; reqs 5/6 are
+NEW editor capability — **autorun** (NFR-027 is present but DORMANT) and **hide-toolbar-actions**
+(Toolbar always renders New/Import/Copy/Download/Validate/Run; `readOnly` only DISABLES). Key
+finding: `get_editor_metadata()` is NOT a hard runtime dep (editor uses the committed snapshot,
+AD-012; glue calls it only in the guarded `transon_version()`) — the hard needs are transon >=
+0.1.7 + `setrecursionlimit(>=1400)`. Reuse moots the Pyodide-load concern (no second load).
+**User decisions (interactive):** SPEC-first FRs, no milestone; `pnpm link`/`file:` dev +
+CI-built tarball on a tagged release; examples = dropdown of all docs examples; editor React-18+
+compatible (widen peer `^18.3.1`→`^18.0.0`). Captured the whole plan as **RFC-005**
+`docs/proposals/rfc-005-docs-site-editor-embedding.md` (house RFC style; Parts A editor additions /
+B docs-site integration / C packaging; sequencing, gates, open questions, non-goals). User then
+asked for the plan to be an RFC (upgraded from the initial "no RFC" governance choice); the
+normative behavior still lands SPEC-first as append-only FRs — the RFC is the design record. **ID note:**
+ledger next-free FR is 135 but RFC-003 P-E holds an unregistered FR-135 reservation — coordinate at
+registration (likely FR-135/136). **NOT DONE:** no SPEC/code edits yet — awaiting explicit
+"proceed". Three open questions remain (see RFC-005): keep Validate under autorun?; pin
+`==0.1.7` vs `>=0.1.7`?; docs-site tarball ref = vendored `file:` vs release-asset URL?
+**Design-review Q&A refinements (same session):** (a) the embed uses **sandbox** shell mode, which
+renders **no** Visual/JSON/Split view switcher — that switcher is COMPACT-mode only (sandbox
+`Toolbar` is called without `onView`, TransonEditor.tsx:165-172); so the kept toolbar controls in
+the embed are just Validate(?) + palette Search + Advanced toggle. (b) In sandbox the Generated-JSON
+panel is an ALWAYS-ON right-column panel (Examples ▸ JSON ▸ Input ▸ Output ▸ Files-when-present) —
+there is currently NO option to hide side PANELS (only toolbar actions), so hiding/omitting the JSON
+panel in the embed would be an ADDITIONAL editor capability (a further FR) → still OPEN.
+(c) rendered an inline mockup (first version wrongly drew a view switch; corrected per (a)).
+**Decisions folded into RFC-005 (2026-07-06):** the standalone docs⇄editor mode switcher is DROPPED
+as redundant (req 1) — enter via the per-example "Open in the editor" button, exit via a
+"← Back to docs" button placed FIRST in the editor toolbar (req 3). That is a NEW editor capability →
+**RFC-005 slice A3**: an optional host-provided leading toolbar action `onBack?()` + `backLabel?`
+(editor renders it first, invokes the host callback, does NO navigation itself — engine-free, AD-008);
+the peer-widen slice renumbered A3→A4; likely FR-135…137. **Validate RESOLVED (2026-07-06): hidden
+too** — redundant under autorun (engine runs continuously, errors surface live in Output), so the
+embed hides ALL SIX action buttons (`hideToolbarActions` = new/import/copy/download/validate/run).
+**ALL open questions resolved (2026-07-06); folded into RFC-005.** (1) JSON panel = EDITABLE
+(bidirectional, like the demo). (2) transon pin = FLOOR `>=0.1.7` (docs-site already floats to
+latest). (3) tarball = dev `file:`/link, production = URL to the GitHub RELEASE ASSET (version-tagged;
+CI builds+attaches on release). (4) out-of-surface examples: HOST provides the example list
+(`host.examples`) — editor asks the environment, no pre-filter; unsupported → normal error path.
+(5) palette chrome STRIPPED (no Search, no Advanced toggle) + advanced blocks ALWAYS shown → new
+slice **A5** (confirm/add an initial `showAdvanced:true` palette config; may be a tiny FR). Net: the
+embed toolbar is now ONLY "← Back to docs". (6) no blank-editor entry (per-example only). (7) UPGRADE
+PyScript to latest & reuse it → new slice **B0** (real migration: 2023.03.1 `<py-script>`/
+`pyscript.interpreter.globals` API differs from current PyScript; the `SharedPyScriptProvider`
+accessor + `transform()` bridge get re-pointed once the target version is chosen). (8) floor pin keeps
+docs rendering on latest transon (verify no regression). (9) verify no CSS bleed with docs-site
+Bootstrap 5.3. Part A now A1 autorun / A2 hide-actions / A3 onBack / A5 palette-advanced / A4
+peer-widen (likely FR-135…137+). **RFC RESTRUCTURED (2026-07-06, per user):** the RFC now leads with
+**Part 1 — SPEC alignment** (SPEC-first, land FIRST): a consolidated table of the new FRs (FR-α
+autorun→realizes NFR-027, FR-β hide-toolbar-actions, FR-γ leading onBack action, FR-δ conditional
+initial-palette-view) with exact SPEC homes (§7.14 + §12.3/§12.6/§12.9 notes), the NFR-027 dormant→
+realized flip, and cross-doc bookkeeping (traceability rows, id-ledger `--update`, SPEC v2.3→v2.4
+header bump, editor-react Changeset, explicit "no new AD / no metadata-contract change"). Parts
+renumbered: Part 2 editor impl (A1/A2/A3/A5/A4, test-first, minus the SPEC bullets now in Part 1),
+Part 3 docs-site (B0 PyScript upgrade → B1 floor → B2 glue → B3 provider → B4 wiring), Part 4
+packaging. Sequencing step 0 = land Part 1 before any code. **NOT DONE:** no SPEC/code yet — still
+awaiting "proceed"; best first VERIFY step = does the editor already support an initial
+advanced-palette config (A5 → decides whether FR-δ is needed) + the latest PyScript globals API (B0)._
 
 _**UAT round 3b — the splitter is now a true divider (2026-07-06, on `palette-flat-list`,
 UNCOMMITTED).** User follow-up: the panel resized but the CANVAS didn't follow. Cause: Blockly
@@ -764,6 +827,18 @@ living read of it.
   `ready`). **1551 tests**; all gates green. See **Last action**.
 
 ## Next steps (ordered)
+
+00. **Docs-site editor embedding — plan approved (RFC-005), implementation NOT started.** Full plan
+   in [`docs/proposals/rfc-005-docs-site-editor-embedding.md`](proposals/rfc-005-docs-site-editor-embedding.md).
+   Blocked on an explicit "proceed" from the user + the 3 open questions in the RFC
+   (Validate-under-autorun; `==` vs `>=` pin; tarball reference). When cleared, order:
+   **A1** SPEC FR + autorun (`autorun?` on `EditorControllerOptions`, realizes NFR-027; test-first)
+   → **A2** SPEC FR + `hideToolbarActions?` (hide ≠ disable; test-first) → **A3** widen editor-react
+   peer to `^18.0.0` + Changeset → **B** docs-site (`config.toml` pin, `script.py` glue +
+   `setrecursionlimit`, `SharedPyScriptProvider` with no-op dispose, App mode-switch/open/close +
+   `IExampleData→ExampleCase`) → **C** CI tarball-on-tag. Register A1/A2 IDs at true next-free,
+   coordinating with the RFC-003 P-E FR-135 reservation (§21.1). Both A-slices are UI-only (§21.12):
+   codec artifacts must stay byte-identical; run traceability + engine-parity gates.
 
 0a. **Land PR #4 (`recent-changes`)** — review fixes are committed and pushed; wait for
    CodeRabbit's re-review + CI, then merge. Two threads were intentionally not "fixed"
