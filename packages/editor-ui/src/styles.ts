@@ -18,6 +18,15 @@ export function sideColDefaultWidth(bodyWidth: number): number {
   return Math.min(SIDE_COL.maxPx, Math.max(SIDE_COL.minPx, (bodyWidth * SIDE_COL.pct) / 100));
 }
 
+/** §12.1 canvas floor — the canvas column never shrinks below this. Single source for the
+ *  splitter's drag-time clamp (splitter.tsx) AND the stylesheet's side-col max-width, so the JS
+ *  clamp and the CSS floor cannot drift apart. */
+export const CANVAS_FLOOR_PX = 320;
+const SPLITTER_PX = 6;
+const BODY_GAP_PX = 8;
+/** max-width beating a splitter-set flex-basis: canvas floor + splitter + the two body gaps. */
+const SIDE_COL_MAX = `calc(100% - ${CANVAS_FLOOR_PX + SPLITTER_PX + 2 * BODY_GAP_PX}px)`;
+
 export const TRANSON_CSS = `
 .transon-editor-shell {
   /* Chrome-only theming tokens (FR-128) with readable defaults. Foreground on background is
@@ -134,7 +143,7 @@ export const TRANSON_CSS = `
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  gap: 8px;
+  gap: ${BODY_GAP_PX}px;
   padding: 8px;
 }
 
@@ -150,8 +159,9 @@ export const TRANSON_CSS = `
   flex: 0 1 clamp(${SIDE_COL.minPx}px, ${SIDE_COL.pct}%, ${SIDE_COL.maxPx}px);
   /* Canvas floor under LATER container narrowing (§12.1): a splitter-chosen width is an inline
      flex-basis in px, clamped only at drag time — max-width beats flex-basis, so the canvas
-     column (320px) + splitter (6px) + two 8px gaps stay usable however the host resizes. */
-  max-width: calc(100% - 342px);
+     column (CANVAS_FLOOR_PX) + splitter + the two body gaps stay usable however the host
+     resizes. */
+  max-width: ${SIDE_COL_MAX};
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -163,7 +173,7 @@ export const TRANSON_CSS = `
 /* §12.1 side-panel splitter: a keyboard-operable ARIA separator between canvas and the panel
    stack. touch-action:none so a pointer drag resizes instead of scrolling on touch devices. */
 .transon-editor-shell .transon-splitter {
-  flex: 0 0 6px;
+  flex: 0 0 ${SPLITTER_PX}px;
   align-self: stretch;
   cursor: col-resize;
   border-radius: 3px;

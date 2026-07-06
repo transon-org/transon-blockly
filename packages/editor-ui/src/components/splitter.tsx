@@ -6,14 +6,12 @@
 
 import { useRef } from 'react';
 import type { JSX, KeyboardEvent, PointerEvent, RefObject } from 'react';
-import { sideColDefaultWidth } from '../styles.js';
+import { sideColDefaultWidth, CANVAS_FLOOR_PX } from '../styles.js';
 
 export const SIDE_MIN_PCT = 50;
 export const SIDE_MAX_PCT = 200;
 /** One arrow-key step, in % of the default width. */
 export const SIDE_STEP_PCT = 5;
-/** The canvas column never shrinks below this, whatever the 200% bound would allow. */
-const CANVAS_FLOOR_PX = 320;
 
 /** The applied side-column width: pixels for the inline flex-basis, percent (of the stylesheet
  *  default) for the separator's aria-valuenow. `null` means "the stylesheet default" (100%). */
