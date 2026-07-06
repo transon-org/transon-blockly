@@ -8,13 +8,33 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `ff1dab7` — chore(make): add ccusage target for Claude Code token usage |
-| Branch | `main` |
+| Repo HEAD | `0ddfeed` — docs(spec): RFC-005 Part 1 — SPEC alignment for docs-site embedding (SPEC v2.4) |
+| Branch | `rfc-005-docs-site-embedding` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-005 Part 1 LANDED — SPEC alignment for docs-site embedding (2026-07-06, branch
+`rfc-005-docs-site-embedding`, COMMITTED).** Branch off `main`; two commits: `daa5bd0` (RFC-005
+proposal doc + handoff) and `0ddfeed` (SPEC v2.4). SPEC-first, append-only, UI-only (§21.12) — no
+projection/surface/round-trip change, no new AD. Added **FR-135** autorun (realizes dormant
+**NFR-027**), **FR-136** hide-toolbar-actions (not-rendered vs read-only's disable), **FR-137**
+leading host toolbar action (`onBack`; editor invokes callback, no navigation, AD-008), **FR-138**
+initial palette view (advanced-shown + search seed) — all in `SPEC.md` §7.14, with section notes in
+§12.3/§12.6/§12.9 and the v2.4 changelog block. `traceability.md` rows added (all `[ ]` — SPEC
+landed, impl pending Part 2); NFR-027 row marked SPEC-realized-by-FR-135. `id-ledger.json` registered
+FR-135..138 (contiguous next-free = 135; **supersedes RFC-003 P-E's informal FR-135 reservation**,
+which re-numbers at landing per §21.1). All pre-commit gates green (traceability, links, maturity,
+engine-parity, append-only ids, presentation, behavior-size, corpus). **Verified for A5:**
+`TransonEditor.tsx:61` hardcodes `useState({showAdvanced:false, search:''})` with NO seeding prop →
+FR-138 is a genuine new option (not just host config). **Next = Part 2** (editor impl, test-first,
+per the RFC sequencing): A1 autorun → A2 hide-actions → A3 onBack → A5 initial-palette (FR-138) → A4
+peer-widen; then Part 3 docs-site (B0 PyScript upgrade first). Each editor slice: red-first test
+citing the FR, thread the option through `EditorControllerOptions`→`TransonEditorHost`→
+`<TransonEditor>`→`<transon-editor>`, flip the traceability row to `[x]`, keep codec artifacts
+byte-identical._
 
 _**Planning proposal written — embed the visual editor inside the docs-site (2026-07-06, on
 `main`, UNCOMMITTED; DISCUSSION/PLANNING only, no behavior code).** User wants a visual Blockly
