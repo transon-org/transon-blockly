@@ -76,7 +76,8 @@ describe('Blockly mount (FR-001, AD-017, AD-018)', () => {
     const c = makeContainer();
     const mount = mountBlockly(c);
     try {
-      const flyout = mount.workspace.getFlyout()!;
+      // getFlyoutScale is on the concrete Flyout base class, not the IFlyout interface
+      const flyout = mount.workspace.getFlyout() as Blockly.Flyout;
       const before = flyout.getFlyoutScale();
       mount.workspace.setScale(2.5); // canvas zoom is UI-only viewport state
       expect(flyout.getFlyoutScale()).toBe(before); // palette must not follow
