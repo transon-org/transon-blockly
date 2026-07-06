@@ -1,6 +1,12 @@
 # RFC-005: Embed the Transon visual editor inside the docs-site
 
-- **Status:** **PROPOSED** (2026-07-06). Awaiting go-ahead to implement. No code/docs changed yet.
+- **Status:** **IMPLEMENTED — Parts 1–3 (2026-07-06); Part 4 (release plumbing) pending.** Part 1
+  landed SPEC v2.4 (FR-135…138) on branch `rfc-005-docs-site-embedding`; Part 2 shipped all editor
+  options test-first (A1–A5); Part 3 wired the docs-site (`transon-org.github.io` branch
+  `rfc-005-embed-editor`) and is **browser-verified** — PyScript upgraded 2023.03.1→2026.3.1, docs
+  still render on engine 0.1.7, opening an example mounts the editor with a single "← Back to docs"
+  toolbar and autorun output. Remaining: **Part 4** (CI tarball-on-tag + docs-site release-asset
+  dep) and the **self-contained editor-react types** follow-up (below).
 - **Type:** Cross-repo integration + a small set of **additive embedding options** on the editor.
   **No new `AD-*`; no projection/surface/round-trip semantics change** (§21.12 — codec artifacts
   stay byte-identical). The new behavior lands **SPEC-first** as append-only FRs (§21.2/§21.1);
@@ -249,6 +255,12 @@ A thin `EngineProvider` (a variant of
 - **docs-site — production:** depend on the **URL to the GitHub release asset** for the tagged
   version (`yarn add https://github.com/.../releases/download/v<x.y.z>/transon-editor-react-<x.y.z>.tgz`),
   so the deployed build is reproducible and versioned.
+- **Self-contained editor-react types (follow-up, found in Part 3).** `@transon/editor-react`'s
+  generated `.d.ts` still *imports type names* from the bundled-but-unpublished `@transon/editor-ui`
+  / `@transon/editor-core`, so a consumer can't resolve the editor's prop types. Part 3 worked
+  around it with a local `src/transon-editor.d.ts` shim in the docs-site. The real fix: make
+  `vite-plugin-dts` inline those types (`bundledPackages`/api-extractor) so the package ships
+  self-contained types — do this with Part 4's packaging work.
 
 ## Why the Pyodide-cost concern is largely moot
 

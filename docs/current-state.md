@@ -8,13 +8,40 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `dbcce52` — chore(editor-react): widen React peer to ^18.0.0 (RFC-005 A4) |
+| Repo HEAD | `f2831df` — docs(handoff): RFC-005 Part 2 complete; next = Part 3 docs-site |
 | Branch | `rfc-005-docs-site-embedding` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-005 Part 3 COMPLETE + BROWSER-VERIFIED — docs-site embedding wired (2026-07-06, repo
+`../transon-org.github.io` branch `rfc-005-embed-editor`, commit `462184c`).** The docs-site now
+embeds the visual editor, reusing its OWN PyScript runtime (no second Pyodide). **B0** upgraded
+PyScript **2023.03.1 → 2026.3.1** (new `core.js` module + `<script type="py" src config>`; dropped
+`<py-config>`/`<py-script>` + the interpreter-globals bridge). **B1** pinned `transon>=0.1.7`
+(`config.toml`). **B2** `public/script.py` keeps the docs `transform`/`init`, adds
+`setrecursionlimit(1400)` + `transon_validate`/`transon_transform`/`transon_version`, and exposes
+them on `window` via `create_proxy` (the robust Pyodide-persist pattern; `import js` + `js.foo =
+create_proxy(fn)`). **B3** `src/transonEngine.ts` = `SharedPyScriptProvider` (proxies `window.transon_*`
+over JSON strings, polls readiness, no-op dispose) + `toExampleCases`. **B4** `App.tsx` holds a
+once-created shared engine + `editorExample` state; `EditorView.tsx` renders `<TransonEditor autorun
+onBack backLabel="Back to docs" hideToolbarActions=[all six] paletteView={{showAdvanced:true}}
+hidePaletteControls host={{engine, examples: toExampleCases(props.examples)}}>`; `ExampleEditor.tsx`
+got the "Open this sample in the editor" button (via `ExamplesContext.openInEditor`). Consumed
+`@transon/editor-react` via a **`file:`** dep (dev); a local `src/transon-editor.d.ts` **type shim**
+covers the package's internal `@transon/*` type imports (→ self-contained-types packaging follow-up,
+recorded in RFC Part 4). **Verification:** `yarn build` compiled (main.js +256 kB = editor+Blockly);
+served `build/` + drove Chrome (preview MCP) — network showed PyScript 2026.3.1 + Pyodide 0.29.3 +
+`transon-0.1.7-py3-none-any.whl` from PyPI; docs render ("version 0.1.7"), zero console errors;
+opening WorkedExampleNestedArithmetic mounted 57 blocks, engine `ready`, **autorun output "20" =
+(2+3)*4 with no Run button**, toolbar = ONLY "← Back to docs" (all six hidden, no palette
+search/advanced chrome, advanced blocks shown in palette), status "engine 0.1.7 / metadata 3.0",
+Back returns to docs. **NEXT = Part 4** (transon-blockly CI: build+`npm pack` on tag `v*`, attach
+tarball to the GitHub release; docs-site prod switches the `file:` dep → release-asset URL) + the
+**self-contained editor-react types** fix (vite-plugin-dts `bundledPackages`). transon-blockly
+`main`-vs-branch commits unchanged from Part 2; this turn only updated the RFC status + this handoff._
 
 _**RFC-005 Part 2 COMPLETE — all editor embedding options implemented, test-first (2026-07-06,
 branch `rfc-005-docs-site-embedding`, COMMITTED).** Five slices, one commit each, red-first then
