@@ -21,6 +21,12 @@ function fakePyodide(): FakePy {
         : JSON.stringify({ status: 'ok', valid: true });
     },
     transon_transform(templateStr, inputStr, marker, includesStr, jsLoader, maxIncludeDepth) {
+      // Real Pyodide delivers a JS `null` argument as JsNull (NOT Python None), so the glue's
+      // `int(max_include_depth)` throws. The provider must OMIT the argument instead — mirror
+      // that strictness here so any null crossing the boundary fails this suite.
+      if (maxIncludeDepth === null) {
+        throw new TypeError("int() argument must be a real number, not 'JsNull'");
+      }
       expect(typeof inputStr).toBe('string');
       const input = JSON.parse(inputStr as string) as unknown;
       // exercise the dynamic include callback if present; the glue passes a JS callback that returns

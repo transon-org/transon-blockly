@@ -118,15 +118,18 @@ export function createPyodideHost(opts: PyodideHostOptions = {}): EngineProvider
             return t === undefined ? null : JSON.stringify(t);
           }
         : null;
+      // Codec include ceiling (CODEC_MAX_INCLUDE_DEPTH, §6.5/AD-035) — was silently dropped
+      // before RFC-004, leaving the browser host on the engine default (50). OMIT the argument
+      // when unset: Pyodide passes a JS `null` as JsNull (not Python None), which explodes the
+      // glue's `int()` — the Python default (None) must come from the missing argument itself.
+      const depthArgs = o.maxIncludeDepth != null ? [o.maxIncludeDepth] : [];
       const out = fn(
         JSON.stringify(template),
         JSON.stringify(input ?? null),
         o.marker,
         JSON.stringify(o.includes ?? {}),
         jsLoader,
-        // Codec include ceiling (CODEC_MAX_INCLUDE_DEPTH, §6.5/AD-035) — was silently dropped
-        // before RFC-004, leaving the browser host on the engine default (50).
-        o.maxIncludeDepth ?? null,
+        ...depthArgs,
       ) as string;
       const parsed = JSON.parse(out) as ExecutionResult & { files_written?: Record<string, Json> };
       // The Python glue emits snake_case `files_written`; the port uses camelCase `filesWritten`.

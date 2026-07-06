@@ -81,7 +81,12 @@ def transon_transform(template_json, input_json, marker, includes_json, js_loade
         # The codec's include ceiling (CODEC_MAX_INCLUDE_DEPTH, metadata-contract §6.5) — mirror
         # the Node runner.py plumbing so deep nesting trips the engine's clean depth-limit guard
         # at the EDITOR's ceiling, not the engine default (AD-035/RFC-004).
-        kwargs["max_include_depth"] = int(max_include_depth)
+        try:
+            kwargs["max_include_depth"] = int(max_include_depth)
+        except (TypeError, ValueError):
+            # A JS null/undefined proxy (JsNull is not Python None) — same semantics as "no
+            # ceiling provided": fall back to the engine default rather than crash pre-transform.
+            pass
     try:
         output = Transformer(template, **kwargs).transform(data, copy_output=True)
     except Exception as exc:  # _error_fields discriminates engine vs unexpected; never escapes Pyodide

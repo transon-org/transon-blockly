@@ -8,13 +8,84 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `b514caf` — Merge pull request #8 from transon-org/mutator-controls-inline |
-| Branch | `main` |
+| Repo HEAD | `014964d` — Merge pull request #9 from transon-org/rfc-004-codec-depth-ceiling |
+| Branch | `palette-flat-list` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**UAT round 3b — the splitter is now a true divider (2026-07-06, on `palette-flat-list`,
+UNCOMMITTED).** User follow-up: the panel resized but the CANVAS didn't follow. Cause: Blockly
+re-measures its SVG only on WINDOW resize; a container-level resize (splitter drag) left the SVG
+at its stale size. Fix: `mountBlockly` now attaches a `ResizeObserver` on the mount container
+forwarding to `Blockly.svgResize(workspace)` (guarded for jsdom/older embeds; disconnected in
+dispose()); SPEC §12.1 amended ("behaves as a true divider … re-measures live"). Test gotcha:
+`svgResize` measures the svg's PARENT (Blockly's own injection div), not our container — the
+mount.test.ts regression test stubs offsetWidth/Height on `svg.parentElement`. Live-verified
+(Playwright drag): side 460→920px, Blockly SVG 900px→440px, dblclick reset restores both._
+
+_**UAT round 3 — resizable side panel (2026-07-06, on `palette-flat-list`, UNCOMMITTED).** User
+asked for a horizontally resizable examples/input/output column, 50%–200% of the current width.
+SPEC-first: §12.1 gained "Side-panel resizing (ratified 2026-07-06)" — splitter between canvas
+and panel stack, bounds 50%–200% of the stylesheet default (`clamp(320px, 34%, 460px)`, now
+single-sourced as `SIDE_COL`/`sideColDefaultWidth()` in `styles.ts`), canvas keeps a 320px floor,
+ARIA separator pattern (focusable, valuemin/max/now as % of default, arrows step 5%, Home/End →
+bounds, Enter/dblclick reset), width is UI-only state (§11.5), splitter hidden in the ≤900px
+single-column layout. Pieces: `components/splitter.tsx` (SideSplitter; pointer-capture drag +
+keyboard), TransonEditor sandbox branch wires bodyRef/sideRef + inline flex-basis. Tests
+red-first: `resize.test.tsx` (6 — aria contract, drag math, both clamps, keyboard, dblclick
+reset, no splitter in compact) + a styles-layout rule test. **Verification gotcha worth
+remembering:** synthetic `dispatchEvent` from the preview-eval console does NOT reach this app's
+React delegation (trusted Playwright input and jsdom fireEvent both do) — Run-button "dead click"
+in UAT round 2 and the splitter's "dead drag" were BOTH this automation artifact; verify with
+Playwright MCP (`browser_drag` clamped at exactly 920px = 200%, dblclick reset to 460px live)._
+
+_**UAT round 2 — five UX flaws fixed on `palette-flat-list` (2026-07-06, UNCOMMITTED).** User
+reported: (1) +/- mutator controls active on palette blocks (grown specimen overlaps flyout
+neighbours) — `appendControls()` now skips `block.isInFlyout` (SPEC §12.6 sentence added; pristine
+palette shape, controls only on canvas copies; mutator.test.ts red-first); (2) "Import" label and
+the native "Choose file" control rendered as a flush/stacked blob — `.transon-import-label` is now
+`inline-flex` + 8px gap; (3) per-UA control thickness — one explicit height (24px, `font:inherit`)
+for all shell buttons/selects/search/file inputs (styles-layout.test.ts asserts both); (4) **Run
+was dead in the browser host** — root cause: RFC-004's `maxIncludeDepth` plumbing passed JS `null`
+into `transon_transform`, Pyodide delivers it as **JsNull (not Python None)**, so
+`int(max_include_depth)` threw BEFORE the glue's try, and the rejection vanished through `void
+controller.run()`. Three-layer fix: provider OMITS the arg when unset (provider.test.ts fake now
+throws on null like real Pyodide), glue guards the int() conversion, and `executeTemplate`/
+`validateTemplate` catch transform/validate REJECTIONS → `editor_internal` surfaced (new
+`execute-errors.test.ts`; validate deliberately returns to `idle`, never a fabricated `invalid`,
+NFR-004). Browser-verified: Run → "✓ Output matches expected" on WorkedExampleReshapeRecords;
+(5) divider labels drifted per-label ("random left margin") — Blockly centers label text at
+measuredWidth/2 but measures with renderer font constants, not the divider CSS (uppercase +
+letter-spacing) — `LeftAnchoredLabelInflater` (registry-overrides the stock `label` FLYOUT_INFLATER
+in `ensureBlocklyReady`) left-anchors text at x=0 (mount.test.ts asserts). All browser-verified at
+uniform left=25px. Gates green (traceability, engine-parity)._
+
+_**UAT — palette presentation: flat always-visible list, no category column (branch
+`palette-flat-list`, 2026-07-06, UNCOMMITTED).** User asked to replace the pop-right category
+palette with one long list with category dividers (motivation: chrome crowds the canvas; few
+blocks per category) and flagged a UX flaw — palette blocks scaled with workspace zoom.
+**SPEC-first:** §12.6 gained a "Palette presentation (ratified 2026-07-06)" paragraph: palette =
+Blockly `flyoutToolbox` derived mechanically from the committed `categoryToolbox` (category →
+divider label + contents; pure view, committed artifact untouched per AD-030/FR-127; FR-109 +
+§12.6 filters apply BEFORE flattening), and palette scale is FIXED, decoupled from canvas zoom
+(§11.5). **Pieces:** `flattenToolbox()` in `editor-ui/src/blockly/toolbox.ts`; mount injects the
+flat definition with `plugins: {flyoutsVerticalToolbox: FixedScaleFlyout}` (a `VerticalFlyout`
+whose `getFlyoutScale()` returns 1 — stock Blockly returns the target workspace's scale, which was
+the flaw); `setToolboxView` re-flattens (updateToolbox stays flyout-kind — it must never switch
+kinds against a flyout-only injection); divider styling `.transonFlyoutDivider` in `styles.ts`.
+Tests red-first: 2 new flatten units (`toolbox.test.ts`), 2 new mount tests (dividers present +
+scale fixed under `setScale(2.5)`); `embedding.test.tsx`/`progressive-disclosure.test.tsx`
+`categoryNames()` helpers now read flyout divider labels (`getContents()` → `FlyoutItem`, the
+Blockly 13 public API) instead of `getToolbox()` (now null). Gates green (traceability,
+engine-parity); browser-verified in reference-host (flyout `scale(1)` vs main canvas
+`scale(0.625)` after zoom; dividers render as uppercase muted labels). **Considered and
+rejected:** `@blockly/continuous-toolbox` (needs blockly ^13.1.0 vs our 13.0.0 pin AND keeps the
+category column — more chrome, not less). Accordion-style categories remain an unexplored option
+if the palette grows. **Next:** user review of the branch → PR; the broader "too much chrome"
+concern (side panel, minimap, zoom controls, trashbin footprint) is untouched._
 
 _**RFC-004 IMPLEMENTED — full self-hosting (AC-042): all 9 committed codec files open + round-trip
 (2026-07-06, on `main`, UNCOMMITTED; `round-trip-reviewer` pass in flight).** Goal (user): every

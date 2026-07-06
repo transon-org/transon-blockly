@@ -138,4 +138,22 @@ describe('AC-038 / §13.13 — +/- controls live on the TITLE row (density: no s
     expect(plusFields.length).toBe(1);
     ws.dispose();
   });
+
+  for (const type of ['transon_array', 'transon_object_literal'] as const) {
+    it(`${type}: palette (flyout) blocks get NO +/- buttons — mutating a palette block is
+        meaningless and the grown block overlaps its flyout neighbours`, () => {
+      registerTransonBlocks();
+      const ws = new Blockly.Workspace();
+      ws.internalIsFlyout = true; // what a real Flyout marks its workspace as (block.isInFlyout)
+      const b = ws.newBlock(type);
+      expect(b.isInFlyout).toBe(true); // precondition — the block knows it lives in the palette
+      expect(b.getField('TRANSON_PLUS')).toBeNull();
+      expect(b.getField('TRANSON_MINUS')).toBeNull();
+      // the canvas copy (same type, non-flyout workspace) still gets the controls
+      const { ws: ws2, b: canvas } = fresh(type);
+      expect(canvas.getField('TRANSON_PLUS')).toBeTruthy();
+      ws.dispose();
+      ws2.dispose();
+    });
+  }
 });

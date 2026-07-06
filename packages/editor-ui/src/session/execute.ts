@@ -40,11 +40,24 @@ export async function executeTemplate(
   if (!activeEngine || !isEngineReady(activeEngine) || template_json == null) return null;
   const isCurrent = beginExecution(store);
   store.setState({ execution_status: 'pending' });
-  const res = await activeEngine.transform(template_json, sample_input_json ?? null, {
-    marker,
-    includeLoader: opts.includeLoader,
-    includes: opts.includes,
-  });
+  let res: ExecutionResult;
+  try {
+    res = await activeEngine.transform(template_json, sample_input_json ?? null, {
+      marker,
+      includeLoader: opts.includeLoader,
+      includes: opts.includes,
+    });
+  } catch (e) {
+    // The port contract returns failures AS results — a rejection is a host/glue defect (§16.4
+    // editor_internal). Surface it; a `void`-ed run() must never leave the UI silently inert.
+    if (!isCurrent() || !isEngineReady(activeEngine)) return null;
+    const prev = store.getState();
+    store.setState({
+      execution_status: prev.execution_output_json != null ? 'stale' : 'error',
+      errors: [{ code: 'editor_internal', message: `engine transform failed: ${String(e)}` }],
+    });
+    return null;
+  }
   // Drop the result when a newer execution started while this one was in flight (§17.8 — the latest
   // run owns execution_status/output) or the engine left `ready` (disposed/failed mid-flight,
   // NFR-004: never publish over a no-longer-authoritative engine); onExecute must not fire either.

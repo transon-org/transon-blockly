@@ -220,6 +220,10 @@ function withMutationEvent(block: DynamicBlock, mutate: () => void): void {
  *  fallback append covers a def with no message (defensive — no current structural def hits it).
  *  The buttons call the block's add/remove methods. */
 function appendControls(block: DynamicBlock, add: () => void, remove: () => void): void {
+  // Palette (flyout) blocks get no +/- controls: mutating a palette block is meaningless (the
+  // canvas copy is a fresh block), and a grown palette block overlaps its flyout neighbours. The
+  // §12.6 flat palette shows the pristine shape; the controls appear on the dropped canvas copy.
+  if (block.isInFlyout) return;
   if (block.getField(PLUS_FIELD)) return;
   const title = block.inputList[0] ?? block.appendDummyInput();
   // segmented-control order: red − on the left, green + on the right

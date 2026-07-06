@@ -78,13 +78,15 @@ describe('theming hooks (FR-108/FR-128)', () => {
 });
 
 describe('configurable categories reach the mount (FR-109)', () => {
-  /** Read the injected toolbox's category names via Blockly's toolbox API. */
+  /** Read the palette's category names — §12.6 presentation: divider labels in the flat flyout. */
   function categoryNames(ws: unknown): string[] {
-    const tb = (ws as { getToolbox?(): unknown }).getToolbox?.() as
-      | { getToolboxItems?(): Array<{ getName?(): string }> }
-      | null;
-    const items = tb?.getToolboxItems?.() ?? [];
-    return items.map((i) => i.getName?.()).filter((n): n is string => typeof n === 'string');
+    const flyout = (ws as { getFlyout?(): unknown }).getFlyout?.() as {
+      getContents(): Array<{ getType(): string; getElement(): { getButtonText?(): string } }>;
+    } | null;
+    return (flyout?.getContents() ?? [])
+      .filter((i) => i.getType() === 'label')
+      .map((i) => i.getElement().getButtonText?.())
+      .filter((n): n is string => typeof n === 'string');
   }
 
   it('injects the configured category set, hiding configured categories', () => {

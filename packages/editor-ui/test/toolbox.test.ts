@@ -3,7 +3,7 @@
 // unknown names rather than silently dropping them.
 import { describe, it, expect, vi } from 'vitest';
 import { getTransonToolbox } from '@transon/editor-blockly';
-import { filterToolbox, progressiveToolbox } from '../src/blockly/toolbox.js';
+import { filterToolbox, progressiveToolbox, flattenToolbox } from '../src/blockly/toolbox.js';
 
 interface CatToolbox {
   kind: string;
@@ -95,5 +95,41 @@ describe('progressiveToolbox (§12.6)', () => {
     expect(types.every((t) => t.includes('attr'))).toBe(true);
     expect(types).toContain('transon_rule_attr__name');
     expect(types).not.toContain('transon_rule_this__base');
+  });
+});
+
+describe('flattenToolbox (§12.6 palette presentation)', () => {
+  it('converts the categoryToolbox into a flyoutToolbox with divider labels in §12.4 order', () => {
+    const tb = getTransonToolbox();
+    const flat = flattenToolbox(tb) as {
+      kind: string;
+      contents: Array<{ kind: string; text?: string; type?: string }>;
+    };
+    expect(flat.kind).toBe('flyoutToolbox');
+
+    // Every §12.4 category becomes a divider label, in the committed order.
+    const labels = flat.contents.filter((c) => c.kind === 'label').map((c) => c.text);
+    expect(labels).toEqual(names(tb));
+
+    // Every block of every category survives, in category order.
+    const flatBlocks = flat.contents.filter((c) => c.kind === 'block').map((c) => c.type);
+    expect(flatBlocks).toEqual(blockTypes(tb));
+
+    // No category items remain — the flyout definition must be flat.
+    expect(flat.contents.some((c) => c.kind === 'category')).toBe(false);
+
+    // Pure view: the committed artifact is untouched (AD-030/FR-127).
+    expect((getTransonToolbox() as CatToolbox).contents.some((c) => c.kind === 'category')).toBe(
+      true,
+    );
+  });
+
+  it('composes after the §12.6 filters: emptied categories contribute no orphan label', () => {
+    // 'attr' search keeps only attribute blocks → exactly one divider label survives.
+    const flat = flattenToolbox(
+      progressiveToolbox(getTransonToolbox(), { showAdvanced: true, search: 'attr' }),
+    ) as { contents: Array<{ kind: string; text?: string }> };
+    const labels = flat.contents.filter((c) => c.kind === 'label');
+    expect(labels.length).toBe(1);
   });
 });
