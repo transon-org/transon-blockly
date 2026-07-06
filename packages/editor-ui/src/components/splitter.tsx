@@ -42,7 +42,10 @@ export function SideSplitter({
     if (!bodyW) return; // no geometry (unmounted / hidden) — don't guess
     const base = sideColDefaultWidth(bodyW);
     const min = (base * SIDE_MIN_PCT) / 100;
-    const max = Math.min((base * SIDE_MAX_PCT) / 100, bodyW - CANVAS_FLOOR_PX);
+    // The canvas floor may undercut the 50% guarantee on a degenerate-narrow body (the splitter
+    // is CSS-hidden below the single-column breakpoint, but don't rely on that): never let the
+    // effective max fall below min, so the reported pct stays inside [valuemin, valuemax].
+    const max = Math.max(min, Math.min((base * SIDE_MAX_PCT) / 100, bodyW - CANVAS_FLOOR_PX));
     const clamped = Math.min(max, Math.max(min, px));
     onWidth({ px: clamped, pct: Math.round((clamped / base) * 100) });
   };
@@ -99,6 +102,7 @@ export function SideSplitter({
       aria-valuemin={SIDE_MIN_PCT}
       aria-valuemax={SIDE_MAX_PCT}
       aria-valuenow={width?.pct ?? 100}
+      aria-valuetext={`${width?.pct ?? 100}% of default width`}
       tabIndex={0}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

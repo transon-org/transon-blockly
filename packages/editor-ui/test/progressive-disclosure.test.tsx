@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { mountBlockly } from '../src/blockly/mount.js';
 import { createEditorController } from '../src/session/controller.js';
 import { createFakeEngine } from './fake-engine.js';
+import { categoryNames } from './helpers/palette.js';
 
 function container(): HTMLElement {
   const c = document.createElement('div');
@@ -12,15 +13,6 @@ function container(): HTMLElement {
   c.style.height = '600px';
   document.body.appendChild(c);
   return c;
-}
-function categoryNames(ws: unknown): string[] {
-  const flyout = (ws as { getFlyout?(): unknown }).getFlyout?.() as {
-    getContents(): Array<{ getType(): string; getElement(): { getButtonText?(): string } }>;
-  } | null;
-  return (flyout?.getContents() ?? [])
-    .filter((i) => i.getType() === 'label')
-    .map((i) => i.getElement().getButtonText?.())
-    .filter((n): n is string => typeof n === 'string');
 }
 
 describe('progressive disclosure mount wiring (§12.6)', () => {

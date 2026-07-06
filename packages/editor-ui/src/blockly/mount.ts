@@ -64,6 +64,9 @@ class FixedScaleFlyout extends Blockly.VerticalFlyout {
 class LeftAnchoredLabelInflater extends Blockly.LabelFlyoutInflater {
   override load(state: object, flyout: Blockly.IFlyout): Blockly.FlyoutItem {
     const item = super.load(state, flyout);
+    // LTR only: an RTL flyout right-aligns its labels, so forcing start/x=0 would flip dividers
+    // to the wrong side — leave Blockly's stock positioning in place there.
+    if ((flyout as Partial<Blockly.Flyout>).RTL) return item;
     const element = item.getElement() as Partial<Blockly.FlyoutButton>;
     const text = element.getSvgRoot?.().querySelector('text');
     if (text) {

@@ -12,17 +12,17 @@ import { createFakeEngine } from './fake-engine.js';
 const BODY_W = 1200;
 const DEFAULT_W = 408;
 
-function mountSandbox(): { splitter: HTMLElement; side: HTMLElement } {
+function mountSandbox(bodyW = BODY_W, defaultW = DEFAULT_W): { splitter: HTMLElement; side: HTMLElement } {
   const engine = createFakeEngine({ status: 'ready' });
   const { container } = render(<TransonEditor host={{ engine }} mode="sandbox" />);
   const body = container.querySelector('.transon-body') as HTMLElement;
   const side = container.querySelector('.transon-side-col') as HTMLElement;
   const rect = (w: number) =>
     ({ x: 0, y: 0, top: 0, left: 0, right: w, bottom: 0, width: w, height: 600, toJSON: () => ({}) }) as DOMRect;
-  body.getBoundingClientRect = () => rect(BODY_W);
+  body.getBoundingClientRect = () => rect(bodyW);
   side.getBoundingClientRect = () =>
     // reflect the applied inline width, else the CSS default
-    rect(side.style.flexBasis ? parseFloat(side.style.flexBasis) : DEFAULT_W);
+    rect(side.style.flexBasis ? parseFloat(side.style.flexBasis) : defaultW);
   return { splitter: screen.getByTestId('side-resizer'), side };
 }
 
@@ -61,6 +61,17 @@ describe('side panel splitter (§12.1)', () => {
     fireEvent.pointerUp(splitter, { pointerId: 1 });
     expect(parseFloat(side.style.flexBasis)).toBeCloseTo(DEFAULT_W / 2, 0);
     expect(splitter.getAttribute('aria-valuenow')).toBe('50');
+  });
+
+  it('the canvas floor caps the drag before the 200% bound on a narrow body (§12.1)', () => {
+    // body 900px → CSS default = clamp(320, 34% of 900 = 306, 460) = 320px; 200% would be 640px
+    // but the 320px canvas floor caps at 900 - 320 = 580px, which is the binding limit here.
+    const { splitter, side } = mountSandbox(900, 320);
+    fireEvent.pointerDown(splitter, { clientX: 580, pointerId: 1 });
+    fireEvent.pointerMove(splitter, { clientX: -2000, pointerId: 1 });
+    fireEvent.pointerUp(splitter, { pointerId: 1 });
+    expect(parseFloat(side.style.flexBasis)).toBeCloseTo(580, 0);
+    expect(splitter.getAttribute('aria-valuenow')).toBe(String(Math.round((580 / 320) * 100)));
   });
 
   it('arrow keys step the width; Home/End jump to the bounds; Enter resets to the default', () => {

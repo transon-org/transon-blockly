@@ -148,6 +148,10 @@ export const TRANSON_CSS = `
 }
 .transon-editor-shell .transon-side-col {
   flex: 0 1 clamp(${SIDE_COL.minPx}px, ${SIDE_COL.pct}%, ${SIDE_COL.maxPx}px);
+  /* Canvas floor under LATER container narrowing (§12.1): a splitter-chosen width is an inline
+     flex-basis in px, clamped only at drag time — max-width beats flex-basis, so the canvas
+     column (320px) + splitter (6px) + two 8px gaps stay usable however the host resizes. */
+  max-width: calc(100% - 342px);
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -231,7 +235,7 @@ export const TRANSON_CSS = `
    canvas and panels stay usable. */
 @media (max-width: 900px) {
   .transon-editor-shell .transon-body.transon-sandbox { flex-direction: column; overflow: auto; }
-  .transon-editor-shell .transon-side-col { flex: 0 0 auto; overflow: visible; }
+  .transon-editor-shell .transon-side-col { flex: 0 0 auto; overflow: visible; max-width: none; }
   .transon-editor-shell .transon-canvas-col { min-height: 320px; }
   /* single-column layout: nothing to resize horizontally (§12.1) */
   .transon-editor-shell .transon-splitter { display: none; }

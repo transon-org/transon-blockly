@@ -53,13 +53,16 @@ describe('scoped stylesheet lays out the shell, not just theme (§12.1, FR-002)'
     const d = decls('.transon-editor-shell .transon-side-col');
     expect(d).toMatch(/flex-direction:\s*column/);
     expect(d).toMatch(/overflow:/);
+    // §12.1 canvas floor under container narrowing: max-width beats a splitter-set flex-basis,
+    // so a later host resize can never squeeze the canvas below its usable floor.
+    expect(d).toMatch(/max-width:\s*calc\(100% - \d+px\)/);
   });
 
   it('degrades to a single column on a narrow container (NFR-025 responsive)', () => {
     expect(TRANSON_CSS).toMatch(/@media[^{]*max-width[^{]*\{/);
   });
 
-  it('chrome form controls share the shell font (no per-UA control typography)', () => {
+  it('chrome form controls share the shell font (no per-UA control typography) (§12.3, NFR-025)', () => {
     // A <select> and a <button> get different UA default fonts/sizes; unnormalized they read as
     // random thicknesses in the toolbar/panels. The shell normalizes typography (an explicit
     // fixed height was tried and rejected — intrinsic sizing from a shared font is enough).
@@ -84,7 +87,7 @@ describe('scoped stylesheet lays out the shell, not just theme (§12.1, FR-002)'
     expect(TRANSON_CSS).toMatch(/@media[^{]*max-width[\s\S]*?\.transon-splitter\s*\{\s*display:\s*none/);
   });
 
-  it('the Import file control lays out as one aligned row with a gap (not a stacked blob)', () => {
+  it('the Import file control lays out as one aligned row with a gap, not a stacked blob (§12.3, FR-096)', () => {
     const d = decls('.transon-editor-shell .transon-import-label');
     expect(d).toMatch(/display:\s*inline-flex/);
     expect(d).toMatch(/align-items:\s*center/);

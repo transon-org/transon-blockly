@@ -6,6 +6,7 @@ import { TransonEditor } from '../src/components/TransonEditor.js';
 import { createEditorController } from '../src/session/controller.js';
 import { mountBlockly } from '../src/blockly/mount.js';
 import { createFakeEngine } from './fake-engine.js';
+import { categoryNames } from './helpers/palette.js';
 
 function container(): HTMLElement {
   const c = document.createElement('div');
@@ -78,17 +79,6 @@ describe('theming hooks (FR-108/FR-128)', () => {
 });
 
 describe('configurable categories reach the mount (FR-109)', () => {
-  /** Read the palette's category names — §12.6 presentation: divider labels in the flat flyout. */
-  function categoryNames(ws: unknown): string[] {
-    const flyout = (ws as { getFlyout?(): unknown }).getFlyout?.() as {
-      getContents(): Array<{ getType(): string; getElement(): { getButtonText?(): string } }>;
-    } | null;
-    return (flyout?.getContents() ?? [])
-      .filter((i) => i.getType() === 'label')
-      .map((i) => i.getElement().getButtonText?.())
-      .filter((n): n is string => typeof n === 'string');
-  }
-
   it('injects the configured category set, hiding configured categories', () => {
     // 'Data Access' is a non-advanced category (attr), present in the default view.
     const c = container();
