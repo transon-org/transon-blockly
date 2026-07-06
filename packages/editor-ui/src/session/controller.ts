@@ -132,7 +132,7 @@ export function createEditorController(
     const workspace = mount.serialize();
     store.setState({ workspace, json_sync_status: 'in_sync' });
     const forward = await runForward(engine, workspace, marker);
-    if (!isCurrent()) return; // superseded by a newer projection/reverse sync: drop the stale result
+    if (!isCurrent() || disposed) return; // superseded, or teardown won the race: drop the stale result
     applyForward(store, forward);
     clearHighlights(mount.workspace); // a new generation supersedes prior error highlights
     opts.onChange?.(store.getState().template_json);
@@ -153,7 +153,7 @@ export function createEditorController(
     if (!engine || engine.status !== 'ready') return; // gated; the panel is read-only when not ready
     const isCurrent = beginSync(store);
     const outcome = await tryReverse(engine, text, marker);
-    if (!isCurrent()) return; // superseded by a newer edit/projection: drop the stale outcome
+    if (!isCurrent() || disposed) return; // superseded, or teardown won the race: drop the stale outcome
     if (outcome.status === 'accepted') {
       mount.loadDocument(outcome.block);
       await project(); // sets workspace/template_json, json_sync in_sync, clears errors + highlights
@@ -232,7 +232,7 @@ export function createEditorController(
     if (engine && engine.status === 'ready') {
       const isCurrent = beginSync(store);
       const block = await encode(engine, doc, marker);
-      if (!isCurrent()) return; // superseded (newer load/edit/clear) while encoding: drop it (§17.8)
+      if (!isCurrent() || disposed) return; // superseded, or teardown won the race, while encoding: drop it (§17.8)
       mount.loadDocument(block);
       await project();
     }
