@@ -130,6 +130,10 @@ cloc: ## Count lines of code (respects .gitignore via git)
 		echo "cloc not installed — install with: brew install cloc"; exit 1; }
 	cloc --vcs=git .
 
+.PHONY: ccusage
+ccusage: ## Show Claude Code token usage & cost (ccusage, via npx)
+	npx -y ccusage@latest
+
 ##@ Maintenance
 .PHONY: memory
 memory: ## Refresh working memory (current-state header + metadata snapshot)
