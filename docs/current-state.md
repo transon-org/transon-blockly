@@ -8,13 +8,40 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `0ddfeed` — docs(spec): RFC-005 Part 1 — SPEC alignment for docs-site embedding (SPEC v2.4) |
+| Repo HEAD | `dbcce52` — chore(editor-react): widen React peer to ^18.0.0 (RFC-005 A4) |
 | Branch | `rfc-005-docs-site-embedding` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-005 Part 2 COMPLETE — all editor embedding options implemented, test-first (2026-07-06,
+branch `rfc-005-docs-site-embedding`, COMMITTED).** Five slices, one commit each, red-first then
+green + traceability row flipped to `[x]`, all pre-commit gates green + full workspace turbo
+test/typecheck exit 0, codec artifacts byte-unchanged (UI-only, §21.12): **A1** `0c4e4a8` autorun
+(FR-135) — store-subscription in `createEditorController` re-executes (shared `runExecution`,
+debounced per NFR-027) on `template_json`/`sample_input_json` change; `executeTemplate` no-ops when
+gated so not-ready never runs; `autorun.test.tsx` (5). **A2** `ec114f4` hide-toolbar-actions
+(FR-136) — `hideToolbarActions?: ToolbarActionId[]`, `Toolbar` omits each named element;
+`toolbar-visibility.test.tsx` (4). **A3** `a0d1af1` leading `onBack`+`backLabel` (FR-137) — first
+toolbar item, invokes host callback, no navigation (AD-008); `toolbar-back.test.tsx` (4). **A5**
+`6d0c8b3` initial `paletteView` + `hidePaletteControls` (FR-138) — controller forwards the seed as
+the mount's initial `view` (mount already honored `view`); `hidePaletteControls` withholds
+`onPaletteView` → `Toolbar` drops search + advanced toggle; `initial-palette.test.tsx` (4). **A4**
+`dbcce52` widen `@transon/editor-react` React peer `^18.3.1`→`^18.0.0` + Changeset. All options
+threaded EditorControllerOptions→TransonEditor prop→`<transon-editor>` attrs (`autorun`,
+`hide-actions`, `back-label`, `show-advanced`, `hide-palette-controls`); `ToolbarActionId` exported
+from editor-ui index. **Design gap found + closed during A5:** `<TransonEditor>` always wired its
+palette handler, so the embed could NOT strip the search/advanced chrome by omission → added
+`hidePaletteControls` (folded into FR-138). Net embed toolbar = only "← Back to docs". **Next =
+Part 3 (docs-site `transon-org.github.io`):** B0 upgrade PyScript to latest (real migration — new
+globals API), B1 pin `transon>=0.1.7`, B2 `script.py` glue (setrecursionlimit 1400 +
+transon_validate/transform/version), B3 `SharedPyScriptProvider` (proxy the existing interpreter, no
+loadPyodide, no-op dispose), B4 app wiring (`<TransonEditor autorun onBack
+hideToolbarActions=[all six] paletteView={{showAdvanced:true}} hidePaletteControls
+host={{engine,examples}}>`); then Part 4 (CI tarball-on-tag + release-asset dep). Dev consumption:
+`file:`/link the built editor-react._
 
 _**RFC-005 Part 1 LANDED — SPEC alignment for docs-site embedding (2026-07-06, branch
 `rfc-005-docs-site-embedding`, COMMITTED).** Branch off `main`; two commits: `daa5bd0` (RFC-005
