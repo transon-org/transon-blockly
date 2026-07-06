@@ -47,7 +47,7 @@ function parseMode(value: string | null): EditorMode {
 
 export class TransonEditorElement extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ['mode', 'marker', 'readonly', 'autorun', 'hide-actions'];
+    return ['mode', 'marker', 'readonly', 'autorun', 'hide-actions', 'back-label'];
   }
 
   /** Host config (engine, examples, metadata, includes) — set as a JS property; objects can't be
@@ -78,12 +78,18 @@ export class TransonEditorElement extends HTMLElement {
     this.appendChild(mountPoint);
     this.#mountPoint = mountPoint;
     const marker = this.getAttribute('marker');
+    // FR-137: a `back-label` attribute opts the leading action in; the editor invokes onBack, which
+    // re-emits a `back` DOM event (the host does the navigation — the editor never routes, AD-008).
+    const backLabel = this.getAttribute('back-label');
     this.#handle = createTransonEditor(mountPoint, {
       host: marker ? { ...this.host, marker } : this.host,
       mode: parseMode(this.getAttribute('mode')),
       readOnly: this.hasAttribute('readonly'),
       autorun: this.hasAttribute('autorun'), // FR-135 — re-run on every accepted change
       hideToolbarActions: parseHideActions(this.getAttribute('hide-actions')), // FR-136
+      ...(backLabel != null
+        ? { backLabel: backLabel || undefined, onBack: () => this.dispatchEvent(new CustomEvent('back')) }
+        : {}),
       template: liveTemplate ?? parseAttr(this.getAttribute('template')),
       input: parseAttr(this.getAttribute('input')),
       // Re-emit the editor callbacks as DOM CustomEvents; the payloads travel in `event.detail`

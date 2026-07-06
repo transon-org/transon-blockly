@@ -336,6 +336,8 @@ export function Toolbar({
   search = '',
   onPaletteView,
   hideActions,
+  onBack,
+  backLabel = 'Back',
 }: {
   state: EditorSession;
   controller: EditorController | null;
@@ -348,6 +350,9 @@ export function Toolbar({
   onPaletteView?(next: { showAdvanced: boolean; search: string }): void;
   /** Toolbar actions to hide (FR-136): a hidden action is not rendered (vs read-only's disable). */
   hideActions?: ToolbarActionId[];
+  /** Optional host leading action (FR-137): rendered FIRST, invokes the host callback. */
+  onBack?(): void;
+  backLabel?: string;
 }): JSX.Element {
   const ready = state.engine_runtime_status === 'ready';
   const hasTemplate = state.template_json != null;
@@ -363,6 +368,17 @@ export function Toolbar({
 
   return (
     <div className="transon-toolbar" data-testid="toolbar" role="toolbar" aria-label="Editor actions">
+      {/* Optional host leading action (FR-137): rendered first; the editor does not navigate. */}
+      {onBack && (
+        <button
+          type="button"
+          data-testid="btn-back"
+          className="transon-back"
+          onClick={() => onBack()}
+        >
+          <span aria-hidden="true">←</span> {backLabel}
+        </button>
+      )}
       {!hidden.has('new') && (
         <button
           type="button"

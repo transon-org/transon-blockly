@@ -30,6 +30,12 @@ export interface EditorControllerOptions {
   /** Hide individual toolbar actions (FR-136): a hidden action is NOT rendered — distinct from
    *  `readOnly`, which disables. Compose with `onBack` / no palette chrome for a minimal embed. */
   hideToolbarActions?: ToolbarActionId[];
+  /** Optional host-provided LEADING toolbar action (FR-137): when supplied, the editor renders it as
+   *  the FIRST toolbar item and invokes this callback on activation. The editor performs no
+   *  navigation itself (AD-008) — the host owns routing (e.g. docs-site "Back to docs"). */
+  onBack?(): void;
+  /** Label for the `onBack` leading action (default `"Back"`). */
+  backLabel?: string;
   /** Fired with the current generated template after each projection (FR-104). */
   onChange?(template: Json | null): void;
   /** Fired with the engine's `ValidationResult` after Validate (ARCHITECTURE §5.3, FR-011/105). */
