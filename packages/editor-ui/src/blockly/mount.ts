@@ -20,6 +20,7 @@ import {
   type ToolboxView,
 } from './toolbox.js';
 import { ensureTransonStyles } from '../styles.js';
+import { collapseOnDoubleClick } from './collapse-on-double-click.js';
 import { TRANSON_THEME, TRANSON_RENDERER } from './theme.js';
 
 /** Scoped root class applied to the host container (AD-018: light DOM, scoped CSS prefix). */
@@ -180,6 +181,11 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
     resizeObserver.observe(container);
   }
 
+  // FR-134: double-clicking a block toggles its collapsed state (see collapse-on-double-click.ts).
+  // Its own change-listener — CLICK is a ui-event the main listener already skips, so no overlap.
+  const doubleClickCollapse = collapseOnDoubleClick(workspace);
+  workspace.addChangeListener(doubleClickCollapse.handleEvent);
+
   let suppress = false;
   const serialize = (): Json => Blockly.serialization.workspaces.save(workspace) as Json;
 
@@ -238,9 +244,11 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
       workspace.setIsReadOnly(readOnly);
     },
     dispose() {
+      doubleClickCollapse.dispose(); // FR-134 — cancel any pending deferred toggle
       resizeObserver?.disconnect();
       minimap.dispose(); // FR-133 — tear down the navigation plugins before the workspace itself
       zoomToFit.dispose();
+      workspace.removeChangeListener(doubleClickCollapse.handleEvent);
       workspace.removeChangeListener(listener);
       workspace.dispose();
     },

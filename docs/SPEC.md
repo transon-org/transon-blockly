@@ -744,10 +744,12 @@ all state they introduce is UI-only per the §11.5 canonical list (which already
   **minimap** overview (OQ-020), and pan/scroll (drag + scrollbars + wheel). Zoom and scroll
   position are UI-only state (§11.5) and never appear in the exported template (§11.6).
 - **FR-134** The canvas shall support **collapsing and expanding any block subtree** (context
-  menu). A collapsed block shows its block label with an ellipsis cue, and its **full subtree
-  remains in the workspace serialization and the generated JSON unchanged** — collapse is UI-only
-  state (§11.5) with no codec or round-trip effect. Custom fields and mutator controls
-  (`ARCHITECTURE.md` AD-031) must render sanely in the collapsed state.
+  menu, or by **double-clicking the block** — ratified 2026-07-06; the double-click is ignored on
+  an editable field or image field so those keep their own behavior). A collapsed block shows its
+  block label with an ellipsis cue, and its **full subtree remains in the workspace serialization
+  and the generated JSON unchanged** — collapse is UI-only state (§11.5) with no codec or
+  round-trip effect. Custom fields and mutator controls (`ARCHITECTURE.md` AD-031) must render
+  sanely in the collapsed state.
 
 ---
 

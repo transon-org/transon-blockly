@@ -227,7 +227,7 @@ export const TRANSON_CSS = `
 }
 .transon-editor-shell pre.transon-code { white-space: pre-wrap; overflow: auto; max-height: 220px; }
 .transon-editor-shell textarea.transon-code-input { resize: vertical; min-height: 96px; }
-.transon-editor-shell .transon-example-select { width: 100%; }
+.transon-editor-shell .transon-example-select { padding: 1px 0px; width: 100%; }
 
 /* Errors + files: readable lists (their state already carries text labels, not colour alone, NFR-045). */
 .transon-editor-shell .transon-errors,
