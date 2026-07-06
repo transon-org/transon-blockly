@@ -5,7 +5,7 @@
 // execute callbacks as DOM CustomEvents (FR-010/011). Ships no engine (AD-008).
 
 import type { Json } from '@transon/editor-core';
-import type { EditorMode, TransonEditorHost } from '@transon/editor-ui';
+import type { EditorMode, ToolbarActionId, TransonEditorHost } from '@transon/editor-ui';
 import { createTransonEditor, type TransonEditorHandle } from './create.js';
 
 export const TRANSON_EDITOR_TAG = 'transon-editor';
@@ -19,6 +19,25 @@ function parseAttr(value: string | null): Json | undefined {
   }
 }
 
+const TOOLBAR_ACTIONS: readonly ToolbarActionId[] = [
+  'new',
+  'import',
+  'copy',
+  'download',
+  'validate',
+  'run',
+];
+
+/** Parse the space/comma-separated `hide-actions` attribute into known toolbar action ids (FR-136). */
+function parseHideActions(value: string | null): ToolbarActionId[] | undefined {
+  if (value == null) return undefined;
+  const ids = value
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .filter((v): v is ToolbarActionId => (TOOLBAR_ACTIONS as readonly string[]).includes(v));
+  return ids.length ? ids : undefined;
+}
+
 const EDITOR_MODES: readonly EditorMode[] = ['sandbox', 'compact'];
 
 /** Validate the `mode` attribute against the supported EditorMode values (default: sandbox). */
@@ -28,7 +47,7 @@ function parseMode(value: string | null): EditorMode {
 
 export class TransonEditorElement extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ['mode', 'marker', 'readonly', 'autorun'];
+    return ['mode', 'marker', 'readonly', 'autorun', 'hide-actions'];
   }
 
   /** Host config (engine, examples, metadata, includes) — set as a JS property; objects can't be
@@ -64,6 +83,7 @@ export class TransonEditorElement extends HTMLElement {
       mode: parseMode(this.getAttribute('mode')),
       readOnly: this.hasAttribute('readonly'),
       autorun: this.hasAttribute('autorun'), // FR-135 — re-run on every accepted change
+      hideToolbarActions: parseHideActions(this.getAttribute('hide-actions')), // FR-136
       template: liveTemplate ?? parseAttr(this.getAttribute('template')),
       input: parseAttr(this.getAttribute('input')),
       // Re-emit the editor callbacks as DOM CustomEvents; the payloads travel in `event.detail`

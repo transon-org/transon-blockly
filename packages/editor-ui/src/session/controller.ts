@@ -18,12 +18,18 @@ import { highlightErrors, clearHighlights } from '../blockly/highlight.js';
 import { createLatestGuard } from './latest.js';
 import type { TransonEditorHost, ExampleCase } from './host.js';
 
+/** The toolbar actions an embedder can hide (FR-136). Hidden = not rendered (vs read-only = disabled). */
+export type ToolbarActionId = 'new' | 'import' | 'copy' | 'download' | 'validate' | 'run';
+
 export interface EditorControllerOptions {
   host: TransonEditorHost;
   mode?: EditorMode;
   template?: Json;
   input?: Json;
   readOnly?: boolean;
+  /** Hide individual toolbar actions (FR-136): a hidden action is NOT rendered — distinct from
+   *  `readOnly`, which disables. Compose with `onBack` / no palette chrome for a minimal embed. */
+  hideToolbarActions?: ToolbarActionId[];
   /** Fired with the current generated template after each projection (FR-104). */
   onChange?(template: Json | null): void;
   /** Fired with the engine's `ValidationResult` after Validate (ARCHITECTURE §5.3, FR-011/105). */

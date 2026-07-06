@@ -137,6 +137,7 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
           showAdvanced={palette.showAdvanced}
           search={palette.search}
           onPaletteView={onPaletteView}
+          hideActions={props.hideToolbarActions}
         />
         <div className="transon-body transon-compact">
           {canvas}
@@ -169,6 +170,7 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
         showAdvanced={palette.showAdvanced}
         search={palette.search}
         onPaletteView={onPaletteView}
+        hideActions={props.hideToolbarActions}
       />
       <div className="transon-body transon-sandbox" ref={bodyRef}>
         <div className="transon-canvas-col">{canvas}</div>
