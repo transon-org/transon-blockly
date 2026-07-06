@@ -17,7 +17,18 @@ import dts from 'vite-plugin-dts';
 // `blockly` (real npm deps, not editor internals) — see editor-ui/vite.config.ts for why bundling
 // their UMD dist is best avoided.
 export default defineConfig({
-  plugins: [react(), dts({ include: ['src/**/*.ts', 'src/**/*.tsx'], rollupTypes: true })],
+  plugins: [
+    react(),
+    dts({
+      include: ['src/**/*.ts', 'src/**/*.tsx'],
+      rollupTypes: true,
+      // The internal @transon/* packages are bundled into the runtime JS but are not published, so
+      // their TYPES must be inlined into this package's .d.ts too — otherwise a consumer can't
+      // resolve `@transon/editor-ui`/`@transon/editor-core` (RFC-005 Part 4). `bundledPackages`
+      // tells api-extractor to inline them rather than emit `import … from '@transon/*'`.
+      bundledPackages: ['@transon/editor-ui', '@transon/editor-core', '@transon/editor-blockly'],
+    }),
+  ],
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),

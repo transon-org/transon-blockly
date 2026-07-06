@@ -1,6 +1,17 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 2.3 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-06
+> **Version:** 2.4 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-06
+
+> **v2.4 — embedding host controls for docs-site reuse (RFC-005).** Adds four component-embedding
+> requirements in **§7.14**: **FR-135** autorun (re-execute on every accepted template/input change,
+> debounced — **realizing the dormant NFR-027**), **FR-136** hiding individual toolbar actions
+> (not rendered vs read-only's disable), **FR-137** an optional host-provided **leading** toolbar
+> action (`onBack`; the editor invokes the host callback and does no navigation, AD-008), and
+> **FR-138** an initial palette view (advanced-blocks shown / search seed) so an embed can present
+> all blocks with the progressive-disclosure chrome omitted. Section notes added to **§12.3**
+> (action visibility + leading action), **§12.6** (embed presentation), and **§12.9** (live output
+> under autorun). All UI-only (§21.12): no projection/surface/round-trip change, codec artifacts
+> byte-unchanged; no new `AD-*`. Design record: [RFC-005](proposals/rfc-005-docs-site-editor-embedding.md).
 
 > **v2.3 — codec depth ceiling raise: full self-hosting (RFC-004).** Adds **AC-042**: *every*
 > committed codec generator and artifact opens in-surface and round-trips in the running editor —
@@ -628,6 +639,23 @@ itself (FR-121, AC-036).
   stay data-driven** from the presentation projection (FR-127); it declares **no** `blockStyles` or
   `categoryStyles` (§21.12 UI≠semantics). It is the SVG-canvas counterpart to the chrome CSS vars
   (FR-128), which theme the surrounding React panels rather than the Blockly SVG.
+- **FR-135** The component shall support an **autorun** mode (`autorun`): when enabled, the editor
+  re-executes the current template against the current sample input on every accepted template
+  change and on every sample-input change — **debounced per NFR-027** — keeping the Output panel
+  (§12.9) live without an explicit Run. Autorun respects the engine-ready and valid-input gates
+  (§10.4, §16.4): it never runs on a not-ready engine or on unparsed sample input.
+- **FR-136** The component shall support **hiding individual toolbar actions**
+  (`hideToolbarActions`: New, Import, Copy, Download, Validate, Run). A hidden action is **not
+  rendered** — distinct from read-only mode (FR-107), which *disables* actions while leaving them
+  visible.
+- **FR-137** The component shall support an optional host-provided **leading** toolbar action
+  (`onBack`, with an optional label): when supplied, the editor renders it as the **first** toolbar
+  item and invokes the host callback on activation. The editor performs **no navigation itself**
+  (AD-008) — the host owns app routing.
+- **FR-138** The component shall accept an **initial palette view** (advanced-blocks shown + search
+  term): the editor opens in that progressive-disclosure state (§12.6) instead of the default, so an
+  embedder can present all blocks (advanced included) with the palette search/advanced chrome
+  omitted.
 
 ### 7.15 Bidirectional JSON Editing
 
@@ -816,6 +844,7 @@ all state they introduce is UI-only per the §11.5 canonical list (which already
   templates.
 - **NFR-026** Validation should not block editing for long-running operations.
 - **NFR-027** Execution preview should debounce frequent edits where auto-run is enabled.
+  **Realized by FR-135** (autorun): the auto-execution reuses the forward-projection debounce.
 - **NFR-028** Where a host provides an engine runtime, the editor should surface its
   initialization/loading state (§10.4).
 - **NFR-029** Large templates should not make the canvas unusable within reasonable limits.
@@ -1145,6 +1174,13 @@ mode (FR-107).
 New; Import Template; Export / Copy Template; Validate; Run; Load Example; Reset Example; Format
 JSON; Toggle Advanced Blocks; Toggle View (Visual / JSON / Split) where enabled.
 
+**Action visibility (FR-136, FR-137).** An embedder may **hide** individual actions
+(`hideToolbarActions`) — a hidden action is not rendered, distinct from read-only (FR-107), which
+disables. An optional host-provided **leading** action (`onBack`, e.g. "Back to docs") renders as
+the **first** toolbar item and invokes the host callback (the editor does not navigate itself,
+AD-008). These compose: an embed that hides all six actions and supplies no view switcher / palette
+chrome shows only the leading action.
+
 ### 12.4 Blockly Toolbox Categories (canonical category set)
 
 This is the single canonical category set and rule-to-category mapping; the rule coverage in §14
@@ -1216,6 +1252,12 @@ structural +/- controls (§13.13, AC-038) appear only on canvas blocks — mutat
 specimen is meaningless (the canvas copy is a fresh block) and a grown specimen would overlap its
 flyout neighbours.
 
+**Embed presentation (FR-138).** An embedder may open the editor in a fixed progressive-disclosure
+state — advanced blocks shown, no search term — and omit the palette search/advanced-toggle chrome
+(by not wiring those controls). The palette then shows all blocks with no toggle; the initial state
+is the `showAdvanced`/search seed of FR-138, not the default. This is display-only (§21.12): the
+committed toolbox/palette artifacts are unchanged.
+
 ### 12.7 Generated JSON Panel
 
 Updates when blocks change — but never while the user is actively typing in it (FR-131); shows
@@ -1233,7 +1275,8 @@ selected.
 
 Shows the transformation result, runtime errors, and expected-vs-actual result for examples.
 Captured `file` writes are shown separately in the "Files produced" panel (§12.11), not inline
-with the transformation output (OQ-007).
+with the transformation output (OQ-007). Under **autorun** (FR-135) this panel is **live** — it
+updates on every accepted template or sample-input change without an explicit Run.
 
 ### 12.10 Tooltips
 

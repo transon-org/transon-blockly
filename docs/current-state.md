@@ -8,13 +8,169 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `014964d` — Merge pull request #9 from transon-org/rfc-004-codec-depth-ceiling |
-| Branch | `palette-flat-list` |
+| Repo HEAD | `3b98738` — feat(editor-react): self-contained types + release-on-tag workflow (RFC-005 Part 4) |
+| Branch | `rfc-005-docs-site-embedding` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-005 Part 4 — packaging + release plumbing (2026-07-06, branch `rfc-005-docs-site-embedding`
+`3b98738`; docs-site `rfc-005-embed-editor` `ca04f3c`).** Made `@transon/editor-react` consumable
+without the internal packages: `vite-plugin-dts` `bundledPackages: [editor-ui, editor-core,
+editor-blockly]` inlines their types into the emitted `.d.ts` (was `import … from '@transon/editor-ui'`,
+unresolvable downstream), and the package index now exports the engine-port types a host implements
+(`EngineProvider`, `Json`, `ValidationResult`, `ExecutionResult`, `ToolbarActionId`). Verified the
+rebuilt `.d.ts` is self-contained (only the package-name string remains) → **removed the docs-site
+`src/transon-editor.d.ts` shim**; `EditorView`/`transonEngine` now import straight from
+`@transon/editor-react`, docs-site `tsc --noEmit` + `yarn build` both clean. Added
+`.github/workflows/release-editor-react.yml`: on a `v*` tag, `pnpm turbo run build --filter=@transon/
+editor-react` + `npm pack` → attach the tarball to the GitHub release via `gh` (SHA-pinned actions,
+`persist-credentials:false`, `contents:write`); `npm pack --dry-run` = `transon-editor-react-0.0.0.tgz`
+(dist only), YAML valid. **NOT triggered** — pushing the first `v*` tag (→ cut the release) is the
+remaining MAINTAINER step; after that the docs-site prod dep switches `file:` → the release-asset URL.
+**RFC-005 is now IMPLEMENTED end-to-end (Parts 1–4) except that one manual release step.** Nothing
+pushed; both branches local. **Next:** review/merge the two branches; cut a `v*` release to exercise
+the workflow, then flip the docs-site prod dep. (Minor nit noted, not fixed: the packed tarball
+includes `dist/tsconfig.tsbuildinfo` — harmless cruft; a `.npmignore`/files tweak could drop it.)_
+
+_**RFC-005 Part 3 COMPLETE + BROWSER-VERIFIED — docs-site embedding wired (2026-07-06, repo
+`../transon-org.github.io` branch `rfc-005-embed-editor`, commit `462184c`).** The docs-site now
+embeds the visual editor, reusing its OWN PyScript runtime (no second Pyodide). **B0** upgraded
+PyScript **2023.03.1 → 2026.3.1** (new `core.js` module + `<script type="py" src config>`; dropped
+`<py-config>`/`<py-script>` + the interpreter-globals bridge). **B1** pinned `transon>=0.1.7`
+(`config.toml`). **B2** `public/script.py` keeps the docs `transform`/`init`, adds
+`setrecursionlimit(1400)` + `transon_validate`/`transon_transform`/`transon_version`, and exposes
+them on `window` via `create_proxy` (the robust Pyodide-persist pattern; `import js` + `js.foo =
+create_proxy(fn)`). **B3** `src/transonEngine.ts` = `SharedPyScriptProvider` (proxies `window.transon_*`
+over JSON strings, polls readiness, no-op dispose) + `toExampleCases`. **B4** `App.tsx` holds a
+once-created shared engine + `editorExample` state; `EditorView.tsx` renders `<TransonEditor autorun
+onBack backLabel="Back to docs" hideToolbarActions=[all six] paletteView={{showAdvanced:true}}
+hidePaletteControls host={{engine, examples: toExampleCases(props.examples)}}>`; `ExampleEditor.tsx`
+got the "Open this sample in the editor" button (via `ExamplesContext.openInEditor`). Consumed
+`@transon/editor-react` via a **`file:`** dep (dev); a local `src/transon-editor.d.ts` **type shim**
+covers the package's internal `@transon/*` type imports (→ self-contained-types packaging follow-up,
+recorded in RFC Part 4). **Verification:** `yarn build` compiled (main.js +256 kB = editor+Blockly);
+served `build/` + drove Chrome (preview MCP) — network showed PyScript 2026.3.1 + Pyodide 0.29.3 +
+`transon-0.1.7-py3-none-any.whl` from PyPI; docs render ("version 0.1.7"), zero console errors;
+opening WorkedExampleNestedArithmetic mounted 57 blocks, engine `ready`, **autorun output "20" =
+(2+3)*4 with no Run button**, toolbar = ONLY "← Back to docs" (all six hidden, no palette
+search/advanced chrome, advanced blocks shown in palette), status "engine 0.1.7 / metadata 3.0",
+Back returns to docs. **NEXT = Part 4** (transon-blockly CI: build+`npm pack` on tag `v*`, attach
+tarball to the GitHub release; docs-site prod switches the `file:` dep → release-asset URL) + the
+**self-contained editor-react types** fix (vite-plugin-dts `bundledPackages`). transon-blockly
+`main`-vs-branch commits unchanged from Part 2; this turn only updated the RFC status + this handoff._
+
+_**RFC-005 Part 2 COMPLETE — all editor embedding options implemented, test-first (2026-07-06,
+branch `rfc-005-docs-site-embedding`, COMMITTED).** Five slices, one commit each, red-first then
+green + traceability row flipped to `[x]`, all pre-commit gates green + full workspace turbo
+test/typecheck exit 0, codec artifacts byte-unchanged (UI-only, §21.12): **A1** `0c4e4a8` autorun
+(FR-135) — store-subscription in `createEditorController` re-executes (shared `runExecution`,
+debounced per NFR-027) on `template_json`/`sample_input_json` change; `executeTemplate` no-ops when
+gated so not-ready never runs; `autorun.test.tsx` (5). **A2** `ec114f4` hide-toolbar-actions
+(FR-136) — `hideToolbarActions?: ToolbarActionId[]`, `Toolbar` omits each named element;
+`toolbar-visibility.test.tsx` (4). **A3** `a0d1af1` leading `onBack`+`backLabel` (FR-137) — first
+toolbar item, invokes host callback, no navigation (AD-008); `toolbar-back.test.tsx` (4). **A5**
+`6d0c8b3` initial `paletteView` + `hidePaletteControls` (FR-138) — controller forwards the seed as
+the mount's initial `view` (mount already honored `view`); `hidePaletteControls` withholds
+`onPaletteView` → `Toolbar` drops search + advanced toggle; `initial-palette.test.tsx` (4). **A4**
+`dbcce52` widen `@transon/editor-react` React peer `^18.3.1`→`^18.0.0` + Changeset. All options
+threaded EditorControllerOptions→TransonEditor prop→`<transon-editor>` attrs (`autorun`,
+`hide-actions`, `back-label`, `show-advanced`, `hide-palette-controls`); `ToolbarActionId` exported
+from editor-ui index. **Design gap found + closed during A5:** `<TransonEditor>` always wired its
+palette handler, so the embed could NOT strip the search/advanced chrome by omission → added
+`hidePaletteControls` (folded into FR-138). Net embed toolbar = only "← Back to docs". **Next =
+Part 3 (docs-site `transon-org.github.io`):** B0 upgrade PyScript to latest (real migration — new
+globals API), B1 pin `transon>=0.1.7`, B2 `script.py` glue (setrecursionlimit 1400 +
+transon_validate/transform/version), B3 `SharedPyScriptProvider` (proxy the existing interpreter, no
+loadPyodide, no-op dispose), B4 app wiring (`<TransonEditor autorun onBack
+hideToolbarActions=[all six] paletteView={{showAdvanced:true}} hidePaletteControls
+host={{engine,examples}}>`); then Part 4 (CI tarball-on-tag + release-asset dep). Dev consumption:
+`file:`/link the built editor-react._
+
+_**RFC-005 Part 1 LANDED — SPEC alignment for docs-site embedding (2026-07-06, branch
+`rfc-005-docs-site-embedding`, COMMITTED).** Branch off `main`; two commits: `daa5bd0` (RFC-005
+proposal doc + handoff) and `0ddfeed` (SPEC v2.4). SPEC-first, append-only, UI-only (§21.12) — no
+projection/surface/round-trip change, no new AD. Added **FR-135** autorun (realizes dormant
+**NFR-027**), **FR-136** hide-toolbar-actions (not-rendered vs read-only's disable), **FR-137**
+leading host toolbar action (`onBack`; editor invokes callback, no navigation, AD-008), **FR-138**
+initial palette view (advanced-shown + search seed) — all in `SPEC.md` §7.14, with section notes in
+§12.3/§12.6/§12.9 and the v2.4 changelog block. `traceability.md` rows added (all `[ ]` — SPEC
+landed, impl pending Part 2); NFR-027 row marked SPEC-realized-by-FR-135. `id-ledger.json` registered
+FR-135..138 (contiguous next-free = 135; **supersedes RFC-003 P-E's informal FR-135 reservation**,
+which re-numbers at landing per §21.1). All pre-commit gates green (traceability, links, maturity,
+engine-parity, append-only ids, presentation, behavior-size, corpus). **Verified for A5:**
+`TransonEditor.tsx:61` hardcodes `useState({showAdvanced:false, search:''})` with NO seeding prop →
+FR-138 is a genuine new option (not just host config). **Next = Part 2** (editor impl, test-first,
+per the RFC sequencing): A1 autorun → A2 hide-actions → A3 onBack → A5 initial-palette (FR-138) → A4
+peer-widen; then Part 3 docs-site (B0 PyScript upgrade first). Each editor slice: red-first test
+citing the FR, thread the option through `EditorControllerOptions`→`TransonEditorHost`→
+`<TransonEditor>`→`<transon-editor>`, flip the traceability row to `[x]`, keep codec artifacts
+byte-identical._
+
+_**Planning proposal written — embed the visual editor inside the docs-site (2026-07-06, on
+`main`, UNCOMMITTED; DISCUSSION/PLANNING only, no behavior code).** User wants a visual Blockly
+editor mode in `transon-org.github.io` reusing that site's EXISTING PyScript runtime (no second
+Pyodide). Read the controller, engine port, reference `provider.ts`/`glue.ts`, SPEC §7.14/§12.3 +
+NFR-027, `host.ts`, `Toolbar` (panels.tsx), and docs-site `index.html`/`config.toml`/`script.py`/
+`App.tsx`/`ExampleEditor.tsx`. Verified the split: reqs 1/2/3/4/7 are docs-site glue; reqs 5/6 are
+NEW editor capability — **autorun** (NFR-027 is present but DORMANT) and **hide-toolbar-actions**
+(Toolbar always renders New/Import/Copy/Download/Validate/Run; `readOnly` only DISABLES). Key
+finding: `get_editor_metadata()` is NOT a hard runtime dep (editor uses the committed snapshot,
+AD-012; glue calls it only in the guarded `transon_version()`) — the hard needs are transon >=
+0.1.7 + `setrecursionlimit(>=1400)`. Reuse moots the Pyodide-load concern (no second load).
+**User decisions (interactive):** SPEC-first FRs, no milestone; `pnpm link`/`file:` dev +
+CI-built tarball on a tagged release; examples = dropdown of all docs examples; editor React-18+
+compatible (widen peer `^18.3.1`→`^18.0.0`). Captured the whole plan as **RFC-005**
+`docs/proposals/rfc-005-docs-site-editor-embedding.md` (house RFC style; Parts A editor additions /
+B docs-site integration / C packaging; sequencing, gates, open questions, non-goals). User then
+asked for the plan to be an RFC (upgraded from the initial "no RFC" governance choice); the
+normative behavior still lands SPEC-first as append-only FRs — the RFC is the design record. **ID note:**
+ledger next-free FR is 135 but RFC-003 P-E holds an unregistered FR-135 reservation — coordinate at
+registration (likely FR-135/136). **NOT DONE:** no SPEC/code edits yet — awaiting explicit
+"proceed". Three open questions remain (see RFC-005): keep Validate under autorun?; pin
+`==0.1.7` vs `>=0.1.7`?; docs-site tarball ref = vendored `file:` vs release-asset URL?
+**Design-review Q&A refinements (same session):** (a) the embed uses **sandbox** shell mode, which
+renders **no** Visual/JSON/Split view switcher — that switcher is COMPACT-mode only (sandbox
+`Toolbar` is called without `onView`, TransonEditor.tsx:165-172); so the kept toolbar controls in
+the embed are just Validate(?) + palette Search + Advanced toggle. (b) In sandbox the Generated-JSON
+panel is an ALWAYS-ON right-column panel (Examples ▸ JSON ▸ Input ▸ Output ▸ Files-when-present) —
+there is currently NO option to hide side PANELS (only toolbar actions), so hiding/omitting the JSON
+panel in the embed would be an ADDITIONAL editor capability (a further FR) → still OPEN.
+(c) rendered an inline mockup (first version wrongly drew a view switch; corrected per (a)).
+**Decisions folded into RFC-005 (2026-07-06):** the standalone docs⇄editor mode switcher is DROPPED
+as redundant (req 1) — enter via the per-example "Open in the editor" button, exit via a
+"← Back to docs" button placed FIRST in the editor toolbar (req 3). That is a NEW editor capability →
+**RFC-005 slice A3**: an optional host-provided leading toolbar action `onBack?()` + `backLabel?`
+(editor renders it first, invokes the host callback, does NO navigation itself — engine-free, AD-008);
+the peer-widen slice renumbered A3→A4; likely FR-135…137. **Validate RESOLVED (2026-07-06): hidden
+too** — redundant under autorun (engine runs continuously, errors surface live in Output), so the
+embed hides ALL SIX action buttons (`hideToolbarActions` = new/import/copy/download/validate/run).
+**ALL open questions resolved (2026-07-06); folded into RFC-005.** (1) JSON panel = EDITABLE
+(bidirectional, like the demo). (2) transon pin = FLOOR `>=0.1.7` (docs-site already floats to
+latest). (3) tarball = dev `file:`/link, production = URL to the GitHub RELEASE ASSET (version-tagged;
+CI builds+attaches on release). (4) out-of-surface examples: HOST provides the example list
+(`host.examples`) — editor asks the environment, no pre-filter; unsupported → normal error path.
+(5) palette chrome STRIPPED (no Search, no Advanced toggle) + advanced blocks ALWAYS shown → new
+slice **A5** (confirm/add an initial `showAdvanced:true` palette config; may be a tiny FR). Net: the
+embed toolbar is now ONLY "← Back to docs". (6) no blank-editor entry (per-example only). (7) UPGRADE
+PyScript to latest & reuse it → new slice **B0** (real migration: 2023.03.1 `<py-script>`/
+`pyscript.interpreter.globals` API differs from current PyScript; the `SharedPyScriptProvider`
+accessor + `transform()` bridge get re-pointed once the target version is chosen). (8) floor pin keeps
+docs rendering on latest transon (verify no regression). (9) verify no CSS bleed with docs-site
+Bootstrap 5.3. Part A now A1 autorun / A2 hide-actions / A3 onBack / A5 palette-advanced / A4
+peer-widen (likely FR-135…137+). **RFC RESTRUCTURED (2026-07-06, per user):** the RFC now leads with
+**Part 1 — SPEC alignment** (SPEC-first, land FIRST): a consolidated table of the new FRs (FR-α
+autorun→realizes NFR-027, FR-β hide-toolbar-actions, FR-γ leading onBack action, FR-δ conditional
+initial-palette-view) with exact SPEC homes (§7.14 + §12.3/§12.6/§12.9 notes), the NFR-027 dormant→
+realized flip, and cross-doc bookkeeping (traceability rows, id-ledger `--update`, SPEC v2.3→v2.4
+header bump, editor-react Changeset, explicit "no new AD / no metadata-contract change"). Parts
+renumbered: Part 2 editor impl (A1/A2/A3/A5/A4, test-first, minus the SPEC bullets now in Part 1),
+Part 3 docs-site (B0 PyScript upgrade → B1 floor → B2 glue → B3 provider → B4 wiring), Part 4
+packaging. Sequencing step 0 = land Part 1 before any code. **NOT DONE:** no SPEC/code yet — still
+awaiting "proceed"; best first VERIFY step = does the editor already support an initial
+advanced-palette config (A5 → decides whether FR-δ is needed) + the latest PyScript globals API (B0)._
 
 _**UAT round 3b — the splitter is now a true divider (2026-07-06, on `palette-flat-list`,
 UNCOMMITTED).** User follow-up: the panel resized but the CANVAS didn't follow. Cause: Blockly
@@ -764,6 +920,18 @@ living read of it.
   `ready`). **1551 tests**; all gates green. See **Last action**.
 
 ## Next steps (ordered)
+
+00. **Docs-site editor embedding — plan approved (RFC-005), implementation NOT started.** Full plan
+   in [`docs/proposals/rfc-005-docs-site-editor-embedding.md`](proposals/rfc-005-docs-site-editor-embedding.md).
+   Blocked on an explicit "proceed" from the user + the 3 open questions in the RFC
+   (Validate-under-autorun; `==` vs `>=` pin; tarball reference). When cleared, order:
+   **A1** SPEC FR + autorun (`autorun?` on `EditorControllerOptions`, realizes NFR-027; test-first)
+   → **A2** SPEC FR + `hideToolbarActions?` (hide ≠ disable; test-first) → **A3** widen editor-react
+   peer to `^18.0.0` + Changeset → **B** docs-site (`config.toml` pin, `script.py` glue +
+   `setrecursionlimit`, `SharedPyScriptProvider` with no-op dispose, App mode-switch/open/close +
+   `IExampleData→ExampleCase`) → **C** CI tarball-on-tag. Register A1/A2 IDs at true next-free,
+   coordinating with the RFC-003 P-E FR-135 reservation (§21.1). Both A-slices are UI-only (§21.12):
+   codec artifacts must stay byte-identical; run traceability + engine-parity gates.
 
 0a. **Land PR #4 (`recent-changes`)** — review fixes are committed and pushed; wait for
    CodeRabbit's re-review + CI, then merge. Two threads were intentionally not "fixed"

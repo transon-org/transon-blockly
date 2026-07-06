@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import type { ChangeEvent, JSX } from 'react';
 import { stableStringify, metadataVersion } from '@transon/editor-core';
 import type { EditorSession } from '../session/types.js';
-import type { EditorController } from '../session/controller.js';
+import type { EditorController, ToolbarActionId } from '../session/controller.js';
 import type { ExampleCase } from '../session/host.js';
 import { ERROR_CATEGORY } from '../session/errors.js';
 
@@ -335,6 +335,9 @@ export function Toolbar({
   showAdvanced = false,
   search = '',
   onPaletteView,
+  hideActions,
+  onBack,
+  backLabel = 'Back',
 }: {
   state: EditorSession;
   controller: EditorController | null;
@@ -345,9 +348,16 @@ export function Toolbar({
   search?: string;
   /** §12.6 palette view change (advanced toggle / search). */
   onPaletteView?(next: { showAdvanced: boolean; search: string }): void;
+  /** Toolbar actions to hide (FR-136): a hidden action is not rendered (vs read-only's disable). */
+  hideActions?: ToolbarActionId[];
+  /** Optional host leading action (FR-137): rendered FIRST, invokes the host callback. */
+  onBack?(): void;
+  backLabel?: string;
 }): JSX.Element {
   const ready = state.engine_runtime_status === 'ready';
   const hasTemplate = state.template_json != null;
+  // FR-136: a hidden action is omitted entirely (distinct from `readOnly`, which disables).
+  const hidden = new Set<ToolbarActionId>(hideActions);
 
   async function onImportFile(e: ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = e.target.files?.[0];
@@ -358,58 +368,81 @@ export function Toolbar({
 
   return (
     <div className="transon-toolbar" data-testid="toolbar" role="toolbar" aria-label="Editor actions">
-      <button
-        type="button"
-        data-testid="btn-new"
-        disabled={readOnly}
-        onClick={() => controller?.newWorkspace()}
-      >
-        New
-      </button>
-      {/* Import a Transon JSON file (FR-096/007) — routed through the strict §7.15 gate. */}
-      <label className="transon-import-label">
-        Import
-        <input
-          type="file"
-          className="transon-import-input"
-          data-testid="btn-import"
-          accept="application/json,.json"
+      {/* Optional host leading action (FR-137): rendered first; the editor does not navigate. */}
+      {onBack && (
+        <button
+          type="button"
+          data-testid="btn-back"
+          className="transon-back"
+          onClick={() => onBack()}
+        >
+          <span aria-hidden="true">←</span> {backLabel}
+        </button>
+      )}
+      {!hidden.has('new') && (
+        <button
+          type="button"
+          data-testid="btn-new"
           disabled={readOnly}
-          onChange={(e) => void onImportFile(e)}
-        />
-      </label>
-      <button
-        type="button"
-        data-testid="btn-copy"
-        disabled={!hasTemplate}
-        onClick={() => void controller?.copyTemplate()}
-      >
-        Copy
-      </button>
-      <button
-        type="button"
-        data-testid="btn-download"
-        disabled={!hasTemplate}
-        onClick={() => controller?.downloadTemplate()}
-      >
-        Download
-      </button>
-      <button
-        type="button"
-        data-testid="btn-validate"
-        disabled={!ready}
-        onClick={() => void controller?.validate()}
-      >
-        Validate
-      </button>
-      <button
-        type="button"
-        data-testid="btn-run"
-        disabled={!ready}
-        onClick={() => void controller?.run()}
-      >
-        Run
-      </button>
+          onClick={() => controller?.newWorkspace()}
+        >
+          New
+        </button>
+      )}
+      {/* Import a Transon JSON file (FR-096/007) — routed through the strict §7.15 gate. */}
+      {!hidden.has('import') && (
+        <label className="transon-import-label">
+          Import
+          <input
+            type="file"
+            className="transon-import-input"
+            data-testid="btn-import"
+            accept="application/json,.json"
+            disabled={readOnly}
+            onChange={(e) => void onImportFile(e)}
+          />
+        </label>
+      )}
+      {!hidden.has('copy') && (
+        <button
+          type="button"
+          data-testid="btn-copy"
+          disabled={!hasTemplate}
+          onClick={() => void controller?.copyTemplate()}
+        >
+          Copy
+        </button>
+      )}
+      {!hidden.has('download') && (
+        <button
+          type="button"
+          data-testid="btn-download"
+          disabled={!hasTemplate}
+          onClick={() => controller?.downloadTemplate()}
+        >
+          Download
+        </button>
+      )}
+      {!hidden.has('validate') && (
+        <button
+          type="button"
+          data-testid="btn-validate"
+          disabled={!ready}
+          onClick={() => void controller?.validate()}
+        >
+          Validate
+        </button>
+      )}
+      {!hidden.has('run') && (
+        <button
+          type="button"
+          data-testid="btn-run"
+          disabled={!ready}
+          onClick={() => void controller?.run()}
+        >
+          Run
+        </button>
+      )}
       {onView ? (
         <select
           data-testid="view-switch"

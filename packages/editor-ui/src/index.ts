@@ -40,8 +40,12 @@ export { buildExampleCorpus } from './session/examples.js';
 
 // ---- host boundary + controller (D2) ----
 export type { TransonEditorHost, ExampleCase, TransonTheme } from './session/host.js';
-export { createEditorController } from './session/controller.js';
-export type { EditorController, EditorControllerOptions } from './session/controller.js';
+export { createEditorController, TOOLBAR_ACTION_IDS } from './session/controller.js';
+export type {
+  EditorController,
+  EditorControllerOptions,
+  ToolbarActionId,
+} from './session/controller.js';
 
 // ---- interactive Blockly mount (D2) ----
 export { mountBlockly, ensureBlocklyReady, TRANSON_ROOT_CLASS } from './blockly/mount.js';
