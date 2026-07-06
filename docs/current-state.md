@@ -8,13 +8,32 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `f2831df` — docs(handoff): RFC-005 Part 2 complete; next = Part 3 docs-site |
+| Repo HEAD | `3b98738` — feat(editor-react): self-contained types + release-on-tag workflow (RFC-005 Part 4) |
 | Branch | `rfc-005-docs-site-embedding` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-005 Part 4 — packaging + release plumbing (2026-07-06, branch `rfc-005-docs-site-embedding`
+`3b98738`; docs-site `rfc-005-embed-editor` `ca04f3c`).** Made `@transon/editor-react` consumable
+without the internal packages: `vite-plugin-dts` `bundledPackages: [editor-ui, editor-core,
+editor-blockly]` inlines their types into the emitted `.d.ts` (was `import … from '@transon/editor-ui'`,
+unresolvable downstream), and the package index now exports the engine-port types a host implements
+(`EngineProvider`, `Json`, `ValidationResult`, `ExecutionResult`, `ToolbarActionId`). Verified the
+rebuilt `.d.ts` is self-contained (only the package-name string remains) → **removed the docs-site
+`src/transon-editor.d.ts` shim**; `EditorView`/`transonEngine` now import straight from
+`@transon/editor-react`, docs-site `tsc --noEmit` + `yarn build` both clean. Added
+`.github/workflows/release-editor-react.yml`: on a `v*` tag, `pnpm turbo run build --filter=@transon/
+editor-react` + `npm pack` → attach the tarball to the GitHub release via `gh` (SHA-pinned actions,
+`persist-credentials:false`, `contents:write`); `npm pack --dry-run` = `transon-editor-react-0.0.0.tgz`
+(dist only), YAML valid. **NOT triggered** — pushing the first `v*` tag (→ cut the release) is the
+remaining MAINTAINER step; after that the docs-site prod dep switches `file:` → the release-asset URL.
+**RFC-005 is now IMPLEMENTED end-to-end (Parts 1–4) except that one manual release step.** Nothing
+pushed; both branches local. **Next:** review/merge the two branches; cut a `v*` release to exercise
+the workflow, then flip the docs-site prod dep. (Minor nit noted, not fixed: the packed tarball
+includes `dist/tsconfig.tsbuildinfo` — harmless cruft; a `.npmignore`/files tweak could drop it.)_
 
 _**RFC-005 Part 3 COMPLETE + BROWSER-VERIFIED — docs-site embedding wired (2026-07-06, repo
 `../transon-org.github.io` branch `rfc-005-embed-editor`, commit `462184c`).** The docs-site now
