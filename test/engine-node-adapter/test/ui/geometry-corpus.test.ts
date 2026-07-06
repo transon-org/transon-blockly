@@ -23,6 +23,7 @@ import { encode } from '@transon/editor-core';
 import { mountBlockly, buildExampleCorpus, type TransonMount } from '@transon/editor-ui';
 import { GRID_UNIT } from '@transon/editor-ui';
 import { createNodeEngineProvider } from '../../src/index.js';
+import { NO_PALETTE } from './corpus-mount.js';
 
 // ---- jsdom polyfills (identical idiom to density-corpus.test.ts / editor-ui test/setup.ts) ----
 function polyfill(proto: object | undefined, name: string, impl: () => unknown): void {
@@ -209,11 +210,7 @@ describe('NFR-050 geometry invariants over the docs example corpus (§19.4)', ()
     'zero-gap stacking, shared left edge, no protrusion, and grid-quantized heights hold for every corpus example',
     async () => {
       const c = makeContainer();
-      // Empty palette: the §12.6 flat flyout renders EVERY palette block at mount (the old
-      // category toolbox rendered none until a category opened), which costs seconds of jsdom
-      // rendering this harness doesn't need — it measures CANVAS blocks only. An all-filtering
-      // search term keeps the mount cheap without touching what is measured.
-      const mount = mountBlockly(c, { view: { search: 'no-palette (harness measures canvas only)' } });
+      const mount = mountBlockly(c, NO_PALETTE); // cheap mount — see corpus-mount.ts
       const violations: string[] = [];
       try {
         for (const example of corpus) {

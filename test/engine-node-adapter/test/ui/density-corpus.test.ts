@@ -31,6 +31,7 @@ import type { EngineProvider, Json } from '@transon/editor-core';
 import { encode } from '@transon/editor-core';
 import { mountBlockly, buildExampleCorpus, type TransonMount } from '@transon/editor-ui';
 import { createNodeEngineProvider } from '../../src/index.js';
+import { NO_PALETTE } from './corpus-mount.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASELINE_PATH = join(
@@ -155,11 +156,6 @@ describe('NFR-049 density harness over the docs example corpus (§19.4, AC-041(d
   it('the corpus is non-empty (anti-truncation floor shared with examples-corpus.test.ts)', () => {
     expect(corpus.length).toBeGreaterThanOrEqual(121);
   });
-
-  // Both mounts use an empty palette (all-filtering search): the §12.6 flat flyout renders EVERY
-  // palette block at mount, costing seconds of jsdom rendering this harness doesn't need — it
-  // measures CANVAS blocks only (measure() reads the main workspace, never the flyout).
-  const NO_PALETTE = { view: { search: 'no-palette (harness measures canvas only)' } };
 
   it('a representative single-value-input rule block (set) renders at most 28px tall at 100% zoom', async () => {
     const c = makeContainer();
