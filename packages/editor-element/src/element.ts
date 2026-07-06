@@ -28,7 +28,7 @@ function parseMode(value: string | null): EditorMode {
 
 export class TransonEditorElement extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ['mode', 'marker', 'readonly'];
+    return ['mode', 'marker', 'readonly', 'autorun'];
   }
 
   /** Host config (engine, examples, metadata, includes) — set as a JS property; objects can't be
@@ -63,6 +63,7 @@ export class TransonEditorElement extends HTMLElement {
       host: marker ? { ...this.host, marker } : this.host,
       mode: parseMode(this.getAttribute('mode')),
       readOnly: this.hasAttribute('readonly'),
+      autorun: this.hasAttribute('autorun'), // FR-135 — re-run on every accepted change
       template: liveTemplate ?? parseAttr(this.getAttribute('template')),
       input: parseAttr(this.getAttribute('input')),
       // Re-emit the editor callbacks as DOM CustomEvents; the payloads travel in `event.detail`

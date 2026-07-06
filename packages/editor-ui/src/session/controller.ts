@@ -35,6 +35,10 @@ export interface EditorControllerOptions {
   confirmReplace?(): boolean;
   /** Forward-projection debounce (ms). Default 150. */
   debounceMs?: number;
+  /** Autorun (FR-135): when true, re-execute the template against the current sample input on every
+   *  accepted template change and on every sample-input change — debounced per NFR-027 — keeping the
+   *  Output panel live without an explicit Run. Gated on a ready engine + valid input (§10.4, §16.4). */
+  autorun?: boolean;
 }
 
 export interface EditorController {
@@ -210,6 +214,45 @@ export function createEditorController(
     }
   }
 
+  // Shared execution used by both the Run action and autorun (FR-135). §16.4 json_input: a bad
+  // sample input blocks execution (don't run on stale/last-valid input).
+  async function runExecution(): Promise<void> {
+    if (inputInvalid) {
+      store.setState({
+        execution_status: 'error',
+        errors: [{ code: 'json_input', message: 'Sample input is not valid JSON' }],
+      });
+      return;
+    }
+    const result = await executeTemplate(store, engine, marker, {
+      includeLoader: host.includeLoader,
+      includes: host.includes,
+    });
+    highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
+    if (result) opts.onExecute?.(result);
+  }
+
+  // Autorun (FR-135): re-execute whenever the execution inputs change — the generated template (set
+  // by project()) or the sample input (setInputText). Subscribing to the store keeps this at a
+  // single source; executeTemplate no-ops when gated (engine not ready / no template), and an
+  // execution only writes execution_*/errors (never template_json/sample_input_json), so there is no
+  // feedback loop. Debounced per NFR-027.
+  let autorunDebounced: { (): void; cancel(): void } | undefined;
+  let unsubscribeAutorun: (() => void) | undefined;
+  if (opts.autorun) {
+    autorunDebounced = debounce(() => void runExecution(), opts.debounceMs ?? 150);
+    let prevTemplate = store.getState().template_json;
+    let prevInput = store.getState().sample_input_json;
+    unsubscribeAutorun = store.subscribe((s) => {
+      if (disposed) return;
+      if (s.template_json !== prevTemplate || s.sample_input_json !== prevInput) {
+        prevTemplate = s.template_json;
+        prevInput = s.sample_input_json;
+        autorunDebounced!();
+      }
+    });
+  }
+
   return {
     store,
     getTemplate: () => store.getState().template_json,
@@ -324,27 +367,14 @@ export function createEditorController(
       highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
       if (result) opts.onValidate?.(result);
     },
-    async run() {
-      // §16.4 json_input: a bad sample input blocks execution (don't run on stale/last-valid input).
-      if (inputInvalid) {
-        store.setState({
-          execution_status: 'error',
-          errors: [{ code: 'json_input', message: 'Sample input is not valid JSON' }],
-        });
-        return;
-      }
-      const result = await executeTemplate(store, engine, marker, {
-        includeLoader: host.includeLoader,
-        includes: host.includes,
-      });
-      highlightErrors(mount.workspace, store.getState().block_map, store.getState().errors);
-      if (result) opts.onExecute?.(result);
-    },
+    run: runExecution,
     dispose() {
       disposed = true;
       if (statusTimer) clearTimeout(statusTimer);
       debouncedProject.cancel();
       debouncedReverse.cancel();
+      autorunDebounced?.cancel();
+      unsubscribeAutorun?.();
       mount.dispose();
     },
   };
