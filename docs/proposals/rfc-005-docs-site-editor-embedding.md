@@ -5,8 +5,9 @@
   options test-first (A1–A5); Part 3 wired the docs-site (`transon-org.github.io` branch
   `rfc-005-embed-editor`) and is **browser-verified** — PyScript upgraded 2023.03.1→2026.3.1, docs
   still render on engine 0.1.7, opening an example mounts the editor with a single "← Back to docs"
-  toolbar and autorun output. Remaining: **Part 4** (CI tarball-on-tag + docs-site release-asset
-  dep) and the **self-contained editor-react types** follow-up (below).
+  toolbar and autorun output. **Part 4 mostly done:** self-contained editor-react types shipped (shim
+  removed) + release-on-tag workflow added; the only remaining maintainer step is cutting the first
+  `v*` release, after which the docs-site prod dep switches `file:` → the release-asset URL.
 - **Type:** Cross-repo integration + a small set of **additive embedding options** on the editor.
   **No new `AD-*`; no projection/surface/round-trip semantics change** (§21.12 — codec artifacts
   stay byte-identical). The new behavior lands **SPEC-first** as append-only FRs (§21.2/§21.1);
@@ -255,12 +256,19 @@ A thin `EngineProvider` (a variant of
 - **docs-site — production:** depend on the **URL to the GitHub release asset** for the tagged
   version (`yarn add https://github.com/.../releases/download/v<x.y.z>/transon-editor-react-<x.y.z>.tgz`),
   so the deployed build is reproducible and versioned.
-- **Self-contained editor-react types (follow-up, found in Part 3).** `@transon/editor-react`'s
-  generated `.d.ts` still *imports type names* from the bundled-but-unpublished `@transon/editor-ui`
-  / `@transon/editor-core`, so a consumer can't resolve the editor's prop types. Part 3 worked
-  around it with a local `src/transon-editor.d.ts` shim in the docs-site. The real fix: make
-  `vite-plugin-dts` inline those types (`bundledPackages`/api-extractor) so the package ships
-  self-contained types — do this with Part 4's packaging work.
+- **Self-contained editor-react types — DONE (Part 4).** `@transon/editor-react`'s generated `.d.ts`
+  used to *import type names* from the bundled-but-unpublished `@transon/editor-ui` /
+  `@transon/editor-core`. Fixed by adding `bundledPackages: ['@transon/editor-ui',
+  '@transon/editor-core', '@transon/editor-blockly']` to the `vite-plugin-dts` config (api-extractor
+  inlines them) and exporting the engine-port types (`EngineProvider`, `Json`, `ValidationResult`,
+  `ExecutionResult`, `ToolbarActionId`) from the package index — a host implementing the port needs
+  them. The docs-site's `src/transon-editor.d.ts` shim was **removed**; it now imports the editor's
+  types straight from `@transon/editor-react` and typechecks clean.
+- **Release workflow — ADDED (Part 4).** `.github/workflows/release-editor-react.yml`: on a `v*`
+  tag, `pnpm turbo run build --filter=@transon/editor-react` + `npm pack`, attach the `.tgz` to the
+  GitHub release (`gh release`). **Not yet triggered** — cutting the first release (push a `v*` tag)
+  is the remaining maintainer step; the docs-site prod dep switches `file:` → the release-asset URL
+  once that release exists.
 
 ## Why the Pyodide-cost concern is largely moot
 

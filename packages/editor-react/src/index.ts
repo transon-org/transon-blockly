@@ -19,4 +19,14 @@ export type {
   EditorController,
   TransonTheme,
   ToolboxCategoryConfig,
+  ToolbarActionId,
 } from '@transon/editor-ui';
+
+// Engine-port types (AD-008): a host implements `EngineProvider` to supply the runtime; the
+// validation/execution result shapes and `Json` type it returns are part of that contract.
+export type {
+  EngineProvider,
+  Json,
+  ValidationResult,
+  ExecutionResult,
+} from '@transon/editor-core';
