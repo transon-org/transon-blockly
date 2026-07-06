@@ -338,6 +338,26 @@ the `this` value passed into the include (build a `{…}` context object at the 
 inside the fragment). Reading a parent-scope variable across the include yields `NoContent`. This
 constrains how the staged generators (§5.5) and the runtime codec thread context through fragments.
 
-**Host recursion ceiling.** The codec's effective recursion depth is host-stack-bound (~25 levels),
-below the engine's `max_include_depth` (default 50); deep nesting beyond that should fail cleanly
-with an `include_loader` error (`SPEC.md` §16.4), not a raw stack overflow.
+**Host recursion ceiling (RFC-004, AD-035).** The codec's effective recursion depth is
+host-stack-bound. Two host-side prerequisites let the editor open **every committed projection
+generator and artifact** (AC-042):
+
+- **Engine ≥ 0.1.7** (engine SPEC §4.6 "Recursion budget", engine Roadmap R-32: one core stack
+  frame per template-nesting level, no `walk`/`_walk` doubling) — pinned by the committed
+  `metadata-snapshot.json`, enforced by the engine-parity gate, and tracked by the reference
+  host's `PINNED_ENGINE_VERSION`.
+- **A host recursion budget of 1400 frames** (`sys.setrecursionlimit(max(current, 1400))` — the
+  Node adapter's `runner.py` and the Pyodide glue both set it): the deepest committed file
+  (`G_encode`, structural depth 41) walks rule-dense and needs include depth **52** with a peak
+  of **~1113 Python frames**, above the default 1000 limit. Structural depth is only a *lower
+  bound* on the include depth a document needs (~2 include levels per rule node).
+
+Under both, the editor caps codec runs at `CODEC_MAX_INCLUDE_DEPTH = 55` (≥ 52 with margin), and
+the literal-nesting stack wall (~68 at the 1400 budget) stays **above** the ceiling — so ordinary
+deep nesting trips the engine's clean `include` depth-limit guard first. Nesting beyond the
+ceiling fails cleanly as `runtime_transformation` (`SPEC.md` §16.4) — a codec/runtime limit,
+never `import_unsupported`; this holds whichever limit trips first: the engine's depth-limit
+guard *or* a host recursion overflow caught at the `EngineProvider` boundary (possible only for
+pathological rule-per-level nesting, a shape no committed codec file has). On hosts missing
+either prerequisite (older engine, or a constrained interpreter that cannot honor the budget) the
+legacy cap 25 is the safe value.

@@ -7,8 +7,9 @@
 import type { EngineProvider, ExecutionResult, Json, ValidationResult } from '@transon/editor-core';
 import { GLUE_PY } from './glue.js';
 
-/** The engine version this reference host pins, matching docs/metadata-snapshot.md (AD-025). */
-export const PINNED_ENGINE_VERSION = '0.1.6';
+/** The engine version this reference host pins, matching docs/metadata-snapshot.md (AD-025).
+ *  ≥ 0.1.7 is REQUIRED by the codec depth ceiling (R-32 recursion budget, AD-035/RFC-004). */
+export const PINNED_ENGINE_VERSION = '0.1.7';
 
 /** A pinned Pyodide build (the editor ships no engine; this loads it at runtime, AD-008). */
 export const PYODIDE_VERSION = 'v0.28.3';
@@ -123,6 +124,9 @@ export function createPyodideHost(opts: PyodideHostOptions = {}): EngineProvider
         o.marker,
         JSON.stringify(o.includes ?? {}),
         jsLoader,
+        // Codec include ceiling (CODEC_MAX_INCLUDE_DEPTH, §6.5/AD-035) — was silently dropped
+        // before RFC-004, leaving the browser host on the engine default (50).
+        o.maxIncludeDepth ?? null,
       ) as string;
       const parsed = JSON.parse(out) as ExecutionResult & { files_written?: Record<string, Json> };
       // The Python glue emits snake_case `files_written`; the port uses camelCase `filesWritten`.

@@ -8,13 +8,44 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `d041aa8` — Merge pull request #7 from transon-org/m6-canvas-density |
-| Branch | `mutator-controls-inline` |
-| Engine pin | transon `v0.1.6 (pip wheel)` @ `unknown` (see [metadata-snapshot.md](metadata-snapshot.md)) |
+| Repo HEAD | `b514caf` — Merge pull request #8 from transon-org/mutator-controls-inline |
+| Branch | `main` |
+| Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-004 IMPLEMENTED — full self-hosting (AC-042): all 9 committed codec files open + round-trip
+(2026-07-06, on `main`, UNCOMMITTED; `round-trip-reviewer` pass in flight).** Goal (user): every
+file in `packages/editor-core/src/codec/generators/` + `…/artifacts/` opens in the editor. Root
+cause chain (this session): the "max recursion" failure was CPython's 1000-frame wall, not
+`max_include_depth`; the engine's `walk`/`_walk` doubling was fixed as **transon v0.1.7 R-32**
+(engine proposal + SPEC §4.6 invariant + regression tests, landed by maintainer, on PyPI).
+**Mid-implementation correction (red test caught it):** the draft's cap-only pre-verification had
+measured the walk WITHOUT marker substitution (G_encode's `$`-nodes walked as literals) — truly,
+G_encode needs include depth **52**, peak **~1113 frames** > default limit, so no cap alone works.
+Maintainer ratified the revision: **cap 25→55** (`CODEC_MAX_INCLUDE_DEPTH`, exported from
+editor-core) + **host recursion budget 1400** (`runner.py` + Pyodide `glue.ts`,
+`setrecursionlimit(max(cur,1400))`) + engine floor ≥ 0.1.7 (snapshot re-pin; reference-host
+`PINNED_ENGINE_VERSION` 0.1.6→0.1.7, smoke test now asserts against the snapshot). Also fixed a
+**latent browser bug found during §19.4 verification**: the Pyodide provider silently dropped
+`maxIncludeDepth` (browser ran at engine default 50) — glue + provider now forward it
+(provider.test.ts asserts). `codecErrorCode` maps caught RecursionError → `runtime_transformation`
+(new `packages/editor-ui/test/errors.test.ts`); selfhosting.test.ts rewritten red-first (all 9
+files accepted + regenerated identically, past-ceiling clean failure, depth lower-bound pin);
+M1 `ceiling.test.ts` rebased onto the constant. **Browser-verified (§19.4, real Pyodide):** engine
+0.1.7 ready, G_encode → 333 blocks + `in_sync` + round-trip identical; nest(70) → clean "include
+depth limit (55)" Runtime error. Docs synced: SPEC v2.3/AC-042/§16.4, AD-035, metadata-contract
+§6.5, traceability (AC-042 [x]), RFC-004 marked IMPLEMENTED with the revision recorded. Gates
+green: turbo build+test+typecheck 13/13, traceability, engine-parity, snapshot `--check`; codec
+artifacts byte-unchanged. **`round-trip-reviewer` verdict: READY TO MERGE, no 🔴** — it
+independently re-probed the RecursionError path in both hosts (no uncaught escape; subprocess
+rc=0), confirmed taxonomy/coherence/test integrity, and flagged 2 🟡 doc-integrity nits (stale
+`45` in two new test comments; the `## Use-case coverage (§5)` heading swallowed by the AC-042
+row insertion) — **both fixed**, touched tests + traceability re-green. **Next:** commit (single
+change per §21 loop; awaiting maintainer go) → consider engine R-33 (engine-side RecursionError→
+TransformationError) as the deferred follow-up._
 
 _**Mutator +/- controls inlined into the title row, button-styled (2026-07-05, branch
 `mutator-controls-inline` off `m6-canvas-density`).** User-requested UX change: the array/object

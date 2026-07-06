@@ -1,6 +1,18 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 2.2 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-05
+> **Version:** 2.3 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-06
+
+> **v2.3 — codec depth ceiling raise: full self-hosting (RFC-004).** Adds **AC-042**: *every*
+> committed codec generator and artifact opens in-surface and round-trips in the running editor —
+> making **FR-121** fully true (AC-036's "at least one" bar had left the deepest generators,
+> `G_encode`/`G_decode`, un-openable as a documented D5 limitation). Enabled by the engine's R-32
+> recursion-budget fix (**engine floor ≥ 0.1.7**, pinned via `metadata-snapshot.json` + the parity
+> gate) plus a **host recursion budget of 1400 frames** in the reference hosts (the deepest
+> generator's walk peaks at ~1113 frames — above the default interpreter limit): the codec
+> ceiling rises 25 → 55 (`metadata-contract.md` §6.5, AD-035). §16.4 gains the clarification that
+> a host recursion overflow during codec execution maps to `runtime_transformation` (a runtime
+> limit), never `import_unsupported`. Codec artifacts are byte-unchanged; surface (§15.7) and
+> round-trip (AD-004) semantics are untouched.
 
 > **v2.2 — renderer geometry invariants (M6 hardening).** Adds **NFR-050** (§8.5): the rendered
 > block geometry must satisfy checkable invariants — zero-gap statement stacking with a shared
@@ -1588,6 +1600,12 @@ The single canonical error taxonomy. FR-095 (error display) and §17 reference t
 
 Captured `file` writes (§16.5) are a side-effect result, not an error category.
 
+Depth/recursion limits during **codec execution** are runtime limits, not surface violations
+(RFC-004): whether the engine's `include` depth-limit guard trips or a host recursion overflow is
+caught at the `EngineProvider` boundary, the failure maps to `runtime_transformation` — never
+`import_unsupported` — so a legitimately deep template is reported as hitting a limit, not
+mislabelled "Unsupported template" (`metadata-contract.md` §6.5, AD-035).
+
 ### 16.5 Captured File Writes
 
 When preview execution uses the `file` rule: no local file is written; output includes captured
@@ -1843,6 +1861,15 @@ Version 1 is acceptable when all criteria below are met.
   committed codec artifacts' regeneration gate stay green (`G_palette` regenerates byte-equal to
   its committed artifact after the label change — AD-030). Verified deterministically (jsdom)
   and visually in a real browser (§19.4).
+- **AC-042 — Full self-hosting: every committed codec file opens (RFC-004).** Every file in
+  `packages/editor-core/src/codec/generators/` (`G_encode`, `G_decode`, `G_palette`, `G_toolbox`)
+  and `packages/editor-core/src/codec/artifacts/` (`encoder`, `decoder`, `blockmap`, `palette`,
+  `toolbox`) is accepted by the §7.15 import gate as an in-surface Transon template and
+  round-trips to identity through the running editor (forward projection regenerates the exact
+  document). This closes FR-121's documented D5 gap (the deepest generators previously exceeded
+  the recursion ceiling) and strengthens AC-036's "at least one" to *all*. Requires the engine
+  recursion budget (engine ≥ 0.1.7, R-32) and the reference hosts' 1400-frame recursion budget;
+  ceiling, floor, and budget are normative in `metadata-contract.md` §6.5 (AD-035).
 
 ---
 

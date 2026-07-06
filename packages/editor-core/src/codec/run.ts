@@ -19,13 +19,23 @@ import blockmapArtifact from './artifacts/blockmap.json' with { type: 'json' };
 export const CODEC_MARKER = '$';
 
 /**
- * The codec's `include`-recursion ceiling (§6.5, §16.4). The codec walks the document by
- * self-`include`; that recursion is host-stack-bound and overflows the host stack a little
- * below the engine default `max_include_depth` (50). We cap it well under that observed
- * host limit so deeply nested input fails cleanly with an engine depth error (surfaced as a
- * `CodecError`) instead of a raw stack overflow.
+ * The codec's `include`-recursion ceiling (metadata-contract §6.5, SPEC §16.4, AD-035/RFC-004).
+ * The codec walks the document by self-`include`; that recursion is host-stack-bound. Opening
+ * every committed codec generator and artifact (AC-042) requires clearing `G_encode`, whose
+ * rule-dense walk needs include depth 52 and peaks at ~1113 Python frames (measured, engine
+ * 0.1.7) — above CPython's default 1000-frame recursion limit. The ceiling therefore comes with
+ * TWO host-side prerequisites, both enforced as data/contract (never bundled, AD-008):
+ *   - engine ≥ 0.1.7 (R-32 per-level recursion budget), pinned by `metadata-snapshot.json` +
+ *     the parity gate;
+ *   - the reference hosts raise the interpreter recursion limit to HOST_RECURSION_LIMIT = 1400
+ *     (Node `runner.py`; Pyodide glue — browser-verified), giving ~290 frames of headroom over
+ *     the deepest committed file while the literal-nesting wall (~68 at 1400) stays ABOVE this
+ *     ceiling, so ordinary deep nesting still trips the engine's clean depth-limit guard first.
+ * Past the ceiling: the guard's `TransformationError` ("depth limit") — or, for a pathological
+ * rule-per-level document, a host recursion overflow caught at the `EngineProvider` boundary —
+ * both map to `runtime_transformation`, never `import_unsupported` (§16.4, AD-035).
  */
-export const CODEC_MAX_INCLUDE_DEPTH = 25;
+export const CODEC_MAX_INCLUDE_DEPTH = 55;
 
 interface Artifact {
   entry: string;

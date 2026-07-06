@@ -70,16 +70,21 @@ export function engineErrorCode(
  * codec failures during the forward projection are `editor_internal` (the codec is generated and
  * should not fail on in-surface input — a failure there is an editor/codec defect, not user error).
  *
- * The host-stack recursion ceiling (§6.5: a template too deeply nested for the codec, e.g. the
- * editor's own `G_encode`/`G_decode` generators) raises an engine `TransformationError` — that is a
- * codec/runtime LIMIT, not an out-of-surface (§15.7) violation, so it is mapped to
- * `runtime_transformation`, never `import_unsupported`. Otherwise a legitimately deep template would
- * be mislabelled "Unsupported template".
+ * Depth/recursion limits during codec execution are runtime LIMITS, not out-of-surface (§15.7)
+ * violations (§16.4, AD-035/RFC-004), so both are mapped to `runtime_transformation`, never
+ * `import_unsupported` — otherwise a legitimately deep template would be mislabelled
+ * "Unsupported template". Two limits can trip (metadata-contract §6.5):
+ *   - the engine's `include` depth-limit guard (`CODEC_MAX_INCLUDE_DEPTH`) — a clean engine
+ *     `TransformationError` whose message says "depth limit";
+ *   - the host call stack, for a pathological rule-per-level document — a raw recursion overflow
+ *     (Python `RecursionError`, "maximum recursion depth exceeded") caught at the
+ *     `EngineProvider` boundary and carried on the CodecError's errorType/message.
  */
 export function codecErrorCode(err: CodecError, phase: 'forward' | 'reverse'): ErrorCode {
   const t = (err.errorType ?? '').toLowerCase();
   const m = (err.message ?? '').toLowerCase();
   if (t.includes('include') || m.includes('include not resolvable')) return 'include_loader';
   if (m.includes('depth limit')) return 'runtime_transformation';
+  if (t.includes('recursion') || m.includes('maximum recursion depth')) return 'runtime_transformation';
   return phase === 'reverse' ? 'import_unsupported' : 'editor_internal';
 }

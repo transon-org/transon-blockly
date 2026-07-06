@@ -20,7 +20,7 @@ function fakePyodide(): FakePy {
         ? JSON.stringify({ status: 'ok', valid: false, error_type: 'DefinitionError', error_message: 'nope' })
         : JSON.stringify({ status: 'ok', valid: true });
     },
-    transon_transform(templateStr, inputStr, marker, includesStr, jsLoader) {
+    transon_transform(templateStr, inputStr, marker, includesStr, jsLoader, maxIncludeDepth) {
       expect(typeof inputStr).toBe('string');
       const input = JSON.parse(inputStr as string) as unknown;
       // exercise the dynamic include callback if present; the glue passes a JS callback that returns
@@ -33,7 +33,8 @@ function fakePyodide(): FakePy {
       return JSON.stringify({
         status: 'ok',
         success: true,
-        output: { input, resolved },
+        // echo maxIncludeDepth so tests can assert the §6.5 ceiling crosses the boundary (AD-035)
+        output: { input, resolved, maxIncludeDepth: maxIncludeDepth ?? null },
         files_written: { 'f.txt': 'x' },
       });
     },
@@ -94,6 +95,17 @@ describe('Pyodide reference host (AD-025, §5.9)', () => {
     // the dynamic include callback was invoked across the boundary (§16.6)
     expect(includeLoader).toHaveBeenCalledWith('Frag');
     expect(res.output).toMatchObject({ input: { a: 1 }, resolved: { resolvedFor: 'Frag' } });
+  });
+
+  it('transform forwards the codec include ceiling across the boundary (§6.5, AD-035/RFC-004)', async () => {
+    // Was silently dropped pre-RFC-004, leaving the browser host on the engine default (50) —
+    // found by the in-browser AC-042 verification (G_encode rejected at "depth limit (50)").
+    const host = createPyodideHost({ loadPyodide: async () => fakePyodide() });
+    await host.init();
+    const withCap = await host.transform({ $: 'this' }, 1, { marker: '$', maxIncludeDepth: 55 });
+    expect(withCap.output).toMatchObject({ maxIncludeDepth: 55 });
+    const withoutCap = await host.transform({ $: 'this' }, 1, { marker: '$' });
+    expect(withoutCap.output).toMatchObject({ maxIncludeDepth: null });
   });
 
   it('version proxies engine + metadata', async () => {
