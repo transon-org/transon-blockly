@@ -36,6 +36,14 @@ export interface EditorControllerOptions {
   onBack?(): void;
   /** Label for the `onBack` leading action (default `"Back"`). */
   backLabel?: string;
+  /** Initial palette view (FR-138): open in this progressive-disclosure state (advanced-blocks
+   *  shown + search seed) instead of the default, so an embed can present all blocks with the
+   *  palette search/advanced chrome omitted (§12.6). */
+  paletteView?: ToolboxView;
+  /** Omit the palette search box + advanced-blocks toggle from the toolbar (FR-138): pair with
+   *  `paletteView:{showAdvanced:true}` for an embed that shows all blocks with no palette chrome.
+   *  Consumed by the React shell (`<TransonEditor>`), not the controller itself. */
+  hidePaletteControls?: boolean;
   /** Fired with the current generated template after each projection (FR-104). */
   onChange?(template: Json | null): void;
   /** Fired with the engine's `ValidationResult` after Validate (ARCHITECTURE §5.3, FR-011/105). */
@@ -131,6 +139,7 @@ export function createEditorController(
   const mount: TransonMount = mountBlockly(container, {
     readOnly,
     categories: host.categories,
+    view: opts.paletteView, // FR-138: open in the seeded palette view (advanced-shown / search)
     onWorkspaceChange: () => debouncedProject(),
   });
 

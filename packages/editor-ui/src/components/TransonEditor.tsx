@@ -58,14 +58,19 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
   const bodyRef = useRef<HTMLDivElement>(null);
   const sideRef = useRef<HTMLDivElement>(null);
   const [sideWidth, setSideWidth] = useState<SideWidth | null>(null);
-  const [palette, setPalette] = useState<{ showAdvanced: boolean; search: string }>({
-    showAdvanced: false,
-    search: '',
-  });
+  // Seed the palette view from props (FR-138) so the toolbar toggle/search reflect the initial
+  // state the controller also injects into the mounted toolbox.
+  const [palette, setPalette] = useState<{ showAdvanced: boolean; search: string }>(() => ({
+    showAdvanced: props.paletteView?.showAdvanced ?? false,
+    search: props.paletteView?.search ?? '',
+  }));
   const onPaletteView = (next: { showAdvanced: boolean; search: string }): void => {
     setPalette(next);
     controllerRef.current?.setPaletteView(next);
   };
+  // FR-138: when the embed omits the palette chrome, don't wire the toolbar controls at all (the
+  // Toolbar renders the search/advanced toggle only when it receives an onPaletteView handler).
+  const paletteHandler = props.hidePaletteControls ? undefined : onPaletteView;
 
   useEffect(() => {
     const c = createEditorController(canvasRef.current!, props);
@@ -136,7 +141,7 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
           readOnly={readOnly}
           showAdvanced={palette.showAdvanced}
           search={palette.search}
-          onPaletteView={onPaletteView}
+          onPaletteView={paletteHandler}
           hideActions={props.hideToolbarActions}
           onBack={props.onBack}
           backLabel={props.backLabel}
@@ -171,7 +176,7 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
         readOnly={readOnly}
         showAdvanced={palette.showAdvanced}
         search={palette.search}
-        onPaletteView={onPaletteView}
+        onPaletteView={paletteHandler}
         hideActions={props.hideToolbarActions}
         onBack={props.onBack}
         backLabel={props.backLabel}

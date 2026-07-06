@@ -47,7 +47,16 @@ function parseMode(value: string | null): EditorMode {
 
 export class TransonEditorElement extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ['mode', 'marker', 'readonly', 'autorun', 'hide-actions', 'back-label'];
+    return [
+      'mode',
+      'marker',
+      'readonly',
+      'autorun',
+      'hide-actions',
+      'back-label',
+      'show-advanced',
+      'hide-palette-controls',
+    ];
   }
 
   /** Host config (engine, examples, metadata, includes) — set as a JS property; objects can't be
@@ -87,6 +96,9 @@ export class TransonEditorElement extends HTMLElement {
       readOnly: this.hasAttribute('readonly'),
       autorun: this.hasAttribute('autorun'), // FR-135 — re-run on every accepted change
       hideToolbarActions: parseHideActions(this.getAttribute('hide-actions')), // FR-136
+      // FR-138: open with advanced blocks shown (embed presents all blocks, no toggle/search chrome).
+      paletteView: this.hasAttribute('show-advanced') ? { showAdvanced: true } : undefined,
+      hidePaletteControls: this.hasAttribute('hide-palette-controls'),
       ...(backLabel != null
         ? { backLabel: backLabel || undefined, onBack: () => this.dispatchEvent(new CustomEvent('back')) }
         : {}),
