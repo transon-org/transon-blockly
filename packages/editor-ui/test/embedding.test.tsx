@@ -6,6 +6,7 @@ import { TransonEditor } from '../src/components/TransonEditor.js';
 import { createEditorController } from '../src/session/controller.js';
 import { mountBlockly } from '../src/blockly/mount.js';
 import { createFakeEngine } from './fake-engine.js';
+import { categoryNames } from './helpers/palette.js';
 
 function container(): HTMLElement {
   const c = document.createElement('div');
@@ -78,15 +79,6 @@ describe('theming hooks (FR-108/FR-128)', () => {
 });
 
 describe('configurable categories reach the mount (FR-109)', () => {
-  /** Read the injected toolbox's category names via Blockly's toolbox API. */
-  function categoryNames(ws: unknown): string[] {
-    const tb = (ws as { getToolbox?(): unknown }).getToolbox?.() as
-      | { getToolboxItems?(): Array<{ getName?(): string }> }
-      | null;
-    const items = tb?.getToolboxItems?.() ?? [];
-    return items.map((i) => i.getName?.()).filter((n): n is string => typeof n === 'string');
-  }
-
   it('injects the configured category set, hiding configured categories', () => {
     // 'Data Access' is a non-advanced category (attr), present in the default view.
     const c = container();

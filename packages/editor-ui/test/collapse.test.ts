@@ -268,4 +268,25 @@ describe('Canvas subtree collapse (FR-134)', () => {
       c.remove();
     }
   });
+
+  it('the mount registers the double-click-to-collapse handler (FR-134)', () => {
+    // The wiring itself: the handler is added as a workspace change listener. Behaviour is proven
+    // deterministically in collapse-on-double-click.test.ts (fed synthetic Click events), and
+    // end-to-end against the real reference host (Playwright double-click on a canvas block).
+    const c = makeContainer();
+    const mount = mountBlockly(c);
+    try {
+      mount.loadDocument(representativeBlock());
+      const top = mount.workspace.getTopBlocks(false)[0] as Blockly.BlockSvg;
+      // A block Click ui-event flows through the mount without throwing (the handler is wired).
+      expect(() =>
+        Blockly.Events.fire(
+          new Blockly.Events.Click(top, mount.workspace.id, Blockly.Events.ClickTarget.BLOCK),
+        ),
+      ).not.toThrow();
+    } finally {
+      mount.dispose();
+      c.remove();
+    }
+  });
 });

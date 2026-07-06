@@ -744,10 +744,12 @@ all state they introduce is UI-only per the §11.5 canonical list (which already
   **minimap** overview (OQ-020), and pan/scroll (drag + scrollbars + wheel). Zoom and scroll
   position are UI-only state (§11.5) and never appear in the exported template (§11.6).
 - **FR-134** The canvas shall support **collapsing and expanding any block subtree** (context
-  menu). A collapsed block shows its block label with an ellipsis cue, and its **full subtree
-  remains in the workspace serialization and the generated JSON unchanged** — collapse is UI-only
-  state (§11.5) with no codec or round-trip effect. Custom fields and mutator controls
-  (`ARCHITECTURE.md` AD-031) must render sanely in the collapsed state.
+  menu, or by **double-clicking the block** — ratified 2026-07-06; the double-click is ignored on
+  an editable field or image field so those keep their own behavior). A collapsed block shows its
+  block label with an ellipsis cue, and its **full subtree remains in the workspace serialization
+  and the generated JSON unchanged** — collapse is UI-only state (§11.5) with no codec or
+  round-trip effect. Custom fields and mutator controls (`ARCHITECTURE.md` AD-031) must render
+  sanely in the collapsed state.
 
 ---
 
@@ -1120,6 +1122,17 @@ and run/validate controls. This is the canonical panel set referenced by FR-002,
 The "Files produced" panel is shown when a template can emit `file` writes; it may be collapsed
 or hidden when empty.
 
+**Side-panel resizing (ratified 2026-07-06).** The side panel column is horizontally resizable
+via a splitter between the canvas and the panel stack, bounded to **50%–200% of its default
+width** (the stylesheet default `clamp(320px, 34%, 460px)`), additionally capped so the canvas
+column keeps a usable floor. The splitter is keyboard-operable (ARIA `separator` pattern:
+focusable, `aria-valuemin/max/now` as % of the default width, arrow keys step, Home/End jump to
+the bounds, Enter/double-click resets to the default). The splitter behaves as a true divider: the
+canvas column takes up the remaining width and the Blockly workspace **re-measures live** as the
+divider moves (container-level resizes are forwarded to the workspace — Blockly only re-measures
+on window resize by itself). The chosen width is UI-only session state (§11.5) — never part of
+the exported template. In the single-column responsive layout the splitter is inert/hidden.
+
 ### 12.2 Compact Embedded Editor Mode
 
 The embeddable visual editor experience: toolbar plus palette + canvas, with an optional
@@ -1187,6 +1200,21 @@ Because per-shape variants enlarge the palette, palette size is managed (OQ-009)
 categories (§12.4), a palette search/filter, an advanced-blocks toggle, and the flyout's clear
 dual labels (§12.5, OQ-018) — a clearer palette is preferred over hidden mode dropdowns
 (NFR-012, AD-015).
+
+**Palette presentation (ratified 2026-07-06).** The palette renders as a single always-visible
+scrolling list (Blockly `flyoutToolbox`) with the §12.4 categories appearing as inline divider
+labels — not a category column with a per-category pop-out flyout. Rationale: the palette is
+small (few blocks overall, few per category), and the editor chrome (side panels, minimap, zoom
+controls) already competes with the canvas for space, so the category column and pop-out overlay
+buy no navigation value for their footprint. The flat list is **derived mechanically** from the
+committed `categoryToolbox` (§12.4 order; each category → divider label + its contents) as a pure
+view — the committed artifact and its projections are unchanged (AD-030, FR-127), and FR-109
+category config plus the §12.6 search/advanced filters apply before flattening. Palette blocks
+render at a **fixed scale, independent of canvas zoom** — canvas zoom is UI-only viewport state
+(§11.5) and must not resize the palette. Palette blocks show the **pristine block shape**: the
+structural +/- controls (§13.13, AC-038) appear only on canvas blocks — mutating a palette
+specimen is meaningless (the canvas copy is a fresh block) and a grown specimen would overlap its
+flyout neighbours.
 
 ### 12.7 Generated JSON Panel
 

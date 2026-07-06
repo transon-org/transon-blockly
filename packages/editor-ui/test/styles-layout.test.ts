@@ -53,10 +53,45 @@ describe('scoped stylesheet lays out the shell, not just theme (§12.1, FR-002)'
     const d = decls('.transon-editor-shell .transon-side-col');
     expect(d).toMatch(/flex-direction:\s*column/);
     expect(d).toMatch(/overflow:/);
+    // §12.1 canvas floor under container narrowing: max-width beats a splitter-set flex-basis,
+    // so a later host resize can never squeeze the canvas below its usable floor.
+    expect(d).toMatch(/max-width:\s*calc\(100% - \d+px\)/);
   });
 
   it('degrades to a single column on a narrow container (NFR-025 responsive)', () => {
     expect(TRANSON_CSS).toMatch(/@media[^{]*max-width[^{]*\{/);
+  });
+
+  it('chrome form controls share the shell font (no per-UA control typography) (§12.3, NFR-025)', () => {
+    // A <select> and a <button> get different UA default fonts/sizes; unnormalized they read as
+    // random thicknesses in the toolbar/panels. The shell normalizes typography (an explicit
+    // fixed height was tried and rejected — intrinsic sizing from a shared font is enough).
+    for (const sel of [
+      '.transon-editor-shell button',
+      '.transon-editor-shell select',
+      '.transon-editor-shell input[type="search"]',
+      '.transon-editor-shell input[type="file"]',
+    ]) {
+      const body = decls(sel);
+      expect(body, `${sel} must inherit the shell font`).toMatch(/font:\s*inherit/);
+      expect(body, `${sel} must pin one font-size`).toMatch(/font-size:\s*\d+px/);
+    }
+  });
+
+  it('the side-panel splitter is a col-resize affordance, hidden in the single-column layout (§12.1)', () => {
+    const d = decls('.transon-editor-shell .transon-splitter');
+    expect(d).toMatch(/cursor:\s*col-resize/);
+    expect(d).toMatch(/flex:\s*0 0/);
+    expect(d).toMatch(/touch-action:\s*none/); // pointer drag must not become a touch scroll
+    // the responsive single-column fallback hides it (nothing to resize horizontally)
+    expect(TRANSON_CSS).toMatch(/@media[^{]*max-width[\s\S]*?\.transon-splitter\s*\{\s*display:\s*none/);
+  });
+
+  it('the Import file control lays out as one aligned row with a gap, not a stacked blob (§12.3, FR-096)', () => {
+    const d = decls('.transon-editor-shell .transon-import-label');
+    expect(d).toMatch(/display:\s*inline-flex/);
+    expect(d).toMatch(/align-items:\s*center/);
+    expect(d).toMatch(/gap:\s*\d/);
   });
 });
 

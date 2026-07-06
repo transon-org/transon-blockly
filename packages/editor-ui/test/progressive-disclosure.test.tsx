@@ -1,10 +1,11 @@
 // D4 — progressive disclosure end-to-end (§12.6, OQ-009): the mount hides advanced blocks by default
-// and setToolboxView restores them; the controller.setPaletteView seam drives it. Reads the injected
-// toolbox via Blockly's toolbox API (reliable under jsdom).
+// and setToolboxView restores them; the controller.setPaletteView seam drives it. Reads the palette's
+// category divider labels via the flyout contents API (§12.6 presentation; reliable under jsdom).
 import { describe, it, expect } from 'vitest';
 import { mountBlockly } from '../src/blockly/mount.js';
 import { createEditorController } from '../src/session/controller.js';
 import { createFakeEngine } from './fake-engine.js';
+import { categoryNames } from './helpers/palette.js';
 
 function container(): HTMLElement {
   const c = document.createElement('div');
@@ -12,14 +13,6 @@ function container(): HTMLElement {
   c.style.height = '600px';
   document.body.appendChild(c);
   return c;
-}
-function categoryNames(ws: unknown): string[] {
-  const tb = (ws as { getToolbox?(): unknown }).getToolbox?.() as
-    | { getToolboxItems?(): Array<{ getName?(): string }> }
-    | null;
-  return (tb?.getToolboxItems?.() ?? [])
-    .map((i) => i.getName?.())
-    .filter((n): n is string => typeof n === 'string');
 }
 
 describe('progressive disclosure mount wiring (§12.6)', () => {

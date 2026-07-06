@@ -129,3 +129,22 @@ export function progressiveToolbox(toolbox: unknown, view: ToolboxView): unknown
 
   return { ...toolbox, contents };
 }
+
+/**
+ * Flatten a `categoryToolbox` into the palette's presentation form (§12.6): a `flyoutToolbox` —
+ * one always-visible scrolling list — where each §12.4 category becomes an inline divider label
+ * followed by its contents. A pure view over a copy: the committed artifact is never mutated
+ * (AD-030/FR-127). Apply AFTER `filterToolbox` (FR-109) and `progressiveToolbox` (§12.6), which
+ * operate on the category form and already drop emptied categories (no orphan dividers).
+ */
+export function flattenToolbox(toolbox: unknown): unknown {
+  if (!isCategoryToolbox(toolbox)) return toolbox;
+  const contents = toolbox.contents.flatMap((item) => {
+    if (item.kind !== 'category' || !Array.isArray(item.contents)) return [item];
+    return [
+      { kind: 'label', text: item.name ?? '', 'web-class': 'transonFlyoutDivider' },
+      ...(item.contents as unknown[]),
+    ];
+  });
+  return { kind: 'flyoutToolbox', contents };
+}

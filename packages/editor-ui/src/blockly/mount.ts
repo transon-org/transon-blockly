@@ -14,11 +14,13 @@ import type { Json } from '@transon/editor-core';
 import { registerTransonBlocks, getTransonToolbox, loadCodecOutput } from '@transon/editor-blockly';
 import {
   filterToolbox,
+  flattenToolbox,
   progressiveToolbox,
   type ToolboxCategoryConfig,
   type ToolboxView,
 } from './toolbox.js';
 import { ensureTransonStyles } from '../styles.js';
+import { collapseOnDoubleClick } from './collapse-on-double-click.js';
 import { TRANSON_THEME, TRANSON_RENDERER } from './theme.js';
 
 /** Scoped root class applied to the host container (AD-018: light DOM, scoped CSS prefix). */
@@ -45,12 +47,50 @@ class SyncablePositionedMinimap extends PositionedMinimap {
   }
 }
 
+/** §12.6 palette presentation: palette blocks keep a constant size — canvas zoom is UI-only
+ *  viewport state (§11.5) and must not resize the palette. Blockly's stock flyout returns the
+ *  target workspace's scale here, which is exactly the coupling being removed. */
+class FixedScaleFlyout extends Blockly.VerticalFlyout {
+  override getFlyoutScale(): number {
+    return 1;
+  }
+}
+
+/** §12.6 divider labels: Blockly centers label text at measuredWidth/2 with text-anchor:middle,
+ *  but it measures with the renderer's font CONSTANTS — the divider CSS (uppercase, smaller size,
+ *  letter-spacing) renders a different width, so each label drifts left/right by its own offset.
+ *  Left-anchor the text at the button origin instead: alignment stops depending on measurement.
+ *  (load() creates AND shows the button synchronously; later flyout layout only moves the group
+ *  transform, never the text's own x/anchor.) */
+class LeftAnchoredLabelInflater extends Blockly.LabelFlyoutInflater {
+  override load(state: object, flyout: Blockly.IFlyout): Blockly.FlyoutItem {
+    const item = super.load(state, flyout);
+    // LTR only: an RTL flyout right-aligns its labels, so forcing start/x=0 would flip dividers
+    // to the wrong side — leave Blockly's stock positioning in place there.
+    if ((flyout as Partial<Blockly.Flyout>).RTL) return item;
+    const element = item.getElement() as Partial<Blockly.FlyoutButton>;
+    const text = element.getSvgRoot?.().querySelector('text');
+    if (text) {
+      text.setAttribute('text-anchor', 'start');
+      text.setAttribute('x', '0');
+    }
+    return item;
+  }
+}
+
 let blocklyReady = false;
 /** Idempotently load the English messages (Blockly.inject needs Msg, e.g. WORKSPACE_ARIA_LABEL) and
  *  register the Transon block definitions + behavior runtime. */
 export function ensureBlocklyReady(): void {
   if (!blocklyReady) {
     Blockly.setLocale(En as unknown as Record<string, string>);
+    // Replace the stock label inflater so §12.6 palette dividers render left-anchored.
+    Blockly.registry.register(
+      Blockly.registry.Type.FLYOUT_INFLATER,
+      'label',
+      LeftAnchoredLabelInflater,
+      true, // override the stock registration
+    );
     blocklyReady = true;
   }
   registerTransonBlocks();
@@ -97,10 +137,15 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
 
   // Base toolbox = the committed §12.4 toolbox with the embedder's category config applied (FR-109);
   // the progressive-disclosure view (advanced/search, §12.6) is layered on top and can change later.
+  // The category form is flattened LAST into the palette's presentation (§12.6): a flyout-only
+  // list with divider labels — no category column, no pop-out flyout.
   const baseToolbox = filterToolbox(getTransonToolbox(), opts.categories);
   let view: ToolboxView = opts.view ?? {};
+  const paletteFor = (v: ToolboxView): Blockly.utils.toolbox.ToolboxDefinition =>
+    flattenToolbox(progressiveToolbox(baseToolbox, v)) as Blockly.utils.toolbox.ToolboxDefinition;
   const workspace = Blockly.inject(container, {
-    toolbox: progressiveToolbox(baseToolbox, view) as Blockly.utils.toolbox.ToolboxDefinition,
+    toolbox: paletteFor(view),
+    plugins: { flyoutsVerticalToolbox: FixedScaleFlyout },
     renderer: TRANSON_RENDERER, // thrasos — conventional puzzle connections (AD-017/AD-033, FR-129)
     theme: TRANSON_THEME, // block-surface theme: font + surface; colours stay data-driven (FR-127)
     readOnly: opts.readOnly ?? false,
@@ -126,6 +171,20 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
   // FR-133 minimap — overview of large templates (OQ-020, @blockly/workspace-minimap).
   const minimap = new SyncablePositionedMinimap(workspace);
   minimap.init();
+
+  // §12.1 splitter / NFR-025: Blockly re-measures only on WINDOW resize; a container-level resize
+  // (side-panel splitter drag, host layout change) must be forwarded explicitly or the SVG keeps
+  // its stale size and the canvas appears frozen. Guarded: jsdom/older embeds lack ResizeObserver.
+  let resizeObserver: ResizeObserver | undefined;
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => Blockly.svgResize(workspace));
+    resizeObserver.observe(container);
+  }
+
+  // FR-134: double-clicking a block toggles its collapsed state (see collapse-on-double-click.ts).
+  // Its own change-listener — CLICK is a ui-event the main listener already skips, so no overlap.
+  const doubleClickCollapse = collapseOnDoubleClick(workspace);
+  workspace.addChangeListener(doubleClickCollapse.handleEvent);
 
   let suppress = false;
   const serialize = (): Json => Blockly.serialization.workspaces.save(workspace) as Json;
@@ -177,16 +236,19 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
     },
     setToolboxView(next) {
       view = next;
-      workspace.updateToolbox(
-        progressiveToolbox(baseToolbox, view) as Blockly.utils.toolbox.ToolboxDefinition,
-      );
+      // Always a flyout-kind definition — updateToolbox refreshes the standing flyout in place
+      // (it must never switch kinds against the flyout-only injection above).
+      workspace.updateToolbox(paletteFor(view));
     },
     setReadOnly(readOnly) {
       workspace.setIsReadOnly(readOnly);
     },
     dispose() {
+      doubleClickCollapse.dispose(); // FR-134 — cancel any pending deferred toggle
+      resizeObserver?.disconnect();
       minimap.dispose(); // FR-133 — tear down the navigation plugins before the workspace itself
       zoomToFit.dispose();
+      workspace.removeChangeListener(doubleClickCollapse.handleEvent);
       workspace.removeChangeListener(listener);
       workspace.dispose();
     },

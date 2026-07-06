@@ -24,6 +24,7 @@ import {
   Toolbar,
   type ViewMode,
 } from './panels.js';
+import { SideSplitter, type SideWidth } from './splitter.js';
 
 export type TransonEditorProps = EditorControllerOptions & {
   /** Called once with the EditorController after it mounts — the seam the vanilla
@@ -53,6 +54,10 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
     }),
   );
   const [view, setView] = useState<ViewMode>('visual');
+  // §12.1 side-panel width — UI-only session state (§11.5); null = the stylesheet default.
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const sideRef = useRef<HTMLDivElement>(null);
+  const [sideWidth, setSideWidth] = useState<SideWidth | null>(null);
   const [palette, setPalette] = useState<{ showAdvanced: boolean; search: string }>({
     showAdvanced: false,
     search: '',
@@ -165,9 +170,14 @@ export function TransonEditor(props: TransonEditorProps): JSX.Element {
         search={palette.search}
         onPaletteView={onPaletteView}
       />
-      <div className="transon-body transon-sandbox">
+      <div className="transon-body transon-sandbox" ref={bodyRef}>
         <div className="transon-canvas-col">{canvas}</div>
-        <div className="transon-side-col">
+        <SideSplitter bodyRef={bodyRef} sideRef={sideRef} width={sideWidth} onWidth={setSideWidth} />
+        <div
+          className="transon-side-col"
+          ref={sideRef}
+          style={sideWidth ? { flexBasis: `${sideWidth.px}px`, flexGrow: 0, flexShrink: 0 } : undefined}
+        >
           <ExamplesPanel
             examples={examples}
             selected={state.selected_example}

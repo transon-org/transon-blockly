@@ -31,6 +31,7 @@ import type { EngineProvider, Json } from '@transon/editor-core';
 import { encode } from '@transon/editor-core';
 import { mountBlockly, buildExampleCorpus, type TransonMount } from '@transon/editor-ui';
 import { createNodeEngineProvider } from '../../src/index.js';
+import { NO_PALETTE } from './corpus-mount.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASELINE_PATH = join(
@@ -158,7 +159,7 @@ describe('NFR-049 density harness over the docs example corpus (§19.4, AC-041(d
 
   it('a representative single-value-input rule block (set) renders at most 28px tall at 100% zoom', async () => {
     const c = makeContainer();
-    const mount = mountBlockly(c);
+    const mount = mountBlockly(c, NO_PALETTE);
     try {
       const block = (await encode(engine, { $: 'set', name: 'x' })) as Json;
       const rec = measure(mount, block);
@@ -174,7 +175,7 @@ describe('NFR-049 density harness over the docs example corpus (§19.4, AC-041(d
     'records blocks-visible + bounding box per example and compares to the committed baseline (no regression)',
     async () => {
       const c = makeContainer();
-      const mount = mountBlockly(c);
+      const mount = mountBlockly(c, NO_PALETTE);
       const recorded: DensityBaseline = {};
       try {
         for (const example of corpus) {
@@ -210,6 +211,8 @@ describe('NFR-049 density harness over the docs example corpus (§19.4, AC-041(d
       }
       expect(regressions, regressions.join('\n')).toEqual([]);
     },
-    60_000,
+    // CI runners took ~55s pre-§12.6 and hit the old 60s ceiling after — headroom, not license
+    // to slow down: the empty-palette mount above restores the old per-run cost.
+    120_000,
   );
 });

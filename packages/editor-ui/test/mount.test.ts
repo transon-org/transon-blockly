@@ -27,10 +27,105 @@ describe('Blockly mount (FR-001, AD-017, AD-018)', () => {
       expect(c.shadowRoot).toBeNull(); // light DOM, never shadow (AD-018)
       expect(c.querySelector('svg')).toBeTruthy(); // rendered SVG canvas
       expect(mount.workspace.getRenderer().getClassName()).toMatch(/thrasos/i); // AD-017/AD-033
-      expect(mount.workspace.getToolbox()).toBeTruthy(); // §12.4 categories present
+      // §12.6 palette presentation: a flat always-visible flyout list, no category column.
+      expect(mount.workspace.getToolbox()).toBeNull();
+      expect(mount.workspace.getFlyout()).toBeTruthy();
     } finally {
       mount.dispose();
       c.remove();
+    }
+  });
+
+  it('presents the palette as a flat list with §12.4 category divider labels (§12.6)', () => {
+    const c = makeContainer();
+    const mount = mountBlockly(c);
+    try {
+      const flyout = mount.workspace.getFlyout()!;
+      const kinds = flyout.getContents().map((i) => i.getType());
+      expect(kinds.filter((k) => k === 'block').length).toBeGreaterThan(0); // palette blocks
+      expect(kinds.filter((k) => k === 'label').length).toBeGreaterThan(1); // §12.4 dividers
+      expect(kinds[0]).toBe('label'); // the list opens with a category divider
+      // Always-visible: the flyout does not auto-close.
+      expect(flyout.autoClose).toBe(false);
+    } finally {
+      mount.dispose();
+      c.remove();
+    }
+  });
+
+  it('left-anchors divider label text — no per-label centering drift (§12.6)', () => {
+    // Blockly centers label text at measuredWidth/2 with text-anchor:middle, but measures with
+    // the renderer font constants — the divider CSS (uppercase, letter-spacing, smaller size)
+    // renders a different width, so each label drifted by its own offset ("random left margin").
+    const c = makeContainer();
+    const mount = mountBlockly(c);
+    try {
+      const texts = c.querySelectorAll('.blocklyFlyout .transonFlyoutDivider text');
+      expect(texts.length).toBeGreaterThan(1);
+      for (const t of texts) {
+        expect(t.getAttribute('text-anchor')).toBe('start');
+        expect(t.getAttribute('x')).toBe('0');
+      }
+    } finally {
+      mount.dispose();
+      c.remove();
+    }
+  });
+
+  it('keeps palette blocks at fixed scale while the canvas zooms (§12.6 / §11.5)', () => {
+    const c = makeContainer();
+    const mount = mountBlockly(c);
+    try {
+      // getFlyoutScale is on the concrete Flyout base class, not the IFlyout interface
+      const flyout = mount.workspace.getFlyout() as Blockly.Flyout;
+      const before = flyout.getFlyoutScale();
+      mount.workspace.setScale(2.5); // canvas zoom is UI-only viewport state
+      expect(flyout.getFlyoutScale()).toBe(before); // palette must not follow
+    } finally {
+      mount.dispose();
+      c.remove();
+    }
+  });
+
+  it('re-measures the workspace when the mount container resizes (§12.1 splitter / NFR-025)', () => {
+    // Blockly only re-measures on WINDOW resize; a container-level resize (side-panel splitter
+    // drag, host layout change) must be forwarded explicitly, or the SVG keeps its stale size.
+    const observed: Element[] = [];
+    let fire: (() => void) | undefined;
+    class FakeResizeObserver {
+      constructor(cb: () => void) {
+        fire = cb;
+      }
+      observe(el: Element): void {
+        observed.push(el);
+      }
+      disconnect(): void {
+        observed.length = 0;
+      }
+    }
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+    try {
+      const c = makeContainer();
+      const mount = mountBlockly(c);
+      try {
+        expect(observed).toContain(c); // the mount watches its own container
+        const svg = c.querySelector('svg.blocklySvg')!;
+        // jsdom has no layout: offsetWidth is 0 at inject time. svgResize measures the svg's
+        // parent (Blockly's injection div, 100%-sized inside our container) — give it the new
+        // measured size (as a splitter drag would) and fire the observer.
+        const injectionDiv = svg.parentElement!;
+        Object.defineProperty(injectionDiv, 'offsetWidth', { value: 640, configurable: true });
+        Object.defineProperty(injectionDiv, 'offsetHeight', { value: 480, configurable: true });
+        fire?.(); // container resized → svgResize re-measures from the container
+        expect(svg.getAttribute('width')).toBe('640px');
+        expect(svg.getAttribute('height')).toBe('480px');
+      } finally {
+        mount.dispose();
+      }
+      expect(observed).toHaveLength(0); // dispose() disconnects the observer
+      c.remove();
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 

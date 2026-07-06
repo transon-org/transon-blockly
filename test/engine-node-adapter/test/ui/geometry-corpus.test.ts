@@ -23,6 +23,7 @@ import { encode } from '@transon/editor-core';
 import { mountBlockly, buildExampleCorpus, type TransonMount } from '@transon/editor-ui';
 import { GRID_UNIT } from '@transon/editor-ui';
 import { createNodeEngineProvider } from '../../src/index.js';
+import { NO_PALETTE } from './corpus-mount.js';
 
 // ---- jsdom polyfills (identical idiom to density-corpus.test.ts / editor-ui test/setup.ts) ----
 function polyfill(proto: object | undefined, name: string, impl: () => unknown): void {
@@ -209,7 +210,7 @@ describe('NFR-050 geometry invariants over the docs example corpus (§19.4)', ()
     'zero-gap stacking, shared left edge, no protrusion, and grid-quantized heights hold for every corpus example',
     async () => {
       const c = makeContainer();
-      const mount = mountBlockly(c);
+      const mount = mountBlockly(c, NO_PALETTE); // cheap mount — see corpus-mount.ts
       const violations: string[] = [];
       try {
         for (const example of corpus) {
@@ -225,6 +226,8 @@ describe('NFR-050 geometry invariants over the docs example corpus (§19.4)', ()
       }
       expect(violations, violations.join('\n')).toEqual([]);
     },
-    60_000,
+    // CI runners took ~55s pre-§12.6 and hit the old 60s ceiling after — headroom, not license
+    // to slow down: the empty-palette mount above restores the old per-run cost.
+    120_000,
   );
 });

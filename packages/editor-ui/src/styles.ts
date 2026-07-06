@@ -10,6 +10,23 @@
 
 export const TRANSON_STYLE_ID = 'transon-editor-styles';
 
+/** §12.1 side column default width — single source for the stylesheet's `clamp()` AND the
+ *  splitter's 50%–200% bounds math (the splitter expresses its limits relative to this). */
+export const SIDE_COL = { minPx: 320, pct: 34, maxPx: 460 } as const;
+/** The width the stylesheet default resolves to for a given body width (mirrors the clamp). */
+export function sideColDefaultWidth(bodyWidth: number): number {
+  return Math.min(SIDE_COL.maxPx, Math.max(SIDE_COL.minPx, (bodyWidth * SIDE_COL.pct) / 100));
+}
+
+/** §12.1 canvas floor — the canvas column never shrinks below this. Single source for the
+ *  splitter's drag-time clamp (splitter.tsx) AND the stylesheet's side-col max-width, so the JS
+ *  clamp and the CSS floor cannot drift apart. */
+export const CANVAS_FLOOR_PX = 320;
+const SPLITTER_PX = 6;
+const BODY_GAP_PX = 8;
+/** max-width beating a splitter-set flex-basis: canvas floor + splitter + the two body gaps. */
+const SIDE_COL_MAX = `calc(100% - ${CANVAS_FLOOR_PX + SPLITTER_PX + 2 * BODY_GAP_PX}px)`;
+
 export const TRANSON_CSS = `
 .transon-editor-shell {
   /* Chrome-only theming tokens (FR-128) with readable defaults. Foreground on background is
@@ -36,6 +53,25 @@ export const TRANSON_CSS = `
   border-radius: 4px;
 }
 .transon-editor-shell .transon-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* Chrome form controls: ONE explicit control height. UA defaults size a <select>, <button>, and
+   text input differently (and differently per platform), which reads as random thicknesses across
+   the toolbar and panels (§12.3). Checkboxes/textareas keep their intrinsic sizing. */
+.transon-editor-shell button,
+.transon-editor-shell select,
+.transon-editor-shell input[type="search"],
+.transon-editor-shell input[type="file"] {
+  font: inherit;
+  font-size: 14px;
+}
+
+/* The Import control is a <label> wrapping a native file input: lay the caption and the input out
+   as one aligned row with the toolbar's gap, not a stacked/flush blob. */
+.transon-editor-shell .transon-import-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .transon-editor-shell .transon-muted,
 .transon-editor-shell .transon-gated { color: var(--transon-muted); }
 .transon-editor-shell .transon-error-category { font-weight: 600; color: var(--transon-error); }
@@ -47,6 +83,16 @@ export const TRANSON_CSS = `
    only <image> fields in the transon surface — rendered as button chips. A pointer cursor gives
    them click affordance (FieldImage has no hover/CSS state of its own). */
 .transon-editor .blocklyDraggable image { cursor: pointer; }
+
+/* §12.6 palette presentation: category divider labels inside the flat flyout list. The label is
+   an SVG <text> Blockly renders for {kind:'label'} flyout items carrying this web-class. */
+.transon-editor .transonFlyoutDivider .blocklyFlyoutLabelText {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  fill: var(--transon-muted);
+}
 
 /* Visible focus for keyboard users on every interactive control (NFR-045). */
 .transon-editor-shell button:focus-visible,
@@ -97,7 +143,7 @@ export const TRANSON_CSS = `
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  gap: 8px;
+  gap: ${BODY_GAP_PX}px;
   padding: 8px;
 }
 
@@ -110,7 +156,12 @@ export const TRANSON_CSS = `
   display: flex;
 }
 .transon-editor-shell .transon-side-col {
-  flex: 0 1 clamp(320px, 34%, 460px);
+  flex: 0 1 clamp(${SIDE_COL.minPx}px, ${SIDE_COL.pct}%, ${SIDE_COL.maxPx}px);
+  /* Canvas floor under LATER container narrowing (§12.1): a splitter-chosen width is an inline
+     flex-basis in px, clamped only at drag time — max-width beats flex-basis, so the canvas
+     column (CANVAS_FLOOR_PX) + splitter + the two body gaps stay usable however the host
+     resizes. */
+  max-width: ${SIDE_COL_MAX};
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -118,6 +169,20 @@ export const TRANSON_CSS = `
   gap: 8px;
   overflow: auto;
 }
+
+/* §12.1 side-panel splitter: a keyboard-operable ARIA separator between canvas and the panel
+   stack. touch-action:none so a pointer drag resizes instead of scrolling on touch devices. */
+.transon-editor-shell .transon-splitter {
+  flex: 0 0 ${SPLITTER_PX}px;
+  align-self: stretch;
+  cursor: col-resize;
+  border-radius: 3px;
+  background: transparent;
+  touch-action: none;
+  user-select: none;
+}
+.transon-editor-shell .transon-splitter:hover,
+.transon-editor-shell .transon-splitter:focus-visible { background: var(--transon-border); }
 
 /* Compact (§12.2): canvas beside the optional JSON / split view. */
 .transon-editor-shell .transon-body.transon-compact { flex-direction: row; }
@@ -162,7 +227,7 @@ export const TRANSON_CSS = `
 }
 .transon-editor-shell pre.transon-code { white-space: pre-wrap; overflow: auto; max-height: 220px; }
 .transon-editor-shell textarea.transon-code-input { resize: vertical; min-height: 96px; }
-.transon-editor-shell .transon-example-select { width: 100%; }
+.transon-editor-shell .transon-example-select { padding: 1px 0px; width: 100%; }
 
 /* Errors + files: readable lists (their state already carries text labels, not colour alone, NFR-045). */
 .transon-editor-shell .transon-errors,
@@ -180,8 +245,10 @@ export const TRANSON_CSS = `
    canvas and panels stay usable. */
 @media (max-width: 900px) {
   .transon-editor-shell .transon-body.transon-sandbox { flex-direction: column; overflow: auto; }
-  .transon-editor-shell .transon-side-col { flex: 0 0 auto; overflow: visible; }
+  .transon-editor-shell .transon-side-col { flex: 0 0 auto; overflow: visible; max-width: none; }
   .transon-editor-shell .transon-canvas-col { min-height: 320px; }
+  /* single-column layout: nothing to resize horizontally (§12.1) */
+  .transon-editor-shell .transon-splitter { display: none; }
 }
 `;
 

@@ -29,7 +29,19 @@ export async function validateTemplate(
   if (!activeEngine || !isEngineReady(activeEngine) || template == null) return null;
   const isCurrent = beginValidation(store);
   store.setState({ validation_status: 'pending' });
-  const res = await activeEngine.validate(template, { marker });
+  let res: ValidationResult;
+  try {
+    res = await activeEngine.validate(template, { marker });
+  } catch (e) {
+    // A rejection is a host/glue defect, not an engine verdict (§16.4). Back to `idle`, NOT
+    // `invalid` — the editor never reports a validity verdict it didn't get (NFR-004).
+    if (!isCurrent() || !isEngineReady(activeEngine)) return null;
+    store.setState({
+      validation_status: 'idle',
+      errors: [{ code: 'editor_internal', message: `engine validate failed: ${String(e)}` }],
+    });
+    return null;
+  }
   // Drop the verdict when a newer validation started while this one was in flight (§17.8 — the
   // latest call owns validation_status/errors) or the engine left `ready` (disposed/failed
   // mid-flight, NFR-004: the engine must still be authoritative); onValidate must not fire either.
