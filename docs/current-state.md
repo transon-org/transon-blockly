@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `07ce7de` — Add Vitest coverage for local dev, CI, and Codecov badge. |
+| Repo HEAD | `e9d5122` — Refresh working handoff after coverage plumbing. |
 | Branch | `main` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -20,8 +20,8 @@ _**Coverage plumbing — Vitest workspace + CI + Codecov badge (2026-07-07, `mai
 Added `@vitest/coverage-v8`, root `vitest.config.ts` (v8 provider, lcov/html reporters, `packages/**/src`
 scope), expanded `vitest.workspace.ts` to all six test projects, `pnpm run coverage` + `make coverage`
 (build-first), Codecov upload in `agentic-checks.yml` tests job, badge in README. Local run: **83.7%**
-lines. **Not pushed; `CODECOV_TOKEN` not yet configured on the repo — CI will fail the upload step
-until then.** Working handoff (`docs/current-state.md`) refreshed in the same session (uncommitted)._
+lines. Handoff committed (`e9d5122`). **Both `07ce7de` + `e9d5122` not pushed; `CODECOV_TOKEN` not yet
+configured — CI will fail the upload step until then.**_
 
 _**UAT bug fix — minimap detached array/object children on +/- mutation (2026-07-07, `main`, uncommitted).**
 FR-133 minimap divergence: adding then removing an array slot (or object field) detached all children
@@ -950,10 +950,10 @@ living read of it.
    projection/UI-only bug fix; codec output stays byte-identical (FieldImage buttons + input shape
    are non-serializable / re-derived by the decoder).
 
-000a. **Push coverage commit + configure Codecov** — `07ce7de` (Vitest coverage + CI upload + README
-   badge) is local-only. Push to `main`, then add `CODECOV_TOKEN` on `transon-org/transon-blockly`
-   (same pattern as the engine repo) so the badge and the Codecov upload step go green. Include the
-   refreshed `docs/current-state.md` in that push (or commit it with the minimap fix).
+000a. **Push local commits + configure Codecov** — `07ce7de` (coverage) + `e9d5122` (handoff) are
+   local-only (`main` ahead of `origin/main` by 2). Push, then add `CODECOV_TOKEN` on
+   `transon-org/transon-blockly` (same pattern as the engine repo) so the badge and Codecov upload
+   step go green.
 
 00. **Docs-site editor embedding — plan approved (RFC-005), implementation NOT started.** Full plan
    in [`docs/proposals/rfc-005-docs-site-editor-embedding.md`](proposals/rfc-005-docs-site-editor-embedding.md).
