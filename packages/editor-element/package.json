@@ -1,6 +1,6 @@
 {
   "name": "@transon/editor-element",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "description": "Framework-agnostic public surface for the Transon Visual Editor: createTransonEditor() + the <transon-editor> custom element (AD-019). ESM primary + a self-contained IIFE that auto-registers the element (AD-020). Bundles the internal React UI; ships no engine (AD-008).",

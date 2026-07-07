@@ -198,9 +198,23 @@ const V_BAR = `<rect x="6" y="3" width="3" height="9" rx="1" fill="#ffffff"/>`;
 const MINUS_ICON = segmentIcon('left', '#c9564c', H_BAR); // red −, left segment
 const PLUS_ICON = segmentIcon('right', '#54a957', H_BAR + V_BAR); // green +, right segment
 
-function removeInputs(block: Blockly.Block, prefix: string): void {
-  const names = block.inputList.map((inp) => inp.name).filter((n) => n.startsWith(prefix));
-  for (const n of names) if (block.getInput(n)) block.removeInput(n);
+/** Reconcile the `<prefix>{0..count-1}` value inputs to exactly `count`, PRESERVING every existing
+ *  input (and its connected child) and touching only the tail — remove the surplus, append the
+ *  shortfall via `append`. A destructive remove-all + re-add rebuild would detach every child; that
+ *  is invisible on the primary canvas (the +/- buttons never rebuild — addItem_/removeItem_ touch
+ *  one tail input) but the FR-133 minimap's stock plugin mirrors each mutation BlockChange by
+ *  REPLAYING loadExtraState → the rebuild onto its mirror block, orphaning the mirrored children
+ *  (and it would likewise corrupt an on-canvas mutation undo/redo, which replays the same event). */
+function reconcileValueInputs(
+  block: Blockly.Block,
+  prefix: string,
+  count: number,
+  append: (i: number) => void,
+): void {
+  let existing = 0;
+  while (block.getInput(`${prefix}${existing}`)) existing++;
+  for (let i = count; i < existing; i++) block.removeInput(`${prefix}${i}`);
+  for (let i = existing; i < count; i++) append(i);
 }
 
 /** Run a +/- shape change wrapped in a mutation BlockChange event. appendValueInput/removeInput
@@ -250,8 +264,7 @@ const ARRAY_MUTATOR = {
     (this.rebuildArray_ as () => void)();
   },
   rebuildArray_(this: DynamicBlock): void {
-    removeInputs(this, 'ITEM');
-    for (let i = 0; i < (this.itemCount_ ?? 0); i++) this.appendValueInput(`ITEM${i}`);
+    reconcileValueInputs(this, 'ITEM', this.itemCount_ ?? 0, (i) => this.appendValueInput(`ITEM${i}`));
   },
   addItem_(this: DynamicBlock): void {
     withMutationEvent(this, () => {
@@ -289,13 +302,17 @@ const OBJECT_MUTATOR = {
     (this.rebuildObject_ as (keys?: unknown[]) => void)(keys);
   },
   rebuildObject_(this: DynamicBlock, keys?: unknown[]): void {
-    removeInputs(this, 'VALUE');
-    for (let i = 0; i < (this.fieldCount_ ?? 0); i++) {
-      const key = keys && i < keys.length ? keys[i] : 'key';
+    const k = Array.isArray(keys) ? keys : [];
+    reconcileValueInputs(this, 'VALUE', this.fieldCount_ ?? 0, (i) =>
       this.appendValueInput(`VALUE${i}`).appendField(
-        new Blockly.FieldTextInput(String(key ?? '')),
+        new Blockly.FieldTextInput(String(k[i] ?? 'key')),
         `KEY${i}`,
-      );
+      ),
+    );
+    // Refresh the labels of the PRESERVED inputs to the loaded keys (setValue is a no-op when
+    // unchanged, so the common tail-only add/remove replay fires nothing on the kept fields).
+    for (let i = 0; i < (this.fieldCount_ ?? 0); i++) {
+      if (k[i] !== undefined) this.getField(`KEY${i}`)?.setValue(String(k[i] ?? ''));
     }
   },
   addField_(this: DynamicBlock): void {

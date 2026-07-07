@@ -1,5 +1,15 @@
 # @transon/editor-react
 
+## 0.1.1
+
+### Patch Changes
+
+- Fix FR-133 minimap detaching array/object children on a +/- slot mutation. The stock minimap
+  mirrors each mutation by replaying `loadExtraState()` on its mirror block, whose rebuild removed
+  and re-added every ITEM/VALUE input — orphaning the mirrored children (canvas unaffected). The
+  rebuild now reconciles only the tail, preserving existing inputs and their connected children (and
+  fixing latent on-canvas mutation undo/redo corruption from the same replayed event).
+
 ## 0.1.0
 
 ### Minor Changes

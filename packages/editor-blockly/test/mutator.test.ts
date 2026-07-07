@@ -24,6 +24,13 @@ interface ObjectBlock extends Blockly.Block {
   loadExtraState(s: { keys?: unknown[] }): void;
 }
 
+/** Connect a fresh scalar child into `input` and return it (value connection). */
+function connectChild(ws: Blockly.Workspace, parent: Blockly.Block, input: string): Blockly.Block {
+  const child = ws.newBlock('transon_literal');
+  parent.getInput(input)!.connection!.connect(child.outputConnection!);
+  return child;
+}
+
 function fresh<T extends Blockly.Block>(type: string): { ws: Blockly.Workspace; b: T } {
   registerTransonBlocks();
   const ws = new Blockly.Workspace();
@@ -77,6 +84,25 @@ describe('AC-038 — array mutator (on-canvas add/remove)', () => {
     expect(b.saveExtraState()).toEqual({ items: [] });
     ws.dispose();
   });
+
+  // FR-133 regression: the stock minimap mirrors a +/- mutation by REPLAYING the 'mutation'
+  // BlockChange onto its mirror block — which runs loadExtraState() → the rebuild. A destructive
+  // remove-all + re-add rebuild detaches every child on the mirror (children appear detached on the
+  // minimap only, since the on-canvas +/- path touches just the tail input). The rebuild must
+  // RECONCILE the tail and preserve existing inputs and their connected children.
+  it('loadExtraState preserves connected children (minimap mirror-replay path)', () => {
+    const { ws, b } = fresh<ArrayBlock>('transon_array');
+    b.addItem_();
+    b.addItem_();
+    const c0 = connectChild(ws, b, 'ITEM0');
+    const c1 = connectChild(ws, b, 'ITEM1');
+    // add a slot then remove it — the two mutation events the minimap replays via loadExtraState
+    b.loadExtraState({ items: [0, 1, 2] });
+    b.loadExtraState(b.saveExtraState()); // == { items: [0, 1] }
+    expect(b.getInput('ITEM0')!.connection!.targetBlock()).toBe(c0);
+    expect(b.getInput('ITEM1')!.connection!.targetBlock()).toBe(c1);
+    ws.dispose();
+  });
 });
 
 describe('AC-038 — object mutator (on-canvas add/remove with editable keys)', () => {
@@ -92,6 +118,25 @@ describe('AC-038 — object mutator (on-canvas add/remove with editable keys)', 
     b.removeField_();
     expect(b.getInput('VALUE1')).toBeNull();
     expect(b.saveExtraState()).toEqual({ keys: ['name'] });
+    ws.dispose();
+  });
+
+  // FR-133 regression (same minimap mirror-replay path as the array): loadExtraState must preserve
+  // the connected values of the keys it keeps, only reconciling the tail.
+  it('loadExtraState preserves connected values while refreshing keys (mirror-replay path)', () => {
+    const { ws, b } = fresh<ObjectBlock>('transon_object_literal');
+    b.addField_();
+    b.setFieldValue('name', 'KEY0');
+    b.addField_();
+    b.setFieldValue('age', 'KEY1');
+    const v0 = connectChild(ws, b, 'VALUE0');
+    const v1 = connectChild(ws, b, 'VALUE1');
+    b.loadExtraState({ keys: ['name', 'age', 'extra'] }); // add a field...
+    b.loadExtraState({ keys: ['name', 'age'] }); // ...then remove it
+    expect(b.getInput('VALUE0')!.connection!.targetBlock()).toBe(v0);
+    expect(b.getInput('VALUE1')!.connection!.targetBlock()).toBe(v1);
+    expect(b.getFieldValue('KEY0')).toBe('name');
+    expect(b.getFieldValue('KEY1')).toBe('age');
     ws.dispose();
   });
 

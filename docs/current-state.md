@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `b0de146` — Refresh working handoff (durable unpushed-main wording). |
+| Repo HEAD | `7f18b36` — Refresh working handoff (durable unpushed-main wording). |
 | Branch | `main` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -36,8 +36,15 @@ both rebuilds use it, so `loadExtraState` now matches the incremental +/- path (
 undo/redo corruption on-canvas, same replayed event). Object variant refreshes preserved KEY labels
 (no-op setValue on tail-only replay). Added 2 FR-133 regression tests to `test/mutator.test.ts`
 (connect children → drive mirror-replay add-then-remove → assert still connected); red before, green
-after. `editor-blockly` 39/39, `editor-ui` 190/190, typecheck clean. **Not committed; review-gate
-(mutator/codec surface, maker≠checker) not yet run.**_
+after. `editor-blockly` 39/39, `editor-ui` 190/190, typecheck clean. **Released as a patch:** changeset
+`.changeset/minimap-array-child-detach.md` → `pnpm changeset version` bumped **editor-react +
+editor-element 0.1.0 → 0.1.1** (reference-host 0.0.1→0.0.2, private) + CHANGELOGs; editor-react@0.1.1
+build clean (dist 259 kB, fix bundled). Pointed the docs-site (`../transon-org.github.io`, `master`,
+uncommitted) `@transon/editor-react` dep at `.../releases/download/v0.1.1/transon-editor-react-0.1.1.tgz`;
+its `yarn.lock` still pins v0.1.0 (the tarball's content sha is unknown until the release is built —
+regenerates on `yarn install` after the tag ships). **Not committed; review-gate (mutator/codec
+surface, maker≠checker) not yet run. MAINTAINER step remains: commit the bump, push a `v0.1.1` tag
+(→ release workflow packs & attaches the tarball), then `yarn install` in docs-site.**_
 
 _**RFC-005 Part 4 — packaging + release plumbing (2026-07-06, branch `rfc-005-docs-site-embedding`
 `3b98738`; docs-site `rfc-005-embed-editor` `ca04f3c`).** Made `@transon/editor-react` consumable
@@ -944,11 +951,16 @@ living read of it.
 
 ## Next steps (ordered)
 
-000. **Land the UAT minimap-detach fix** (see Last action; `main`, uncommitted:
-   `packages/editor-blockly/src/runtime.ts` + `test/mutator.test.ts`). Run the `review-gate`
-   workflow (mutator/codec surface, maker≠checker), then branch + commit. No SPEC change — a
-   projection/UI-only bug fix; codec output stays byte-identical (FieldImage buttons + input shape
-   are non-serializable / re-derived by the decoder).
+000. **Land + release the UAT minimap-detach fix → v0.1.1** (see Last action). Uncommitted:
+   monorepo `main` (`packages/editor-blockly/src/runtime.ts` + `test/mutator.test.ts`, the consumed
+   changeset, editor-react/element `package.json`+`CHANGELOG` at 0.1.1, reference-host 0.0.2) and
+   docs-site `../transon-org.github.io` `master` (`package.json` → v0.1.1 tarball URL). No SPEC change
+   — projection/UI-only fix; codec output byte-identical (FieldImage buttons + input shape are
+   non-serializable / re-derived by the decoder). Order: (a) run `review-gate` (mutator/codec surface,
+   maker≠checker); (b) branch + commit the monorepo change; (c) **MAINTAINER: push a `v0.1.1` tag** →
+   `release-editor-react.yml` packs & attaches `transon-editor-react-0.1.1.tgz` to release `v0.1.1`;
+   (d) `yarn install` in docs-site to regenerate `yarn.lock` (still pins v0.1.0 — the tarball content
+   sha is unknown until the release builds), then commit + deploy the docs-site.
 
 000a. **Push unpushed `main` + configure Codecov** — everything since `bcb882f` is local-only (coverage
    slice + handoff syncs). `git push`, then add `CODECOV_TOKEN` on `transon-org/transon-blockly` (same
