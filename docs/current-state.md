@@ -20,8 +20,8 @@ _**Coverage plumbing — Vitest workspace + CI + Codecov badge (2026-07-07, `mai
 Added `@vitest/coverage-v8`, root `vitest.config.ts` (v8 provider, lcov/html reporters, `packages/**/src`
 scope), expanded `vitest.workspace.ts` to all six test projects, `pnpm run coverage` + `make coverage`
 (build-first), Codecov upload in `agentic-checks.yml` tests job, badge in README. Local run: **83.7%**
-lines. Handoff committed (`e9d5122`). **Both `07ce7de` + `e9d5122` not pushed; `CODECOV_TOKEN` not yet
-configured — CI will fail the upload step until then.**_
+lines. Handoff synced (`e9d5122`, `6cd0db4`). **`main` ahead of `origin/main` by 3 (`07ce7de`…`6cd0db4`);
+not pushed; `CODECOV_TOKEN` not yet configured — CI will fail the upload step until then.**_
 
 _**UAT bug fix — minimap detached array/object children on +/- mutation (2026-07-07, `main`, uncommitted).**
 FR-133 minimap divergence: adding then removing an array slot (or object field) detached all children
@@ -950,8 +950,8 @@ living read of it.
    projection/UI-only bug fix; codec output stays byte-identical (FieldImage buttons + input shape
    are non-serializable / re-derived by the decoder).
 
-000a. **Push local commits + configure Codecov** — `07ce7de` (coverage) + `e9d5122` (handoff) are
-   local-only (`main` ahead of `origin/main` by 2). Push, then add `CODECOV_TOKEN` on
+000a. **Push local commits + configure Codecov** — `07ce7de` (coverage) + handoff commits (`e9d5122`,
+   `6cd0db4`) are local-only (`main` ahead of `origin/main` by 3). Push, then add `CODECOV_TOKEN` on
    `transon-org/transon-blockly` (same pattern as the engine repo) so the badge and Codecov upload
    step go green.
 
