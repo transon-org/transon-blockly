@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `7f18b36` — Refresh working handoff (durable unpushed-main wording). |
+| Repo HEAD | `88e677a` — Fix unresolvable Codecov action pin; gate upload on token presence |
 | Branch | `main` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -39,12 +39,21 @@ undo/redo corruption on-canvas, same replayed event). Object variant refreshes p
 after. `editor-blockly` 39/39, `editor-ui` 190/190, typecheck clean. **Released as a patch:** changeset
 `.changeset/minimap-array-child-detach.md` → `pnpm changeset version` bumped **editor-react +
 editor-element 0.1.0 → 0.1.1** (reference-host 0.0.1→0.0.2, private) + CHANGELOGs; editor-react@0.1.1
-build clean (dist 259 kB, fix bundled). Pointed the docs-site (`../transon-org.github.io`, `master`,
-uncommitted) `@transon/editor-react` dep at `.../releases/download/v0.1.1/transon-editor-react-0.1.1.tgz`;
-its `yarn.lock` still pins v0.1.0 (the tarball's content sha is unknown until the release is built —
-regenerates on `yarn install` after the tag ships). **Not committed; review-gate (mutator/codec
-surface, maker≠checker) not yet run. MAINTAINER step remains: commit the bump, push a `v0.1.1` tag
-(→ release workflow packs & attaches the tarball), then `yarn install` in docs-site.**_
+build clean (dist 259 kB, fix bundled). Pointed the docs-site (`../transon-org.github.io`, `master`)
+`@transon/editor-react` dep at `.../releases/download/v0.1.1/transon-editor-react-0.1.1.tgz`.
+**SHIPPED (per user directive commit+tag+push):** fix committed `main` `09dc71b`, tagged **`v0.1.1`**,
+pushed; `release-editor-react.yml` succeeded → `transon-editor-react-0.1.1.tgz` attached to the
+`v0.1.1` release (asset verified). Docs-site committed+pushed `1fff245`. **review-gate NOT run**
+(direct-to-main per user) — post-hoc review still advisable (mutator/codec surface). Docs-site
+`yarn.lock` still pins v0.1.0 → regenerate via `yarn install` (tarball now exists) + deploy._
+
+_**CI fix — unresolvable Codecov action pin (2026-07-07, `main` `88e677a`, pushed).** Pushing the
+queued coverage commit (`07ce7de`) reded `agentic-checks/tests`: `codecov/codecov-action` was pinned
+to a non-existent SHA (`5a10915c…fd52` — first 7 chars right, rest fabricated). Corrected to the real
+v5.5.1 commit `5a1091511ad55cbe89839c7260b706298ca349f7`, and — since no `CODECOV_TOKEN` secret is
+configured and the step is strict (`fail_ci_if_error`) — gated the upload behind a job-level
+`env.CODECOV_TOKEN != ''` so it skips cleanly until the token lands, then runs strict. `agentic-checks`
+green again on `main`. (Provisioning `CODECOV_TOKEN` remains the way to actually enable upload.)_
 
 _**RFC-005 Part 4 — packaging + release plumbing (2026-07-06, branch `rfc-005-docs-site-embedding`
 `3b98738`; docs-site `rfc-005-embed-editor` `ca04f3c`).** Made `@transon/editor-react` consumable
@@ -951,16 +960,14 @@ living read of it.
 
 ## Next steps (ordered)
 
-000. **Land + release the UAT minimap-detach fix → v0.1.1** (see Last action). Uncommitted:
-   monorepo `main` (`packages/editor-blockly/src/runtime.ts` + `test/mutator.test.ts`, the consumed
-   changeset, editor-react/element `package.json`+`CHANGELOG` at 0.1.1, reference-host 0.0.2) and
-   docs-site `../transon-org.github.io` `master` (`package.json` → v0.1.1 tarball URL). No SPEC change
-   — projection/UI-only fix; codec output byte-identical (FieldImage buttons + input shape are
-   non-serializable / re-derived by the decoder). Order: (a) run `review-gate` (mutator/codec surface,
-   maker≠checker); (b) branch + commit the monorepo change; (c) **MAINTAINER: push a `v0.1.1` tag** →
-   `release-editor-react.yml` packs & attaches `transon-editor-react-0.1.1.tgz` to release `v0.1.1`;
-   (d) `yarn install` in docs-site to regenerate `yarn.lock` (still pins v0.1.0 — the tarball content
-   sha is unknown until the release builds), then commit + deploy the docs-site.
+000. ~~**Land + release the UAT minimap-detach fix → v0.1.1**~~ **DONE (2026-07-07).** Fix +
+   regression tests + changeset committed to `main` (`09dc71b`), tagged `v0.1.1`, pushed;
+   `release-editor-react.yml` succeeded → `transon-editor-react-0.1.1.tgz` attached to the `v0.1.1`
+   release. Docs-site (`../transon-org.github.io` `master`, `1fff245`, pushed) `package.json` now
+   points at that tarball. `agentic-checks` green on `main`. `review-gate` was NOT run (user directed
+   commit+tag+push directly) — a post-hoc review is still advisable given the mutator/codec surface.
+   **Remaining:** (a) docs-site `yarn.lock` still pins v0.1.0 — regenerate via `yarn install` (the
+   v0.1.1 tarball now exists) + commit + deploy the docs-site; (b) optional post-hoc `review-gate`.
 
 000a. **Push unpushed `main` + configure Codecov** — everything since `bcb882f` is local-only (coverage
    slice + handoff syncs). `git push`, then add `CODECOV_TOKEN` on `transon-org/transon-blockly` (same
