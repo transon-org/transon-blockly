@@ -6,6 +6,7 @@ __pycache__/
 node_modules/
 dist/
 .turbo/
+coverage/
 *.log
 .pnpm-store
 

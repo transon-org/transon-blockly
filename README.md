@@ -5,6 +5,7 @@ An embeddable, engine-free [Blockly](https://developers.google.com/blockly) edit
 visually, exported as canonical Transon JSON.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
+![Codecov](https://img.shields.io/codecov/c/github/transon-org/transon-blockly)
 
 ## What it is
 
@@ -67,6 +68,7 @@ pnpm --filter @transon/reference-host dev   # or: make demo
 ```sh
 pnpm build       # build all packages (Turborepo)
 pnpm test        # run all tests (Vitest)
+make coverage    # run tests with line coverage (HTML in coverage/index.html)
 pnpm typecheck   # typecheck all packages
 ```
 

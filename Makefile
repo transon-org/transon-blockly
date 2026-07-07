@@ -68,14 +68,11 @@ test-host: ## Test only the reference host (demo)
 	$(PNPM) --filter $(DEMO_PKG) test
 
 .PHONY: test-coverage
-test-coverage: ## Run tests with coverage (needs @vitest/coverage-v8)
-	@if [ -d node_modules/@vitest/coverage-v8 ]; then \
-		$(PNPM) exec vitest run --coverage; \
-	else \
-		echo "coverage provider missing — install with:"; \
-		echo "  $(PNPM) add -Dw @vitest/coverage-v8"; \
-		exit 1; \
-	fi
+test-coverage: coverage ## Alias for `make coverage`
+
+.PHONY: coverage
+coverage: build ## Run tests with line coverage report (HTML in coverage/index.html)
+	$(PNPM) run coverage
 
 ##@ Gates (mirror .github/workflows/agentic-checks.yml)
 .PHONY: gates

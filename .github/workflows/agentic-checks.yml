@@ -120,5 +120,10 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Test (all workspace suites)
-        run: pnpm test
+      - name: Test with coverage
+        run: pnpm run coverage
+
+      - uses: codecov/codecov-action@5a10915cde47ba9aecfaaa6951d80a766780fd52 # v5.5.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
