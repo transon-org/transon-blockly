@@ -1,7 +1,7 @@
 # Transon Visual Editor
 
 An embeddable, engine-free [Blockly](https://developers.google.com/blockly) editor for authoring
-**[Transon](https://github.com/lig/transon)** templates — JSON-to-JSON transformations built
+**[Transon](https://github.com/transon-org/transon)** templates — JSON-to-JSON transformations built
 visually, exported as canonical Transon JSON.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
