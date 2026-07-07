@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `88e677a` — Fix unresolvable Codecov action pin; gate upload on token presence |
+| Repo HEAD | `e992625` — Refresh handoff: v0.1.1 shipped + Codecov CI pin fix |
 | Branch | `main` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -966,8 +966,15 @@ living read of it.
    release. Docs-site (`../transon-org.github.io` `master`, `1fff245`, pushed) `package.json` now
    points at that tarball. `agentic-checks` green on `main`. `review-gate` was NOT run (user directed
    commit+tag+push directly) — a post-hoc review is still advisable given the mutator/codec surface.
-   **Remaining:** (a) docs-site `yarn.lock` still pins v0.1.0 — regenerate via `yarn install` (the
-   v0.1.1 tarball now exists) + commit + deploy the docs-site; (b) optional post-hoc `review-gate`.
+   **Docs-site SHIPPED (2026-07-07):** the existing `deploy.yml` (push→`yarn build`→GitHub Pages)
+   already auto-deploys; my package.json bump had broken it (`yarn install --frozen-lockfile` failed
+   on the stale v0.1.0 `yarn.lock`). Regenerated the lock for v0.1.1 (`3edd6dd`, pushed); `deploy.yml`
+   ran green → **live site now runs v0.1.1**. Verified end-to-end via Playwright on
+   transon-org.github.io: opened an example in the Visual Editor, ran +slot/−slot on an array — the
+   minimap keeps all children nested (no detach), matching the canvas. **Remaining:** (a) optional
+   post-hoc `review-gate`; (b) optional cleanup — docs-site `package.json` still has dead manual
+   `predeploy`/`deploy` (`gh-pages -d build`) scripts, superseded by the `build_type: workflow` Pages
+   deploy.
 
 000a. **Push unpushed `main` + configure Codecov** — everything since `bcb882f` is local-only (coverage
    slice + handoff syncs). `git push`, then add `CODECOV_TOKEN` on `transon-org/transon-blockly` (same
