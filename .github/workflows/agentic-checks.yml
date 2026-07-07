@@ -84,6 +84,10 @@ jobs:
   # green even if every test broke (AC-027 was local-only).
   tests:
     runs-on: ubuntu-latest
+    # Surfaced at job level so the Codecov step's `if` can gate on it — a step's own `env` is not
+    # reliably visible to that step's `if`, and `secrets` is never referenceable there directly.
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       # This job runs third-party install/build scripts (pnpm) — never leave the
       # repo token on disk for them.
@@ -123,7 +127,12 @@ jobs:
       - name: Test with coverage
         run: pnpm run coverage
 
-      - uses: codecov/codecov-action@5a10915cde47ba9aecfaaa6951d80a766780fd52 # v5.5.1
+      # Upload coverage only when a CODECOV_TOKEN is configured (job-level env above); skip cleanly
+      # until then so a not-yet-provisioned token can't red the whole tests job. When present the
+      # upload stays strict (fail_ci_if_error).
+      - name: Upload coverage to Codecov
+        if: ${{ env.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           fail_ci_if_error: true
