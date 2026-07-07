@@ -8,13 +8,36 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `3b98738` — feat(editor-react): self-contained types + release-on-tag workflow (RFC-005 Part 4) |
-| Branch | `rfc-005-docs-site-embedding` |
+| Repo HEAD | `07ce7de` — Add Vitest coverage for local dev, CI, and Codecov badge. |
+| Branch | `main` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**Coverage plumbing — Vitest workspace + CI + Codecov badge (2026-07-07, `main`, `07ce7de`, local only — not pushed).**
+Added `@vitest/coverage-v8`, root `vitest.config.ts` (v8 provider, lcov/html reporters, `packages/**/src`
+scope), expanded `vitest.workspace.ts` to all six test projects, `pnpm run coverage` + `make coverage`
+(build-first), Codecov upload in `agentic-checks.yml` tests job, badge in README. Local run: **83.7%**
+lines. **Not pushed; `CODECOV_TOKEN` not yet configured on the repo — CI will fail the upload step
+until then.** Working handoff (`docs/current-state.md`) refreshed in the same session (uncommitted)._
+
+_**UAT bug fix — minimap detached array/object children on +/- mutation (2026-07-07, `main`, uncommitted).**
+FR-133 minimap divergence: adding then removing an array slot (or object field) detached all children
+**on the minimap only**, canvas fine. Cause: the +/- buttons (`addItem_`/`removeItem_` in
+`packages/editor-blockly/src/runtime.ts`) touch only the tail input, but the stock
+`@blockly/workspace-minimap` mirrors each `BLOCK_CHANGE` by REPLAYING it on its mirror
+(`Events.fromJson(...).run(true)`) → for a `'mutation'` change runs `loadExtraState()` →
+`rebuildArray_`/`rebuildObject_`, which did `removeInputs()` (remove ALL item inputs, orphaning every
+mirrored child) then re-appended empties. Fix: replaced `removeInputs` with `reconcileValueInputs`
+(reconciles to target count, touching only the tail — preserves existing inputs + connected children);
+both rebuilds use it, so `loadExtraState` now matches the incremental +/- path (also fixes latent
+undo/redo corruption on-canvas, same replayed event). Object variant refreshes preserved KEY labels
+(no-op setValue on tail-only replay). Added 2 FR-133 regression tests to `test/mutator.test.ts`
+(connect children → drive mirror-replay add-then-remove → assert still connected); red before, green
+after. `editor-blockly` 39/39, `editor-ui` 190/190, typecheck clean. **Not committed; review-gate
+(mutator/codec surface, maker≠checker) not yet run.**_
 
 _**RFC-005 Part 4 — packaging + release plumbing (2026-07-06, branch `rfc-005-docs-site-embedding`
 `3b98738`; docs-site `rfc-005-embed-editor` `ca04f3c`).** Made `@transon/editor-react` consumable
@@ -920,6 +943,17 @@ living read of it.
   `ready`). **1551 tests**; all gates green. See **Last action**.
 
 ## Next steps (ordered)
+
+000. **Land the UAT minimap-detach fix** (see Last action; `main`, uncommitted:
+   `packages/editor-blockly/src/runtime.ts` + `test/mutator.test.ts`). Run the `review-gate`
+   workflow (mutator/codec surface, maker≠checker), then branch + commit. No SPEC change — a
+   projection/UI-only bug fix; codec output stays byte-identical (FieldImage buttons + input shape
+   are non-serializable / re-derived by the decoder).
+
+000a. **Push coverage commit + configure Codecov** — `07ce7de` (Vitest coverage + CI upload + README
+   badge) is local-only. Push to `main`, then add `CODECOV_TOKEN` on `transon-org/transon-blockly`
+   (same pattern as the engine repo) so the badge and the Codecov upload step go green. Include the
+   refreshed `docs/current-state.md` in that push (or commit it with the minimap fix).
 
 00. **Docs-site editor embedding — plan approved (RFC-005), implementation NOT started.** Full plan
    in [`docs/proposals/rfc-005-docs-site-editor-embedding.md`](proposals/rfc-005-docs-site-editor-embedding.md).
