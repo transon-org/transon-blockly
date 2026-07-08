@@ -130,9 +130,17 @@ jobs:
       # Upload coverage only when a CODECOV_TOKEN is configured (job-level env above); skip cleanly
       # until then so a not-yet-provisioned token can't red the whole tests job. When present the
       # upload stays strict (fail_ci_if_error).
+      #
+      # use_pypi: install the Codecov CLI from PyPI (pip) instead of the signed binary from
+      # cli.codecov.io. The binary path verifies a GPG signature by first importing Codecov's public
+      # key from keybase.io, which intermittently returns no key ("no valid OpenPGP data found" →
+      # "Can't check signature: No public key" → the wrapper exits 1). fail_ci_if_error then reds the
+      # whole tests job on what is really an upstream key-fetch flake. PyPI install carries its own
+      # integrity and needs no keybase fetch (Python 3.12 is already set up in this job).
       - name: Upload coverage to Codecov
         if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           token: ${{ env.CODECOV_TOKEN }}
           fail_ci_if_error: true
+          use_pypi: true
