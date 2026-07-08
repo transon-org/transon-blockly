@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `e992625` — Refresh handoff: v0.1.1 shipped + Codecov CI pin fix |
+| Repo HEAD | `f487f18` — Fix Codecov upload: install CLI from PyPI to skip flaky GPG key fetch |
 | Branch | `main` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -54,6 +54,17 @@ v5.5.1 commit `5a1091511ad55cbe89839c7260b706298ca349f7`, and — since no `CODE
 configured and the step is strict (`fail_ci_if_error`) — gated the upload behind a job-level
 `env.CODECOV_TOKEN != ''` so it skips cleanly until the token lands, then runs strict. `agentic-checks`
 green again on `main`. (Provisioning `CODECOV_TOKEN` remains the way to actually enable upload.)_
+
+_**Codecov upload now working end-to-end (2026-07-08, `main` `f487f18`, pushed).** The user provisioned
+the `CODECOV_TOKEN` secret (~23:50), so the gated step ran for the first time — and failed: the
+`codecov/codecov-action` wrapper downloads the signed CLI from `cli.codecov.io` and verifies its GPG
+signature by importing Codecov's public key from keybase.io, which returned nothing (`no valid OpenPGP
+data found` → `Can't check signature: No public key` → wrapper exit 1), so `fail_ci_if_error` reded
+the tests job on an upstream key-fetch flake — not a token/coverage-file problem. Fix: `use_pypi: true`
+on the step → the CLI installs from PyPI (`codecov-cli-11.2.8`, own integrity, no keybase fetch; the
+job already sets up Python 3.12). Verified live: `agentic-checks` green, the upload step queued the
+report (`app.codecov.io/github/transon-org/transon-blockly/commit/f487f18…`). **Codecov CI is fully
+wired now** — token set, pin correct, PyPI install path, strict on real errors._
 
 _**RFC-005 Part 4 — packaging + release plumbing (2026-07-06, branch `rfc-005-docs-site-embedding`
 `3b98738`; docs-site `rfc-005-embed-editor` `ca04f3c`).** Made `@transon/editor-react` consumable
@@ -976,9 +987,9 @@ living read of it.
    `predeploy`/`deploy` (`gh-pages -d build`) scripts, superseded by the `build_type: workflow` Pages
    deploy.
 
-000a. **Push unpushed `main` + configure Codecov** — everything since `bcb882f` is local-only (coverage
-   slice + handoff syncs). `git push`, then add `CODECOV_TOKEN` on `transon-org/transon-blockly` (same
-   pattern as the engine repo) so the badge and Codecov upload step go green.
+000a. ~~**Push unpushed `main` + configure Codecov**~~ **DONE (2026-07-08).** `main` pushed;
+   user provisioned `CODECOV_TOKEN`; upload step fixed with `use_pypi: true` (`f487f18`) and verified
+   green — first report at `app.codecov.io/github/transon-org/transon-blockly`. See Last action.
 
 00. **Docs-site editor embedding — plan approved (RFC-005), implementation NOT started.** Full plan
    in [`docs/proposals/rfc-005-docs-site-editor-embedding.md`](proposals/rfc-005-docs-site-editor-embedding.md).
