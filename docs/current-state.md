@@ -8,7 +8,7 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `f487f18` — Fix Codecov upload: install CLI from PyPI to skip flaky GPG key fetch |
+| Repo HEAD | `e75a35b` — Handoff: Codecov upload fixed (use_pypi) and verified green |
 | Branch | `main` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
@@ -16,12 +16,36 @@
 
 ## Last action
 
-_**Coverage plumbing — Vitest workspace + CI + Codecov badge (2026-07-07, `main`, `07ce7de` + handoff syncs, unpushed).**
+_**Stop-hook loop fixed + RFC-006 handoff (2026-07-12, `main`, UNCOMMITTED).** After RFC-006 +
+handoff narrative were already written, the `handoff-memory` stop hook kept re-prompting in a
+loop. Root cause: `harness/scripts/update_memory.py` `_git()` used `.strip()` on
+`git status --porcelain`, which ate the leading space on unstaged ` M path` lines; `_changed_paths`
+then sliced `line[3:]` and turned `docs/current-state.md` into `ocs/current-state.md`, so
+`handoff_nudge()` never saw the handoff update and kept firing. Fix: `_git`/`_git_in` use
+`.rstrip("\\n")` only. Verified: `handoff_nudge()` → `None` with current-state in the dirty set.
+Also: RFC-006 proposed earlier this session (see below)._
+
+_**RFC-006 proposed — post-M6 consistency backlog Tiers A–D (2026-07-12, `main`, UNCOMMITTED).**
+Analyzed the Blockly project (M0–M6 shipped, v0.1.1 live, docs-site embedded) and wrote
+[`docs/proposals/rfc-006-post-m6-consistency-backlog.md`](proposals/rfc-006-post-m6-consistency-backlog.md)
+(**Status: Proposed** — design/sequencing only; **no SPEC IDs registered**; all decisions left as
+open questions). **Tier A** = contract honesty / consistency debt (FR-017, UC-010, FR-033, FR-048,
+evidence pack, stale handoff/traceability rows). **Tier B** = R-28 consumer (`container`/`arm` in
+snapshot 3.0 but `metadata-contract.md` §2.2 undocumented and unused by palette/runtime). **Tier C**
+= M7 RFC-003 P-E adaptive layout (OQ-019 ratified; **FR-135 collision**: RFC-005 already used
+FR-135…138 → P-E must take next-free **FR-139+ / AD-36+**). **Tier D** = process (post-hoc
+review-gate on minimap fix, maturity M-10…15, handoff hygiene). Suggested order A→B→C→D but
+**OQ-B0** (B before/after/parallel M7) undecided. **No product/SPEC behavior edits** — proposal +
+handoff + the porcelain-strip hook fix only. Uncommitted: RFC-006, `current-state.md`,
+`harness/scripts/update_memory.py`._
+
+_**Coverage plumbing — Vitest workspace + CI + Codecov badge (2026-07-07, `main`, `07ce7de` + later
+handoff syncs; Codecov end-to-end later fixed — see entries below).**
 Added `@vitest/coverage-v8`, root `vitest.config.ts` (v8 provider, lcov/html reporters, `packages/**/src`
 scope), expanded `vitest.workspace.ts` to all six test projects, `pnpm run coverage` + `make coverage`
 (build-first), Codecov upload in `agentic-checks.yml` tests job, badge in README. Local run: **83.7%**
-lines. **`main` unpushed since `bcb882f` (coverage + working-handoff commits through current HEAD);
-`CODECOV_TOKEN` not yet configured — CI will fail the upload step until then.**_
+lines. _(Historical note in this entry: the original “unpushed / no token” state was cleared
+2026-07-08 — see Codecov entries below.)_
 
 _**UAT bug fix — minimap detached array/object children on +/- mutation (2026-07-07, `main`, uncommitted).**
 FR-133 minimap divergence: adding then removing an array slot (or object field) detached all children
@@ -971,112 +995,49 @@ living read of it.
 
 ## Next steps (ordered)
 
-000. ~~**Land + release the UAT minimap-detach fix → v0.1.1**~~ **DONE (2026-07-07).** Fix +
-   regression tests + changeset committed to `main` (`09dc71b`), tagged `v0.1.1`, pushed;
-   `release-editor-react.yml` succeeded → `transon-editor-react-0.1.1.tgz` attached to the `v0.1.1`
-   release. Docs-site (`../transon-org.github.io` `master`, `1fff245`, pushed) `package.json` now
-   points at that tarball. `agentic-checks` green on `main`. `review-gate` was NOT run (user directed
-   commit+tag+push directly) — a post-hoc review is still advisable given the mutator/codec surface.
-   **Docs-site SHIPPED (2026-07-07):** the existing `deploy.yml` (push→`yarn build`→GitHub Pages)
-   already auto-deploys; my package.json bump had broken it (`yarn install --frozen-lockfile` failed
-   on the stale v0.1.0 `yarn.lock`). Regenerated the lock for v0.1.1 (`3edd6dd`, pushed); `deploy.yml`
-   ran green → **live site now runs v0.1.1**. Verified end-to-end via Playwright on
-   transon-org.github.io: opened an example in the Visual Editor, ran +slot/−slot on an array — the
-   minimap keeps all children nested (no detach), matching the canvas. **Remaining:** (a) optional
-   post-hoc `review-gate`; (b) optional cleanup — docs-site `package.json` still has dead manual
-   `predeploy`/`deploy` (`gh-pages -d build`) scripts, superseded by the `build_type: workflow` Pages
-   deploy.
+0. **Answer RFC-006 open questions** (or defer with owner/date) — checklist in
+   [`docs/proposals/rfc-006-post-m6-consistency-backlog.md`](proposals/rfc-006-post-m6-consistency-backlog.md)
+   appendix. Highest leverage first: **OQ-B0** (Tier B before/after/parallel M7), **OQ-A3/A4**
+   (FR-048 / FR-033 implement vs paper), **OQ-A1/A2** (descope FR-017 / soften UC-010). Until
+   answered, do **not** start SPEC or code slices from the RFC. Optional: commit the untracked
+   RFC-006 + this handoff + the `update_memory.py` porcelain-strip fix when ready.
 
-000a. ~~**Push unpushed `main` + configure Codecov**~~ **DONE (2026-07-08).** `main` pushed;
-   user provisioned `CODECOV_TOKEN`; upload step fixed with `use_pypi: true` (`f487f18`) and verified
-   green — first report at `app.codecov.io/github/transon-org/transon-blockly`. See Last action.
+1. **Tier A (after OQ answers) — contract honesty.** (a) Docs honesty: fix stale
+   `traceability.md` NFR-027 row (FR-135 autorun is `[x]`); keep this Next-steps list current.
+   (b) SPEC decide-or-descope PR for phantoms (FR-017, UC-010/FR-053, AD-013 advisory half,
+   FR-086 “limited generic”). (c) FR-033 and/or FR-048 per OQ-A3/A4. (d) Evidence pack
+   (FR-057/049/066, FR-085/086 negative, FR-083 op/fn, `onImportFile`). Full inventory = RFC-006
+   Tier A + 2026-07-03 audit notes in `traceability.md`.
 
-00. **Docs-site editor embedding — plan approved (RFC-005), implementation NOT started.** Full plan
-   in [`docs/proposals/rfc-005-docs-site-editor-embedding.md`](proposals/rfc-005-docs-site-editor-embedding.md).
-   Blocked on an explicit "proceed" from the user + the 3 open questions in the RFC
-   (Validate-under-autorun; `==` vs `>=` pin; tarball reference). When cleared, order:
-   **A1** SPEC FR + autorun (`autorun?` on `EditorControllerOptions`, realizes NFR-027; test-first)
-   → **A2** SPEC FR + `hideToolbarActions?` (hide ≠ disable; test-first) → **A3** widen editor-react
-   peer to `^18.0.0` + Changeset → **B** docs-site (`config.toml` pin, `script.py` glue +
-   `setrecursionlimit`, `SharedPyScriptProvider` with no-op dispose, App mode-switch/open/close +
-   `IExampleData→ExampleCase`) → **C** CI tarball-on-tag. Register A1/A2 IDs at true next-free,
-   coordinating with the RFC-003 P-E FR-135 reservation (§21.1). Both A-slices are UI-only (§21.12):
-   codec artifacts must stay byte-identical; run traceability + engine-parity gates.
+2. **Tier B — R-28 editor consumer (was UAT #1/#2).** Engine export **done** (`container`/`arm` in
+   snapshot 3.0). Editor still open: document §2.2 → FRs at next-free (**FR-139+**; P-E also
+   claims that range — coordinate) → spike `chain`+`cond` → generalize `switch`/`object.fields`;
+   NFR-046-gated runtime primitives; `review-gate` on codec/mutator. **Coordinate** before
+   touching contract/codec/runtime (may overlap another session). Sequencing vs M7 = **OQ-B0**.
 
-0a. **Land PR #4 (`recent-changes`)** — review fixes are committed and pushed; wait for
-   CodeRabbit's re-review + CI, then merge. Two threads were intentionally not "fixed"
-   (theme.ts `name` — required by the installed typings; current-state.md intro — already
-   current); replies posted on the threads.
-0. ~~Gate + commit the R-31 consumer migration~~ **DONE (2026-07-03)** — `review-gate` run
-   (findings fixed, see Last action) and the tree committed on branch `r31-corpus-migration`
-   (R-31 + FR-132 + fixes, plus a dev-env chore commit). The engine side is already released
-   (`v0.1.5`/`v0.1.6`); provenance pinned `v0.1.6 @ b64b340b9090`. Merge/push rides the
-   Next-step-1 push train.
-0b. ~~Examples-picker slice~~ **DONE — FR-132 (see Last action).** Remaining optional follow-up
-   only: (i) context-sensitive examples (selected block → its rule's reference examples;
-   `rule`/`tier`/`tags` joins already in place) — separate FR when wanted. (~~(ii) 0.1.6 pin
-   bump~~ done in this tree — transon 0.1.6 is on PyPI.)
-0c. **RFC-003 → M6: SPEC landing DONE (branch `m6-canvas-density-spec`); next = run the
-   milestone.** The contract edits are landed and gated (see Last action): SPEC v2.1 (§7.17
-   FR-133/134, NFR-049, AC-041, §12.5/OQ-018 labels), ROADMAP v2.1 (M6 authored: 3 phases —
-   navigation+minimap+collapse → labels+`G_palette` regen → compact renderer+density harness),
-   OQ-018…020 ratified rows, ledger updated. **PR #6 opened
-   (https://github.com/transon-org/transon-blockly/pull/6)** — carries both commits (`6058e45`
-   ratification + `6e263ff` landing); local `main` deliberately NOT pushed, the PR supersedes it.
-   Sequence: (a) review/merge PR #6; (b) `/run-milestone M6` (optionally `milestone-planner`
-   first) — implementation
-   branch per the command's own convention; (c) after M6, prototype P-E adaptive layout on the
-   largest corpus examples, pin threshold/damping, then land FR/AD IDs at next-free and author
-   **M7**. Guardrail: M6 must NOT touch `inputsInline`/§13.10/FR-129/AC-040 (P-E surfaces).
-1. ~~Push the milestone branches + open PR(s)~~ **DONE / SUPERSEDED (verified 2026-07-03)** — the
-   entire history (M0–M5 + `fix-editor-layout-css` + `fr-130` + `fr-131` + `r31-corpus-migration`)
-   landed **linearly on `main`** and `main` is pushed (`origin/main` == `ca3a975`); no PRs were used.
-   Optional cleanup only: delete the stale local branch refs (all are ancestors of `main`).
-2. **UAT #1/#2 — structured params (collection/struct inputs), engine-first. ⚠ IN PROGRESS in a
-   SEPARATE session (user, 2026-07-02) — do NOT pick this up here; coordinate before touching its
-   surfaces (contract §2.2, codec container branch, runtime primitives).** The shape-hint
-   decision is RESOLVED (see Last action): the engine already declares `ParamSpec.container` +
-   `ArmSpec` internally; the interim editor-side `paramShapes` idea is rejected. Sequence:
-   (a) ~~engine RFC~~ **done**; ~~engine implementation~~ **done — R-28 SHIPPED in engine
-   `v0.1.4`** (`container` + `arm` in the catalog; the re-pinned 3.0 snapshot already carries
-   them); (b) editor — **now unblocked**: `metadata-contract.md` §2.2 does NOT yet document
-   `container`/`arm` (verified 2026-07-02) → contract update + new FRs (snapshot re-pin already
-   done by step 0); (c) spike `chain` (list) + `cond`
-   (arms) end-to-end (palette, ~2 new runtime primitives with a gated NFR-046 bump, codec
-   container branch, corpus extension) before generalizing to `switch`/`object.fields`;
-   `round-trip-reviewer` gates the codec change.
-3. **M5 follow-ups (non-blocking polish, optional).** (a) Commit the accessibility BROWSER layer as a CI
-   job — a `@playwright/test` + `@axe-core/playwright` e2e against the built `examples/reference-host`
-   (contrast, keyboard nav, visible focus, real Pyodide load, browser self-hosting demo). It was run LIVE
-   via the Playwright MCP and passed (axe 0 violations incl. contrast; Pyodide `ready`), but is not yet a
-   committed gate. (b) Structured error→block highlighting still falls back to the root block because real
-   engine errors carry only a text location trail — a structured template-path would need an engine change.
-4. ~~(Deferred, M-09) Pin `transon` in CI and flip `--require-engine` on~~ **DONE (2026-07-03,
-   see Last action)** — `agentic-checks` installs the snapshot-pinned wheel (pin read out of
-   `metadata-snapshot.json`, so it cannot drift) and runs parity + snapshot with
-   `--require-engine`; `drift-watch` installs the *latest* wheel so upstream movement becomes a
-   proposal issue. A new CI `tests` job also runs typecheck + build + the full vitest workspace.
-5. **Verification burn-down (2026-07-03 deep audit — see traceability audit notes).** In rough
-   value order: (a) FR-033 — populate `template_path` on import rejections (`reverse.ts`);
-   (b) negative-path tests: FR-057 missing-required → `generation_status: 'incomplete'`,
-   FR-085/086 incomplete-metadata reject, `onImportFile` file wrapper, FR-066 DOM render of a
-   validation error, FR-049 param-examples join; (c) decide-or-descope (SPEC-first §21):
-   FR-017 block comments, FR-048 param-level docs rendering, UC-010 context-restricted
-   iteration accessors, AD-013 advisory typing half, NFR-021 snapshot tests, NFR-029 perf
-   benchmark (+ OQ-005 targets), FR-083 custom operator/function coverage;
-   (d) NFR-030/031/034 isolation/negative tests; (e) M-14 Playwright/axe browser CI job
-   (contrast/keyboard/Pyodide), M-15 coverage ratchet.
+3. **Tier C — M7 adaptive layout (RFC-003 P-E).** M6 **DONE**. Next: prototype on largest corpus
+   examples → pin threshold/damping (**OQ-C1/C2**) → SPEC at true next-free (**not** FR-135 —
+   consumed by RFC-005) → implement. Guardrail until SPEC: no production `inputsInline` flips.
+   Optional polish (context-sensitive examples, shadows, a11y CI) = OQ-C6…C9 / Tier D.
 
-**Regen flow** (only if a codec generator changes — M5 did NOT): write generators →
+4. **Tier D (capacity).** (a) Optional post-hoc `review-gate` on v0.1.1 minimap mutator fix
+   (**OQ-D1**). (b) M-14 a11y CI / M-15 coverage ratchet / M-10…12 harness polish (**OQ-D2**).
+   (c) Optional docs-site cleanup (dead `predeploy`/`deploy` scripts).
+
+~~Historical (DONE — kept for provenance; do not re-open):~~ v0.1.1 minimap fix shipped; Codecov
+wired (`use_pypi`); RFC-005 Parts 1–4 + docs-site embed live; M0–M6 complete; R-31 / FR-132 /
+M-09 CI engine pin done. Detail lives in **Last action** archive below.
+
+**Regen flow** (only if a codec generator changes): write generators →
 `pnpm --filter editor-core build` → `UPDATE_ARTIFACTS=1` test → rebuild (double-build, run.ts bundles the
 artifacts) → a normal run must be byte-equal.
 
 ## Open blockers / waiting-on
 
-- **UAT #1/#2 editor work**: engine R-28 SHIPPED (`v0.1.4`; `container`/`arm` present in the
-  pinned 3.0 snapshot) — no longer a blocker, but the editor slice is ⚠ IN PROGRESS in a
-  SEPARATE session (see Next step 2); coordinate before touching its surfaces.
-- None blocking M0 — it depends only on owner-controlled inputs (ROADMAP §"Remaining inputs").
+- **RFC-006 open questions** — maintainer answers (or explicit defer) before Tier A–C implementation.
+- **Tier B surfaces** — coordinate before editing `metadata-contract.md` §2.2 / codec container
+  branch / runtime primitives (possible cross-session overlap).
+- No product blocker on shipped M0–M6 / v0.1.1 / docs-site embed.
 
 ## Do-not-relitigate (pointers, not copies)
 

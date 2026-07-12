@@ -56,7 +56,11 @@ def _git(*args: str) -> Optional[str]:
         )
     except (OSError, subprocess.SubprocessError):
         return None
-    return r.stdout.strip() if r.returncode == 0 else None
+    # rstrip only — a leading-space porcelain line (` M path`) must keep its XY column
+    # so `_changed_paths` can slice at index 3. A full `.strip()` ate that space and
+    # turned `docs/current-state.md` into `ocs/current-state.md`, so `handoff_nudge`
+    # never saw the handoff update and looped the stop-hook forever.
+    return r.stdout.rstrip("\n") if r.returncode == 0 else None
 
 
 def _git_in(repo: Path, *args: str) -> Optional[str]:
@@ -67,7 +71,7 @@ def _git_in(repo: Path, *args: str) -> Optional[str]:
         )
     except (OSError, subprocess.SubprocessError):
         return None
-    return r.stdout.strip() if r.returncode == 0 else None
+    return r.stdout.rstrip("\n") if r.returncode == 0 else None
 
 
 def _changed_paths() -> List[str]:
@@ -76,7 +80,10 @@ def _changed_paths() -> List[str]:
         return []
     paths = []
     for line in out.splitlines():
-        path = line[3:].strip().strip('"')
+        if not line:
+            continue
+        # porcelain v1: two-char XY status, then a space, then the path (possibly quoted).
+        path = line[3:].strip().strip('"') if len(line) > 3 else line.strip().strip('"')
         if " -> " in path:
             path = path.split(" -> ", 1)[1]
         paths.append(path)
