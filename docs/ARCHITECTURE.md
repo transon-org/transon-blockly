@@ -1,6 +1,17 @@
 # ARCHITECTURE.md — Transon Visual Editor
 
-> **Version:** 2.0 · **Status:** Pre-implementation baseline · **Last updated:** 2026-06-27
+> **Version:** 2.1 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-17
+
+> **v2.1 — opt-in runtime metadata source (RFC-007, AD-036).** The AD-030 two-place projection
+> model (build-time codegen → committed artifacts; runtime execution via the host) gains a third,
+> **opt-in** execution point: a session may fetch the engine's editor-metadata at init through a
+> new **optional** `EngineProvider.getEditorMetadata()` (§5.2) and regenerate its
+> palette/toolbox/encoder/decoder from the fetched catalog — same generators, same `transform`
+> port, guarded by a same-major `metadata_version` gate with fail-safe fallback to the committed
+> snapshot. The snapshot + committed artifacts remain the default and the CI substrate. Post-v2.0
+> decisions also recorded since the v2.0 header: AD-032 (no codec↔Blockly mapping layer), AD-033
+> (thrasos renderer), AD-035 (codec depth ceiling, RFC-004), AD-036 (this change; AD-034 stays
+> reserved by RFC-003 P-E).
 
 > **v2.0 — template-driven projection pivot.** The editor surface (palette, toolbox, encoder,
 > decoder) is no longer a hand-written TypeScript mapping layer. It is **derived as Transon-template
@@ -15,7 +26,7 @@
 > append-only and never renumbered (`SPEC.md` §21.1); superseded decisions are marked in place.
 
 This document is the source of truth for **how** the Transon Visual Editor is built: the
-architectural principles, the architecture decision records (`AD-001..AD-031`), the
+architectural principles, the architecture decision records (`AD-001..AD-036`), the
 package/module structure, the host boundary and public API, the **template-driven projections**
 (generators `G_*` and the generated codec) that replace the former typed IR, the metadata
 reshape and dispatch primitives, the validation/execution flows, distribution, and build tooling.
@@ -35,7 +46,7 @@ It complements — and does not restate — [`SPEC.md`](SPEC.md) (the *what*),
 | Document | Owns (source of truth for) | Does **not** contain |
 |---|---|---|
 | [`SPEC.md`](SPEC.md) | Product behavior: use cases, FR/NFR/AC, conceptual domain model, UX model, rule coverage, import/export and round-trip semantics, canonical error taxonomy, governance rules. The **what**. | Architecture decisions, package/module layout, language/tooling choices, public API signatures, build/distribution mechanics, implementation flows. |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) (this doc) | Implementation **how**: architecture decisions (`AD-001..031`), package decomposition, ports & adapters, host boundary & public API, the template-driven projections (`G_*`) and generated codec, the metadata reshape + dispatch primitives, validation/execution flows, state/error/theming strategy, distribution, build/tooling. | Behavioral requirements (SPEC), metadata field lists (contract), test matrices (traceability), milestone sequencing (roadmap). |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) (this doc) | Implementation **how**: architecture decisions (`AD-001..036`), package decomposition, ports & adapters, host boundary & public API, the template-driven projections (`G_*`) and generated codec, the metadata reshape + dispatch primitives, validation/execution flows, state/error/theming strategy, distribution, build/tooling. | Behavioral requirements (SPEC), metadata field lists (contract), test matrices (traceability), milestone sequencing (roadmap). |
 | [`metadata-contract.md`](metadata-contract.md) | The cross-repo **data contract**: metadata field shapes for rules/params/operators/functions, the engine-owned export, schema versioning. The metadata **shape**. | Editor internals, UI, runtime wiring. |
 | [`traceability.md`](traceability.md) | **Verification**: requirement→code→test matrix, engine-parity (anti-drift) checks, round-trip corpus coverage, AC coverage. The **is-it-covered**. | Design rationale, behavior definitions. |
 | [`ROADMAP.md`](ROADMAP.md) | **Sequencing**: milestones (M0–M5), per-milestone scope/deliverables/Definition of Done, readiness, locked decisions, open questions, future considerations. The **in-what-order**. | Behavior definitions, design rationale, test matrices. |
@@ -70,9 +81,12 @@ flowchart TD
    JSON→JSON and are therefore expressed as **Transon-template projections** of that metadata.
    Encode and decode derive from the *same* source, so they are inverse by construction (§5.4) —
    eliminating the "two halves drift" risk of a hand-written codec.
-5. **Compiler model, committed** (AD-026, AD-030). Generator templates `G_*` run at build time
-   (meta-level marker `@`) and emit specialized codec templates (object-level marker `$`); the
-   emitted codecs run at runtime via the host engine. No interpreter codec is shipped.
+5. **Compiler model, committed** (AD-026, AD-030; extended by AD-036). Generator templates `G_*`
+   run at build time (meta-level marker `@`) and emit specialized codec templates (object-level
+   marker `$`); the emitted codecs run at runtime via the host engine. No interpreter codec is
+   shipped. An **opt-in** session may additionally re-run the same generators at session init
+   over runtime-fetched engine metadata (AD-036) — the committed artifacts stay the default and
+   the fallback.
 6. **Codec = skeleton + projected arms** (AD-028). Generic invariants (recursion, literal
    passthrough, marker-escape, ordering, the out-of-surface placeholder) live in a fixed skeleton;
    only the per-rule dispatch arms are projected from metadata.
@@ -554,7 +568,7 @@ The dashed edges are the **host boundary**: everything below it is supplied by t
 
 | Package | Public | Depends on | Responsibility |
 |---|:--:|---|---|
-| `@transon/editor-core` | yes | pure TS | The **projection templates** `G_*` (data), the **committed codec artifacts** (encoder/decoder + palette/toolbox, regenerated at build time, AD-030), the codec-skeleton invariants (`SPEC.md` §11.4/§13.11/§15.3), surface check (`SPEC.md` §15.7), `JsonPathBlockMap` (`SPEC.md` §9.12), metadata model, `EngineProvider` **port** (used to *run* the codec, §5.4), error taxonomy (`SPEC.md` §16.4). Engine-free, headless. **Deliverable #1.** |
+| `@transon/editor-core` | yes | pure TS | The **projection templates** `G_*` (data), the **committed codec artifacts** (encoder/decoder + palette/toolbox, regenerated at build time, AD-030), the **runtime metadata source** (`fetchRuntimeSurface` — gate + session-init regeneration, AD-036), the codec-skeleton invariants (`SPEC.md` §11.4/§13.11/§15.3), surface check (`SPEC.md` §15.7), `JsonPathBlockMap` (`SPEC.md` §9.12), metadata model, `EngineProvider` **port** (used to *run* the codec, §5.4), error taxonomy (`SPEC.md` §16.4). Engine-free, headless. **Deliverable #1.** |
 | `@transon/editor-blockly` | yes | core, blockly | Renders the projected palette/toolbox through the configured Blockly renderer (thrasos default, AD-033); the finite **rule-agnostic behavior runtime** (AD-031); wires `workspace ⇄ blocks` so the generated encoder/decoder can read/write workspace JSON |
 | `editor-ui` (internal) | — | core, blockly, react | panels, sandbox/compact modes, `EditorSession` store, theming (light DOM) |
 | `@transon/editor-element` | yes | editor-ui (React bundled) | `createTransonEditor()` + `<transon-editor>`; ESM + IIFE global |
@@ -596,6 +610,10 @@ interface EngineProvider {         // implemented by the HOST, not the editor
     includeLoader?(name: string): Json | undefined;   // host owns includes (AD-010)
   }): Promise<ExecutionResult>;    // ExecutionResult.filesWritten = captured `file` writes (AD-009)
   version(): Promise<{ engine: string; metadata: string }>;
+  // OPTIONAL (AD-036, RFC-007): proxy the engine's get_editor_metadata() export, verbatim
+  // (metadata-contract §3 runtime delivery). Only a session opted into the runtime metadata
+  // source (SPEC FR-139) calls it; implementing it alone changes nothing.
+  getEditorMetadata?(): Promise<Json>;
   dispose(): void;
 }
 ```
@@ -604,14 +622,20 @@ interface EngineProvider {         // implemented by the HOST, not the editor
 `template_loader` constructor delegates, so a host adapter wires them without touching engine
 internals.
 
-**Running projections through the same port (AD-030, OQ-016).** A projection is just a template
-run with a chosen marker, so no new host method is required — `transform` is reused, parameterized
-by `marker`:
+**Running projections through the same port (AD-030, OQ-016; extended by AD-036).** A projection
+is just a template run with a chosen marker, so no new execution method is required — `transform`
+is reused, parameterized by `marker`:
 
 - **build time** (CI codegen): `transform(G_encode, metadata, { marker: "@" }) → encoder` (and
   likewise `G_decode`/`G_palette`/`G_toolbox`); the outputs are committed as artifacts.
 - **runtime**: `transform(encoder, document, { marker: "$" }) → workspace` and
   `transform(decoder, workspace, { marker: "$" }) → document`.
+- **session init, opt-in** (AD-036, SPEC §7.18): a session configured `metadataSource: 'engine'`
+  first calls `getEditorMetadata()` (the one addition to the port, optional), gates the payload
+  (same-major `metadata_version`, SPEC FR-140), then runs the *same build-time generator step
+  through the same `transform`* over the **fetched** catalog — producing that session's
+  palette/toolbox/encoder/decoder in the browser instead of in CI. Any failure falls back to the
+  committed snapshot artifacts (never a mixed catalog); the default session never fetches.
 
 This is the **two-pass generate-then-run** model: the editor never asks the host to `eval` a value
 as a template (AD-027); it hands the host a finished codec template plus its input data. The split
@@ -654,8 +678,10 @@ flowchart LR
     DOC -. semantic identity via engine execution (AD-011) .- DOC2
 ```
 
-The encoder/decoder are committed artifacts (build-time codegen, AD-030) and run at runtime via the
-host engine (§5.2). The codec **skeleton** (AD-028) owns the fixed invariants: recursion over nested
+The encoder/decoder are committed artifacts (build-time codegen, AD-030) — or, for a session
+opted into the runtime metadata source, the same generators' output over the fetched catalog at
+session init (AD-036) — and run at runtime via the host engine (§5.2). The codec **skeleton**
+(AD-028) owns the fixed invariants: recursion over nested
 nodes, literal passthrough, marker escape (`SPEC.md` §11.4), ordering preservation for `set`/`chain`
 and object keys (`SPEC.md` §13.12, §15.3), the surface check (`SPEC.md` §15.7), and the
 out-of-surface placeholder (`SPEC.md` §13.11). The `JsonPathBlockMap` (`SPEC.md` §9.12) is produced
