@@ -1,6 +1,19 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 2.4 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-06
+> **Version:** 2.5 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-17
+
+> **v2.5 — opt-in runtime metadata source (RFC-007).** Adds **§7.18 (FR-139…FR-141)** and
+> **AC-043**: a host may opt a session into fetching the engine's editor-metadata **at runtime**
+> (via a new optional `EngineProvider.getEditorMetadata()`, `metadata-contract.md` §3) and
+> regenerating the projection surface (palette/toolbox/encoder/decoder, FR-114) from the fetched
+> catalog through the same engine — so a newer engine's rules appear with **no editor release**
+> (completing FR-120/AC-034 across engine releases). Guarded by a **same-major
+> `metadata_version` compatibility gate** with fail-safe fallback to the bundled snapshot
+> (realizing NFR-036…NFR-040 at runtime; new §16.4 code `metadata_fallback`), and a **data-driven
+> presentation fallback** for rules the committed presentation does not know (FR-127 preserved).
+> The committed snapshot + artifacts remain the default path and the CI substrate — **FR-119 and
+> AD-030 are extended, not changed** (`ARCHITECTURE.md` AD-036); the default path is
+> byte-identical. Design record: [RFC-007](proposals/rfc-007-dynamic-engine-metadata.md).
 
 > **v2.4 — embedding host controls for docs-site reuse (RFC-005).** Adds four component-embedding
 > requirements in **§7.14**: **FR-135** autorun (re-execute on every accepted template/input change,
@@ -778,6 +791,47 @@ all state they introduce is UI-only per the §11.5 canonical list (which already
   and the generated JSON unchanged** — collapse is UI-only state (§11.5) with no codec or
   round-trip effect. Custom fields and mutator controls (`ARCHITECTURE.md` AD-031) must render
   sanely in the collapsed state.
+
+### 7.18 Runtime Metadata Source (Dynamic Catalog)
+
+By default the projection surface is generated at build time from the **pinned metadata snapshot**
+and shipped as committed artifacts (FR-119, AD-030). That couples "a new engine rule appears"
+(FR-120) to a snapshot re-pin **and an editor release** — a host already running a newer engine
+projects the newer surface as `transon_unsupported` until then. This subsection adds an **opt-in
+runtime path** that removes the release coupling; the committed snapshot and artifacts remain the
+default source, the deterministic CI substrate, and the fail-safe fallback
+([`ARCHITECTURE.md`](ARCHITECTURE.md) AD-036; design record
+[RFC-007](proposals/rfc-007-dynamic-engine-metadata.md)).
+
+- **FR-139** The editor shall support an opt-in **runtime metadata source**: a session configured
+  with `metadataSource: 'engine'` (default `'snapshot'`) shall, once the host engine is ready,
+  fetch the engine's editor-metadata through the optional
+  `EngineProvider.getEditorMetadata()` port method ([`metadata-contract.md`](metadata-contract.md)
+  §3) and generate its projection surface — palette, toolbox, encoder, decoder, block map — from
+  the **fetched** catalog by running the committed FR-114 generator templates through the same
+  engine (the AD-030 two-pass model, executed at session init instead of build time). The fetch
+  and generation happen **once, at session init** (on the engine-ready transition), never
+  mid-session. The default `'snapshot'` path is behaviorally identical to the committed artifacts.
+- **FR-140** Runtime metadata shall pass a **compatibility gate** before use: the payload must be
+  structurally complete (contract §2: `catalog`, `docs`, `metadata_version`) and declare a
+  `metadata_version` whose **major component equals** the editor's pinned schema major (NFR-037,
+  NFR-040; [`metadata-contract.md`](metadata-contract.md) §5). On **any** failure of the runtime
+  path — the provider does not implement `getEditorMetadata`, the fetch rejects, the payload is
+  malformed or version-incompatible, or surface generation fails — the session shall **fall back
+  to the bundled snapshot** and committed artifacts, surface the `metadata_fallback` diagnostic
+  (§16.4), and remain fully functional (NFR-038/NFR-039 fail-safe). The surface shall never mix
+  sources: all five artifacts come from the fetched catalog or all from the snapshot.
+- **FR-141** A fetched-catalog rule that the committed presentation data does not know shall
+  project with a **data-driven presentation fallback** — title = the rule's metadata `name`,
+  category = the fallback category declared **in the presentation data** (not a TS literal,
+  FR-127), `advanced: true` — instead of failing generation. Rules present in the committed
+  presentation keep their committed title/category/advanced unchanged. (Custom rules with
+  metadata-supplied `title`/`category` follow FR-086 as before and need no fallback.)
+
+The codec depth ceiling and host recursion budget (`metadata-contract.md` §6.5, AD-035) were
+measured against the pinned engine and are carried unchanged as a **conservative floor** on the
+runtime path: a newer engine may afford more headroom, never less is assumed (RFC-007 P-E,
+option (a)).
 
 ---
 
@@ -1667,6 +1721,7 @@ The single canonical error taxonomy. FR-095 (error display) and §17 reference t
 | `runtime_transformation` | Transon transformation/runtime error (engine `TransformationError` via `transform()`) | execution |
 | `include_loader` | Include template could not be resolved (§16.6) | validation/execution |
 | `engine_init` | Host engine runtime failed to load or initialize | runtime init |
+| `metadata_fallback` | The opt-in runtime metadata path (§7.18, FR-140) could not be used — `getEditorMetadata` absent/rejected, payload malformed or `metadata_version`-incompatible, or surface generation failed — and the session fell back to the bundled snapshot catalog. Diagnostic, non-blocking: the editor stays fully functional on the snapshot surface. | runtime init |
 | `editor_internal` | Unexpected editor error | any |
 
 Captured `file` writes (§16.5) are a side-effect result, not an error category.
@@ -1941,6 +1996,17 @@ Version 1 is acceptable when all criteria below are met.
   the recursion ceiling) and strengthens AC-036's "at least one" to *all*. Requires the engine
   recursion budget (engine ≥ 0.1.7, R-32) and the reference hosts' 1400-frame recursion budget;
   ceiling, floor, and budget are normative in `metadata-contract.md` §6.5 (AD-035).
+- **AC-043 — Runtime metadata surface, with fail-safe fallback (RFC-007).** Against an engine
+  whose metadata exports a rule **absent from the pinned snapshot** (a newer engine release, or a
+  synthetic vNext catalog): **(a)** a session opted into the runtime metadata source (§7.18,
+  FR-139) projects that rule into palette and toolbox, and a template using it imports in-surface
+  and round-trips to identity — with no editor code change, no projection-template change, and no
+  snapshot re-pin (FR-120 across engine releases); **(b)** a default (`'snapshot'`) session
+  against the same engine routes the same template to `transon_unsupported` unchanged (AD-004);
+  **(c)** a payload failing the FR-140 compatibility gate (e.g. a different `metadata_version`
+  major) leaves the session on the snapshot surface, fully functional, with `metadata_fallback`
+  surfaced (§16.4); **(d)** a fetched rule unknown to the committed presentation projects via the
+  FR-141 fallback (metadata name as title, data-declared fallback category, advanced).
 
 ---
 

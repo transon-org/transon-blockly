@@ -39,7 +39,8 @@ describe('§7.15 reverse sync — controller response (AC-033)', () => {
       await vi.waitFor(() => expect(ctl.store.getState().json_sync_status).toBe('in_sync'));
       // the workspace now holds the loaded block (not empty)
       expect(isEmptyWorkspace(ctl.store.getState().workspace)).toBe(false);
-      expect(mockReverse).toHaveBeenCalledWith(expect.anything(), '1', '$');
+      // 4th arg = the session codec-artifact set (RFC-007 P-C): undefined on the snapshot default.
+      expect(mockReverse).toHaveBeenCalledWith(expect.anything(), '1', '$', undefined);
     } finally {
       ctl.dispose();
       c.remove();

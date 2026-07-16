@@ -27,10 +27,12 @@ describe('EditorSession store (FR-001, §9.3)', () => {
   ];
   // M5 D2: expected output of the loaded example, for actual-vs-expected display (§12.9, AC-019).
   const M5_FIELDS = ['expected_output_json'];
+  // RFC-007 runtime metadata source (SPEC §7.18, FR-139/140).
+  const RFC007_FIELDS = ['metadata_source', 'metadata_fallback'];
 
   it('initial state has exactly the §9.3 fields plus the M4 flow + M5 fields', () => {
     const store = createEditorStore();
-    expect(Object.keys(store.getState()).sort()).toEqual([...SPEC_9_3, ...M4_FLOW, ...M5_FIELDS].sort());
+    expect(Object.keys(store.getState()).sort()).toEqual([...SPEC_9_3, ...M4_FLOW, ...M5_FIELDS, ...RFC007_FIELDS].sort());
   });
 
   it('defaults are idle/empty with no engine and the default marker (§11.2, §10.4)', () => {

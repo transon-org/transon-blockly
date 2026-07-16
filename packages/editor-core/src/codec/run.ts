@@ -42,6 +42,19 @@ interface Artifact {
   fragments: Record<string, Json>;
 }
 
+/**
+ * A session's codec artifact set — the three engine-executed codec templates as one bundle
+ * (RFC-007 P-C, AD-036). `encode`/`decode`/`blockMap` default to the COMMITTED artifacts; a
+ * session on the runtime metadata source (SPEC §7.18, FR-139) passes its freshly generated set
+ * instead. Always swap the whole bundle: the three artifacts must come from one catalog —
+ * never mix sources (FR-140).
+ */
+export interface CodecArtifacts {
+  encoder: { entry: string; fragments: Record<string, Json> };
+  decoder: { entry: string; fragments: Record<string, Json> };
+  blockmap: { entry: string; fragments: Record<string, Json> };
+}
+
 const ENCODER = encoderArtifact as unknown as Artifact;
 const DECODER = decoderArtifact as unknown as Artifact;
 const BLOCKMAP = blockmapArtifact as unknown as Artifact;
@@ -116,14 +129,25 @@ async function runArtifact(
 }
 
 /** Encode a Transon document into Blockly workspace-serialization JSON (FR-114/124). `marker` is
- *  the document's configured marker key (FR-063), default `$`. */
-export function encode(engine: EngineProvider, document: Json, marker: string = CODEC_MARKER): Promise<Json> {
-  return runArtifact(engine, ENCODER, document, marker);
+ *  the document's configured marker key (FR-063), default `$`. `artifacts` overrides the committed
+ *  codec with a session-generated set (RFC-007/FR-139); omitted = the committed default. */
+export function encode(
+  engine: EngineProvider,
+  document: Json,
+  marker: string = CODEC_MARKER,
+  artifacts?: CodecArtifacts,
+): Promise<Json> {
+  return runArtifact(engine, (artifacts?.encoder as Artifact) ?? ENCODER, document, marker);
 }
 
 /** Decode Blockly workspace JSON back into a Transon document (FR-114/126); inverse of `encode`. */
-export function decode(engine: EngineProvider, workspace: Json, marker: string = CODEC_MARKER): Promise<Json> {
-  return runArtifact(engine, DECODER, workspace, marker);
+export function decode(
+  engine: EngineProvider,
+  workspace: Json,
+  marker: string = CODEC_MARKER,
+  artifacts?: CodecArtifacts,
+): Promise<Json> {
+  return runArtifact(engine, (artifacts?.decoder as Artifact) ?? DECODER, workspace, marker);
 }
 
 /**
@@ -148,8 +172,18 @@ export function runCodecArtifact(
  * with `rule_name`/`parameter_name` where applicable and the `nearest_parent_block_id` for the
  * enclosing block. Consumed for error→block highlighting in M4 (FR-092/093/095).
  */
-export async function blockMap(engine: EngineProvider, document: Json, marker: string = CODEC_MARKER): Promise<JsonPathBlockMap> {
-  const root = (await runArtifact(engine, BLOCKMAP, { n: document }, marker)) as unknown as MapNode;
+export async function blockMap(
+  engine: EngineProvider,
+  document: Json,
+  marker: string = CODEC_MARKER,
+  artifacts?: CodecArtifacts,
+): Promise<JsonPathBlockMap> {
+  const root = (await runArtifact(
+    engine,
+    (artifacts?.blockmap as Artifact) ?? BLOCKMAP,
+    { n: document },
+    marker,
+  )) as unknown as MapNode;
   return flattenBlockMap(root, null);
 }
 

@@ -136,6 +136,17 @@ export function createPyodideHost(opts: PyodideHostOptions = {}): EngineProvider
       const { files_written, ...rest } = parsed;
       return { ...rest, filesWritten: files_written } as ExecutionResult;
     },
+    async getEditorMetadata(): Promise<Json> {
+      // RFC-007/FR-139 (contract §3): proxy the engine's get_editor_metadata() verbatim. A
+      // Python-side failure comes back as an error envelope → reject, so the editor's FR-140
+      // gate falls back to the snapshot surface.
+      const fn = requirePy('getEditorMetadata').globals.get('transon_editor_metadata') as PyCallable;
+      const out = JSON.parse(fn() as string) as { status: string; metadata?: Json; error_message?: string };
+      if (out.status !== 'ok') {
+        throw new Error(out.error_message ?? 'engine editor-metadata export failed');
+      }
+      return out.metadata as Json;
+    },
     async version(): Promise<{ engine: string; metadata: string }> {
       const fn = requirePy('version').globals.get('transon_version') as PyCallable;
       return JSON.parse(fn() as string) as { engine: string; metadata: string };

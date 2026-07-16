@@ -12,8 +12,10 @@ export const EDITOR_BLOCKLY_PACKAGE = '@transon/editor-blockly';
 export { registerTransonRuntime, BEHAVIOR_PRIMITIVES } from './runtime.js';
 export {
   registerTransonBlocks,
+  applyPaletteSurface,
   getTransonToolbox,
   toWorkspaceState,
   loadCodecOutput,
   ruleTooltip,
 } from './blocks.js';
+export type { PaletteSurface } from './blocks.js';

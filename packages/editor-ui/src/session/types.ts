@@ -61,7 +61,18 @@ export interface EditorSession {
   /** Expected output of the loaded example, for actual-vs-expected display (§12.9, AC-019). Null
    *  unless an example with a `result` is loaded. */
   expected_output_json: Json | null;
+
+  // ---- RFC-007 runtime metadata source (SPEC §7.18, AD-036) ----
+  /** Which catalog the session's projection surface came from (FR-139): the bundled snapshot
+   *  (default) or the engine's runtime metadata export. */
+  metadata_source: MetadataSource;
+  /** The FR-140 fail-safe diagnostic: set (and kept — not wiped by later projections) when a
+   *  session opted into the runtime source fell back to the snapshot (§16.4 metadata_fallback). */
+  metadata_fallback: EditorError | null;
 }
+
+/** The catalog source of a session's projection surface (SPEC §7.18, FR-139). */
+export type MetadataSource = 'snapshot' | 'engine';
 
 /** The default marker key (SPEC §11.2). */
 export const DEFAULT_MARKER = '$';
@@ -87,6 +98,8 @@ export function emptySession(overrides: Partial<EditorSession> = {}): EditorSess
     block_map: null,
     files_written: null,
     expected_output_json: null,
+    metadata_source: 'snapshot',
+    metadata_fallback: null,
     ...overrides,
   };
 }

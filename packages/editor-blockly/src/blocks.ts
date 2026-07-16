@@ -5,20 +5,35 @@
 // reads a block's inputs/fields/extraState).
 
 import * as Blockly from 'blockly/core';
-import { PALETTE_BLOCKS, TOOLBOX, editorMetadata, type Json } from '@transon/editor-core';
+import { PALETTE_BLOCKS, TOOLBOX, editorMetadata, type BlockDefinition, type Json } from '@transon/editor-core';
 import { registerTransonRuntime } from './runtime.js';
 
 let blocksRegistered = false;
 
 const RULE_TYPE_PREFIX = 'transon_rule_';
 
+/**
+ * A palette surface to register: the block definitions (the `G_palette` output `blocks`) plus the
+ * docs rules that feed tooltips (FR-078). The committed snapshot surface is the default; a session
+ * on the runtime metadata source passes its generated palette + fetched docs instead
+ * (RFC-007/FR-139, AD-036).
+ */
+export interface PaletteSurface {
+  blocks: BlockDefinition[];
+  /** The metadata docs payload's `rules` list (name + description), for FR-078 tooltips. */
+  docsRules?: { name: string; [k: string]: unknown }[];
+}
+
 /** Rule name → its metadata description, for block tooltips (FR-078). Built lazily from the docs
- *  payload; missing/empty docs simply yield no tooltip (FR-077, graceful). */
+ *  payload; missing/empty docs simply yield no tooltip (FR-077, graceful). Rebuilt when a runtime
+ *  palette surface is applied (RFC-007). */
 let ruleDescriptions: Map<string, string> | undefined;
+let docsRulesSource: { name: string; [k: string]: unknown }[] | undefined;
 function ruleDescriptionMap(): Map<string, string> {
   if (!ruleDescriptions) {
     ruleDescriptions = new Map();
-    for (const r of editorMetadata.docs?.rules ?? []) {
+    const rules = docsRulesSource ?? editorMetadata.docs?.rules ?? [];
+    for (const r of rules) {
       const desc = (r as { description?: unknown }).description;
       if (typeof desc === 'string' && desc.trim()) ruleDescriptions.set(r.name, desc);
     }
@@ -58,13 +73,13 @@ export function ruleTooltip(blockType: string): string | undefined {
 const FLYOUT_LABEL_EXTENSION = 'transon_flyout_label';
 let flyoutLabelsByType: Map<string, string> | undefined;
 
-/** Registers the shared flyout-label extension once. Looks up each block's dual label from the
- *  committed palette defs by block `type` (never per-rule TS — AD-012). */
-function ensureFlyoutLabelExtension(): void {
-  if (Blockly.Extensions.isRegistered(FLYOUT_LABEL_EXTENSION)) return;
+/** Registers the shared flyout-label extension once; (re)builds the type→dual-label lookup from
+ *  the given palette defs (never per-rule TS — AD-012). */
+function ensureFlyoutLabelExtension(blocks: BlockDefinition[]): void {
   flyoutLabelsByType = new Map(
-    PALETTE_BLOCKS.filter((d) => typeof d.flyoutLabel === 'string').map((d) => [d.type, d.flyoutLabel as unknown as string]),
+    blocks.filter((d) => typeof d.flyoutLabel === 'string').map((d) => [d.type, d.flyoutLabel as unknown as string]),
   );
+  if (Blockly.Extensions.isRegistered(FLYOUT_LABEL_EXTENSION)) return;
   Blockly.Extensions.register(FLYOUT_LABEL_EXTENSION, function (this: Blockly.Block) {
     if (!this.isInFlyout) return;
     const label = flyoutLabelsByType?.get(this.type);
@@ -72,6 +87,26 @@ function ensureFlyoutLabelExtension(): void {
     const title = [...this.getFields()][0];
     if (title instanceof Blockly.FieldLabel) title.setValue(label);
   });
+}
+
+/** Register one definition set. `override` re-registers a type that already exists (runtime palette
+ *  swap, RFC-007) — Blockly's registry is global, so the last-applied surface wins page-wide. */
+function defineBlocks(blocks: BlockDefinition[], override: boolean): void {
+  for (const def of blocks) {
+    if (Blockly.Blocks[def.type]) {
+      if (!override) continue;
+      delete Blockly.Blocks[def.type];
+    }
+    const tip = ruleTooltip(def.type);
+    let enriched: typeof def = def;
+    if (tip && !(def as { tooltip?: unknown }).tooltip) enriched = { ...enriched, tooltip: tip };
+    if (typeof enriched.flyoutLabel === 'string') {
+      const existing = (enriched as { extensions?: string[] }).extensions ?? [];
+      const extensions = [...existing, FLYOUT_LABEL_EXTENSION] as unknown as Json;
+      enriched = { ...enriched, extensions };
+    }
+    Blockly.defineBlocksWithJsonArray([enriched as unknown as { [k: string]: unknown }]);
+  }
 }
 
 /**
@@ -86,20 +121,24 @@ export function registerTransonBlocks(): void {
   registerTransonRuntime();
   if (blocksRegistered) return;
   blocksRegistered = true;
-  ensureFlyoutLabelExtension();
-  for (const def of PALETTE_BLOCKS) {
-    if (!Blockly.Blocks[def.type]) {
-      const tip = ruleTooltip(def.type);
-      let enriched: typeof def = def;
-      if (tip && !(def as { tooltip?: unknown }).tooltip) enriched = { ...enriched, tooltip: tip };
-      if (typeof enriched.flyoutLabel === 'string') {
-        const existing = (enriched as { extensions?: string[] }).extensions ?? [];
-        const extensions = [...existing, FLYOUT_LABEL_EXTENSION] as unknown as Json;
-        enriched = { ...enriched, extensions };
-      }
-      Blockly.defineBlocksWithJsonArray([enriched as unknown as { [k: string]: unknown }]);
-    }
-  }
+  ensureFlyoutLabelExtension(PALETTE_BLOCKS);
+  defineBlocks(PALETTE_BLOCKS, false);
+}
+
+/**
+ * Apply a session-generated palette surface (RFC-007/FR-139, AD-036): rebuilds the FR-078 tooltip
+ * map from the fetched docs, rebuilds the §12.5 flyout-label lookup, and (re)registers every
+ * definition — overriding committed types whose projection changed (e.g. a dropdown whose enum
+ * domain grew). Blockly's block registry is global (AD-036 trade-off): the last-applied surface
+ * wins for the whole page, so one session per page is the supported dynamic embed shape. Apply
+ * BEFORE any document is loaded; existing block instances are not migrated.
+ */
+export function applyPaletteSurface(surface: PaletteSurface): void {
+  registerTransonBlocks(); // runtime + committed baseline first (structural blocks, extension)
+  docsRulesSource = surface.docsRules;
+  ruleDescriptions = undefined; // rebuild the tooltip map from the new docs on next lookup
+  ensureFlyoutLabelExtension(surface.blocks);
+  defineBlocks(surface.blocks, true);
 }
 
 /** The committed Blockly `categoryToolbox` projected by G_toolbox (§12.4). */

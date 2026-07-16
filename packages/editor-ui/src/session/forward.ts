@@ -5,7 +5,7 @@
 // orchestrates core's decode()/blockMap() and folds the result into the session.
 
 import { decode, blockMap, CodecError } from '@transon/editor-core';
-import type { EngineProvider, Json, JsonPathBlockMap } from '@transon/editor-core';
+import type { CodecArtifacts, EngineProvider, Json, JsonPathBlockMap } from '@transon/editor-core';
 import type { EditorStore } from './store.js';
 import type { GenerationStatus } from './types.js';
 import { isEngineReady } from './engine-status.js';
@@ -50,6 +50,7 @@ export async function runForward(
   engine: EngineProvider | undefined,
   workspace: Json | null,
   marker: string,
+  artifacts?: CodecArtifacts,
 ): Promise<ForwardResult> {
   if (!isEngineReady(engine)) {
     return { template_json: null, block_map: null, generation_status: 'unavailable', error: null };
@@ -59,8 +60,8 @@ export async function runForward(
     return { template_json: null, block_map: null, generation_status: 'empty', error: null };
   }
   try {
-    const document = await decode(engine!, block, marker);
-    const map = await blockMap(engine!, document, marker);
+    const document = await decode(engine!, block, marker, artifacts);
+    const map = await blockMap(engine!, document, marker, artifacts);
     return { template_json: document, block_map: map, generation_status: 'complete', error: null };
   } catch (err) {
     if (err instanceof CodecError) {

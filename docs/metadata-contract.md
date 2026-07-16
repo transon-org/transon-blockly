@@ -251,6 +251,21 @@ an editor-side bridge:
 This work lives in the Transon repository (§6). The engine-parity checks in
 [`traceability.md`](traceability.md) guard against drift between the export and the editor.
 
+**Runtime delivery (RFC-007, SPEC §7.18, AD-036).** In addition to the offline snapshot pin
+(consumed at build time), the export may be delivered **at runtime** through an **optional**
+`EngineProvider` port method the host implements:
+
+```ts
+/** Proxy the engine's get_editor_metadata() export (§2 shape, verbatim). Optional:
+ *  absent on hosts that predate RFC-007 — the editor then stays on the snapshot. */
+getEditorMetadata?(): Promise<Json>;
+```
+
+The payload is the **same full §2 contract** the snapshot pins — the editor consumes it directly
+(§4, no normalization), gated only by the §5 version-compatibility check (SPEC FR-140) with
+fail-safe fallback to the bundled snapshot. Only a session explicitly opted into the runtime
+metadata source (SPEC FR-139) calls this method; implementing it alone changes nothing.
+
 ---
 
 ## 4. The editor consumes; it does not normalize (AD-012, AD-026)
@@ -282,6 +297,12 @@ the current metadata (AD-030; see [`traceability.md`](traceability.md)).
   shape change and bumps `metadata_version`; so is the normalized example corpus (v2.1, engine
   `metadata_version` `2.2` → `3.0`).
 - A stable, versioned editor metadata schema is required by NFR-040.
+- **Concrete compatible range (ratified with RFC-007, SPEC FR-140):** a runtime-fetched payload is
+  compatible when its `metadata_version` **major component equals** the major of the schema
+  version the editor was built against (e.g. an editor pinned to `3.0` accepts `3.0`, `3.1`, …,
+  and rejects `2.x`/`4.x`). Minor bumps are additive by definition (this §5 policy); a shape
+  change that breaks consumers must bump the major. An incompatible or missing `metadata_version`
+  fails the gate → snapshot fallback + `metadata_fallback` diagnostic (SPEC §16.4).
 
 ---
 

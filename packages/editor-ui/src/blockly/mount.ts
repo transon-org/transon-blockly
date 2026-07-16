@@ -103,6 +103,9 @@ export interface TransonMountOptions {
   categories?: ToolboxCategoryConfig;
   /** Initial progressive-disclosure view — advanced toggle + search (§12.6). */
   view?: ToolboxView;
+  /** Toolbox override (RFC-007/FR-139): a session-generated `categoryToolbox` used instead of the
+   *  committed artifact. Category filtering (FR-109) and the §12.6 view layers apply the same. */
+  toolbox?: unknown;
   /** Fired on a meaningful (non-UI, non-programmatic) workspace edit, with the serialized envelope. */
   onWorkspaceChange?(workspace: Json): void;
 }
@@ -118,6 +121,9 @@ export interface TransonMount {
   clear(): void;
   /** Update the palette view — advanced-blocks toggle + search (§12.6). Re-projects the toolbox. */
   setToolboxView(view: ToolboxView): void;
+  /** Swap the base toolbox to a session-generated one (RFC-007/FR-139) — e.g. after a runtime
+   *  metadata fetch. Category config + the current §12.6 view re-apply on top. */
+  setBaseToolbox(toolbox: unknown): void;
   /** Toggle read-only after mount (FR-107): controlled embeds can flip the prop at runtime, and the
    *  injected workspace must follow (Blockly 13 `WorkspaceSvg.setIsReadOnly`). */
   setReadOnly(readOnly: boolean): void;
@@ -139,7 +145,7 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
   // the progressive-disclosure view (advanced/search, §12.6) is layered on top and can change later.
   // The category form is flattened LAST into the palette's presentation (§12.6): a flyout-only
   // list with divider labels — no category column, no pop-out flyout.
-  const baseToolbox = filterToolbox(getTransonToolbox(), opts.categories);
+  let baseToolbox = filterToolbox(opts.toolbox ?? getTransonToolbox(), opts.categories);
   let view: ToolboxView = opts.view ?? {};
   const paletteFor = (v: ToolboxView): Blockly.utils.toolbox.ToolboxDefinition =>
     flattenToolbox(progressiveToolbox(baseToolbox, v)) as Blockly.utils.toolbox.ToolboxDefinition;
@@ -238,6 +244,10 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
       view = next;
       // Always a flyout-kind definition — updateToolbox refreshes the standing flyout in place
       // (it must never switch kinds against the flyout-only injection above).
+      workspace.updateToolbox(paletteFor(view));
+    },
+    setBaseToolbox(toolbox) {
+      baseToolbox = filterToolbox(toolbox, opts.categories);
       workspace.updateToolbox(paletteFor(view));
     },
     setReadOnly(readOnly) {

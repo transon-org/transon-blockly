@@ -125,6 +125,16 @@ export interface EngineProvider {
   /** Engine + metadata versions for the mismatch check (AD-012). */
   version(): Promise<{ engine: string; metadata: string }>;
 
+  /**
+   * Proxy the engine's `get_editor_metadata()` export, verbatim (the full metadata-contract §2
+   * payload — catalog + docs + `metadata_version`). OPTIONAL (RFC-007, SPEC §7.18, AD-036):
+   * hosts that predate it simply leave the editor on the bundled snapshot. Only a session
+   * explicitly opted into the runtime metadata source (FR-139) calls this; implementing it alone
+   * changes nothing. The editor consumes the payload directly after the FR-140 compatibility
+   * gate — it never normalizes (contract §4).
+   */
+  getEditorMetadata?(): Promise<Json>;
+
   /** Release host resources (e.g. reap the subprocess). */
   dispose(): void;
 }
