@@ -19,9 +19,12 @@
 _**RELEASED 0.2.0 (2026-07-17):** PR #13 merged (`feef227`); `@transon/editor-react` +
 `@transon/editor-element` **0.2.0**, `@transon/reference-host` 0.0.3 (`6a94b4c`, tag `v0.2.0`);
 release workflow attached `transon-editor-react-0.2.0.tgz`; docs site
-(`transon-org.github.io` `ab160fc`) pin bumped to the v0.2.0 tarball — the site already runs
-engine `>=0.1.8`, so opting its embed into `metadataSource: 'engine'` is the natural follow-up
-(not done; site currently stays on the snapshot surface). OQ-R3 CI smoke still deferred._
+(`transon-org.github.io` `ab160fc`) pin bumped to the v0.2.0 tarball — the site's embed is now
+ALSO opted into the runtime metadata source (`transon-org.github.io` `9248650`:
+`transon_editor_metadata` glue in script.py + `SharedPyScriptProvider.getEditorMetadata()` +
+`metadataSource="engine"` on the EditorView embed) — live-verified in production: status bar
+`engine 0.1.8 · metadata 3.0 · catalog: engine`, `split (split)` in the palette, no fallback
+diagnostic. OQ-R3 CI smoke still deferred._
 
 _**RFC-007 IMPLEMENTED — opt-in runtime engine metadata, live-verified against the 0.1.8 skew
 (2026-07-17, branch `rfc-007-dynamic-metadata`, 7 commits, NOT pushed/merged).** Maintainer
