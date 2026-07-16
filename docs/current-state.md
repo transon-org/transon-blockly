@@ -17,7 +17,7 @@
 ## Last action
 
 _**RFC-007 IMPLEMENTED — opt-in runtime engine metadata, live-verified against the 0.1.8 skew
-(2026-07-17, branch `rfc-007-dynamic-metadata`, 5 commits, NOT pushed/merged).** Maintainer
+(2026-07-17, branch `rfc-007-dynamic-metadata`, 7 commits, NOT pushed/merged).** Maintainer
 directives: implement per the harness; **NO snapshot re-pin** — the 0.1.8-engine vs 0.1.7-pin skew
 is the deliberate real-world test. **Phase 0 (SPEC-first, `83418a9`):** SPEC **v2.5** §7.18
 (**FR-139** opt-in `metadataSource:'engine'` fetch+regenerate at session init; **FR-140**
@@ -52,7 +52,10 @@ reference-host provider proxy tests. Full workspace: **1588 tests / 7 suites gre
 deterministic gates green ×5 commits (traceability, parity, snapshot `--check`, presentation,
 behavior-size, corpus, append-only ids, no-codec-mapping); committed codec artifacts + snapshot
 **byte-unchanged** (pin still 0.1.7 on purpose). One non-reproducible engine-node-adapter flake
-under full-parallel turbo (request timeout under load; passes alone + on rerun). **Next:**
+under full-parallel turbo (request timeout under load; passes alone + on rerun). **ARCH body sync (`10b826b`, user-caught):** AD-036 had landed but ARCHITECTURE.md prose was
+stale — §5.2 `EngineProvider` snippet now carries the optional `getEditorMetadata()`, the
+same-port projection list gained the session-init execution point, §2 principle 5 / §5.4 / §5.1
+note AD-036, header bumped v2.0→v2.1 (stale `AD-001..031` ranges fixed to `..036`). **Next:**
 (1) review/merge the branch (PR off `rfc-007-dynamic-metadata`); (2) consider OQ-R3 floating-
 engine CI smoke as follow-up; (3) RFC-006 Tier B sequencing now unblocked (OQ-R6); (4) optional
 hardening: null-prototype rules map in `presentationWithFallback`._
