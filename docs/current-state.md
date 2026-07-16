@@ -8,13 +8,79 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `e75a35b` — Handoff: Codecov upload fixed (use_pypi) and verified green |
-| Branch | `main` |
+| Repo HEAD | `7080482` — RFC-007 review fix: imperative loads wait out the dynamic-arrival work |
+| Branch | `rfc-007-dynamic-metadata` |
 | Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RFC-007 IMPLEMENTED — opt-in runtime engine metadata, live-verified against the 0.1.8 skew
+(2026-07-17, branch `rfc-007-dynamic-metadata`, 5 commits, NOT pushed/merged).** Maintainer
+directives: implement per the harness; **NO snapshot re-pin** — the 0.1.8-engine vs 0.1.7-pin skew
+is the deliberate real-world test. **Phase 0 (SPEC-first, `83418a9`):** SPEC **v2.5** §7.18
+(**FR-139** opt-in `metadataSource:'engine'` fetch+regenerate at session init; **FR-140**
+same-major `metadata_version` gate + snapshot fallback, never a mixed catalog; **FR-141**
+data-driven presentation fallback), **AC-043**, §16.4 `metadata_fallback`, **AD-036**,
+metadata-contract §3 (optional `EngineProvider.getEditorMetadata()`) + §5 (same-major policy),
+ledger + traceability rows, RFC-007 ratified (OQ-R1 explicit flag · OQ-R2 same-major · OQ-R3 CI
+smoke DEFERRED · OQ-R4 depth constants = conservative floor · OQ-R5 full payload · OQ-R6 before
+Tier B · OQ-R7 `presentation.json fallbackCategory: "Custom"`). **Phase 1 (P-C, `8f302be`):**
+`encode`/`decode`/`blockMap` take an optional `CodecArtifacts` bundle (default committed);
+`applyPaletteSurface()` override re-registration (Blockly registry is global — one dynamic
+session per page, AD-036 trade-off); mount `toolbox` option + `setBaseToolbox()`; controller
+session `codecArtifacts` threaded through forward/reverse/encode; byte-identical default.
+**Phase 2 (`0c308e0`):** `metadata/dynamic.ts` (`fetchRuntimeSurface` /
+`validateMetadataPayload` / `isCompatibleMetadataVersion` / `presentationWithFallback` /
+`MetadataFallbackError`); Pyodide glue `transon_editor_metadata` + provider proxy; Node runner
+`editor_metadata` op + adapter method; controller `maybeApplyRuntimeSurface` on the ready
+transition (all-or-nothing swap); persistent `metadata_fallback` store field + StatusBar
+`catalog: engine` / fallback badge; `<transon-editor metadata-source="engine">`. **AC-043 live
+pass (`c0fcf9f`):** demo URL knobs (`?engine=0.1.8&metadata=engine` — `main.ts`); real Pyodide:
+dynamic session status `engine 0.1.8 · metadata 3.0 · catalog: engine`, `split (split)` in
+palette (FR-141 fallback), `{"$":"split","sep":","}` accepted + regenerated + Run `"a,b,c"` →
+`["a","b","c"]`; default session same engine: split rejected `import_unsupported`, workspace
+unchanged. **Review (maker≠checker):** `round-trip-reviewer` verdict **READY TO MERGE, no 🔴**;
+its 🟡 (imperative import racing the dynamic-arrival projection → silent drop) FIXED (`7080482`:
+`arrivalSettled` serialization + regression test); 🟢 `__proto__` note recorded in the RFC, not
+fixed (trusted host, AD-008). Tests added: `packages/editor-core/test/dynamic.test.ts`,
+`packages/editor-ui/test/dynamic-metadata.test.tsx` (4),
+`test/engine-node-adapter/test/codec/dynamic-surface.test.ts` (8, real engine — NOTE the local
+`../transon` checkout is AHEAD of the pin, tests assert superset not equality),
+reference-host provider proxy tests. Full workspace: **1588 tests / 7 suites green**, all
+deterministic gates green ×5 commits (traceability, parity, snapshot `--check`, presentation,
+behavior-size, corpus, append-only ids, no-codec-mapping); committed codec artifacts + snapshot
+**byte-unchanged** (pin still 0.1.7 on purpose). One non-reproducible engine-node-adapter flake
+under full-parallel turbo (request timeout under load; passes alone + on rerun). **Next:**
+(1) review/merge the branch (PR off `rfc-007-dynamic-metadata`); (2) consider OQ-R3 floating-
+engine CI smoke as follow-up; (3) RFC-006 Tier B sequencing now unblocked (OQ-R6); (4) optional
+hardening: null-prototype rules map in `presentationWithFallback`._
+
+_**RFC-007 proposed — optional runtime engine metadata (2026-07-16, `main`, UNCOMMITTED).**
+Motivating incident: engine **v0.1.8** released → deployed editors project its new/changed shapes
+as `transon_unsupported` because the catalog + codec artifacts are compiled in from the pinned
+snapshot (engine pin still **0.1.7**). Session traced the full pipeline (snapshot →
+catalog-parameterized generators `generateCodec`/`generatePalette`/`generateToolbox`
+(`codegen.ts:685/728/857`, all `(engine, rules, catalog[, presentation])` with snapshot only as
+default) → committed artifacts → engine-executed at runtime) and wrote
+[`docs/proposals/rfc-007-dynamic-engine-metadata.md`](proposals/rfc-007-dynamic-engine-metadata.md)
+(**Status: Proposed** — design record only, **no SPEC IDs registered**; hints FR-139/AC-43/AD-36/
+OQ-21). Shape: **hybrid, opt-in** — snapshot stays default + CI anchor (AD-030 regen gate
+untouched); a host opting into `metadataSource: 'engine'` fetches `get_editor_metadata()` via a
+new optional `EngineProvider.getEditorMetadata()` at session init, runs the generators over the
+fetched catalog, falls back to the snapshot on `metadata_version` mismatch (NFR-038/039). Key work
+items identified: P-C module-level constants (`editorMetadata`, `PALETTE_BLOCKS`/`TOOLBOX`,
+`ENCODER`/`DECODER`/`BLOCKMAP`) → session state (ships first, byte-identical); P-D presentation
+fallback (`codegen.ts:742` throws for a rule with no committed category — every new engine
+built-in hits this); P-E RFC-004's depth/recursion constants are 0.1.7-measured. 7 open questions
+(OQ-R1…R7: option shape, version-range policy, floating-engine CI, Tier-B sequencing). Gates
+verified green (traceability, append-only ids). **NOT DONE:** the immediate **0.1.8 re-pin**
+(`update_memory.py --snapshot` after refreshing the engine venv editable install + bump
+`PINNED_ENGINE_VERSION` in `provider.ts:12`, smoke test couples them) — user hasn't asked yet.
+**Next:** (1) maintainer answers the RFC-007 "Decision asked" section (ratify hybrid; OQ-R1/R2;
+sequence vs RFC-006 Tier B); (2) re-pin snapshot to 0.1.8 regardless; (3) if ratified, Phase 1 =
+P-C plumbing refactor (snapshot-only, artifacts byte-identical)._
 
 _**Stop-hook loop fixed + RFC-006 handoff (2026-07-12, `main`, UNCOMMITTED).** After RFC-006 +
 handoff narrative were already written, the `handoff-memory` stop hook kept re-prompting in a

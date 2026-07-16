@@ -1,8 +1,15 @@
 # RFC-007: Optional runtime engine metadata — dynamic catalog + codegen at session init
 
-- **Status:** **RATIFIED — Phase 0 landed, implementation in progress** (2026-07-17; maintainer
-  directive: *no snapshot re-pin* — the live 0.1.8-engine vs 0.1.7-pin skew is kept deliberately
-  as the real-world AC-043 test). Contract homes: `SPEC.md` **v2.5** §7.18 (**FR-139/140/141**),
+- **Status:** **IMPLEMENTED** (2026-07-17, branch `rfc-007-dynamic-metadata`, Phases 0–2 +
+  AC-043 live browser pass; maintainer directive: *no snapshot re-pin* — the live 0.1.8-engine vs
+  0.1.7-pin skew was kept deliberately and served as the real-world AC-043 test: dynamic session →
+  `split` in palette, imports in-surface, executes; default session → `import_unsupported`).
+  Independent `round-trip-reviewer`: **READY TO MERGE, no 🔴**; its one 🟡 (imperative load
+  racing the dynamic-arrival projection → silent drop) fixed same-branch via `arrivalSettled`
+  serialization + regression test; 🟢 note recorded, not fixed: `presentationWithFallback` would
+  mishandle a fetched rule literally named `__proto__` (trusted-host boundary per AD-008 —
+  harden with a null-prototype map if the trust model ever changes). Phase 3 (floating-engine CI
+  smoke, OQ-R3) remains DEFERRED. Contract homes: `SPEC.md` **v2.5** §7.18 (**FR-139/140/141**),
   **AC-043**, §16.4 `metadata_fallback`; `ARCHITECTURE.md` **AD-036**; `metadata-contract.md` §3
   (runtime delivery) + §5 (same-major range policy). Ratified answers: **OQ-R1** explicit
   `metadataSource` flag (presence of the method alone changes nothing); **OQ-R2** same-major
