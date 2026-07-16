@@ -1,5 +1,22 @@
 # @transon/editor-react
 
+## 0.2.0
+
+### Minor Changes
+
+- Opt-in runtime engine metadata (RFC-007, SPEC v2.5 §7.18, AD-036): `metadataSource: 'engine'`
+  fetches the engine's editor-metadata once on the engine-ready transition through the new
+  **optional** `EngineProvider.getEditorMetadata()` port method and regenerates the session's
+  projection surface (palette, toolbox, encoder, decoder, block map) from the fetched catalog —
+  so a newer engine's rules appear with no editor release and no snapshot re-pin (FR-139).
+  Guarded by a same-major `metadata_version` compatibility gate with fail-safe fallback to the
+  bundled snapshot and a persistent `metadata_fallback` diagnostic; the surface never mixes
+  sources (FR-140). Rules unknown to the committed presentation project with a data-declared
+  fallback (title = metadata name, the `presentation.json` fallback category, advanced; FR-141).
+  The default `'snapshot'` path is unchanged; imperative loads issued during the arrival window
+  now wait for it instead of racing it. The status bar shows `catalog: engine` on success and
+  the fallback diagnostic on failure.
+
 ## 0.1.1
 
 ### Patch Changes

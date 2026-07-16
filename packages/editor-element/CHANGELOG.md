@@ -1,5 +1,14 @@
 # @transon/editor-element
 
+## 0.2.0
+
+### Minor Changes
+
+- Opt-in runtime engine metadata (RFC-007): new `<transon-editor metadata-source="engine">`
+  attribute / `metadataSource: 'engine'` option — see @transon/editor-react 0.2.0 for the full
+  behavior (fetch + regenerate on engine-ready, same-major gate, snapshot fallback, presentation
+  fallback). Default behavior unchanged.
+
 ## 0.1.1
 
 ### Patch Changes
