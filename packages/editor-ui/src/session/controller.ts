@@ -163,6 +163,8 @@ export function createEditorController(
   // the error marked out_of_sync (FR-112/113, AD-024).
   const applyReverse = async (text: string): Promise<void> => {
     if (!engine || engine.status !== 'ready') return; // gated; the panel is read-only when not ready
+    await arrivalSettled; // FR-140: don't race the in-flight dynamic-arrival work (see above)
+    if (disposed) return;
     const isCurrent = beginSync(store);
     const outcome = await tryReverse(engine, text, marker, codecArtifacts);
     if (!isCurrent() || disposed) return; // superseded, or teardown won the race: drop the stale outcome
@@ -224,21 +226,41 @@ export function createEditorController(
     }
   };
 
+  // Imperative loads (importText / setTemplate / loadExample) issued while a dynamic session's
+  // arrival work is still in flight must WAIT for it instead of racing it: the arrival's own
+  // terminal projection would supersede their latest-guard token and silently drop them
+  // (round-trip-reviewer 🟡, 2026-07-17). Resolves when the WHOLE arrival — surface swap
+  // (success or fallback) AND the first projection/initial-template load — has settled, so a
+  // queued import strictly follows it and stays the latest sync. Pre-resolved for snapshot
+  // sessions (their arrival adds no async work beyond what always existed) — the default path
+  // is untouched.
+  let resolveArrivalSettled: (() => void) | undefined;
+  const arrivalSettled: Promise<void> =
+    opts.metadataSource === 'engine'
+      ? new Promise((resolve) => {
+          resolveArrivalSettled = resolve;
+        })
+      : Promise.resolve();
+
   // The engine-ready arrival work, shared by the poll transition and the already-ready constructor
   // path: apply the runtime metadata surface first (no-op unless opted in), then load the deferred
   // initial template (FR-102) or project.
   const onEngineReady = (): void => {
     void (async () => {
-      await maybeApplyRuntimeSurface();
-      if (disposed) return;
-      if (pendingInitialTemplate !== undefined) {
-        // Deferred initial template (FR-102): load it now that the codec can run; loadDocumentSafely
-        // ends in project(), so a plain re-projection would be redundant.
-        const doc = pendingInitialTemplate;
-        pendingInitialTemplate = undefined;
-        await loadDocumentSafely(doc);
-      } else {
-        await project();
+      try {
+        await maybeApplyRuntimeSurface();
+        if (disposed) return;
+        if (pendingInitialTemplate !== undefined) {
+          // Deferred initial template (FR-102): load it now that the codec can run;
+          // loadDocumentSafely ends in project(), so a plain re-projection would be redundant.
+          const doc = pendingInitialTemplate;
+          pendingInitialTemplate = undefined;
+          await loadDocumentSafely(doc, { internal: true });
+        } else {
+          await project();
+        }
+      } finally {
+        resolveArrivalSettled?.();
       }
     })();
   };
@@ -276,11 +298,17 @@ export function createEditorController(
     onEngineReady();
   }
 
-  async function loadDocumentSafely(doc: Json): Promise<void> {
+  async function loadDocumentSafely(doc: Json, o?: { internal?: boolean }): Promise<void> {
     // Reverse path (New/Import/Load-Example): encode the document to a workspace block and project
     // it onto the canvas. Engine-gated — without a ready engine the codec cannot run. The strict
     // §7.15 JSON-panel accept/reject (surface check) is layered on in D5 (reverse.ts).
+    // `internal` marks the call made FROM the arrival work itself (FR-102 initial template),
+    // which must not await its own settlement.
     if (engine && engine.status === 'ready') {
+      if (!o?.internal) {
+        await arrivalSettled; // FR-140: don't race the in-flight dynamic-arrival work (see above)
+        if (disposed) return;
+      }
       const isCurrent = beginSync(store);
       const block = await encode(engine, doc, marker, codecArtifacts);
       if (!isCurrent() || disposed) return; // superseded, or teardown won the race, while encoding: drop it (§17.8)

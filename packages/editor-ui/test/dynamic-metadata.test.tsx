@@ -106,6 +106,32 @@ describe('FR-139 — opt-in runtime metadata source', () => {
   });
 });
 
+describe('FR-140 — imperative loads do not race the in-flight surface swap (round-trip-reviewer 🟡)', () => {
+  it('an importText issued during the metadata fetch is applied after the swap, not silently dropped', async () => {
+    let resolveFetch!: (s: RuntimeSurface) => void;
+    mockFetch.mockReturnValue(new Promise<RuntimeSurface>((r) => (resolveFetch = r)));
+    const engine = createFakeEngine(); // echo transform: encode/decode return their input verbatim
+    const c = container();
+    const ctl = createEditorController(c, { host: { engine }, metadataSource: 'engine', debounceMs: 0 });
+    try {
+      // The fetch is pending; the engine is ready and the workspace interactive. Import now.
+      const doc = { type: 'transon_literal', fields: { VALUE: 1 } };
+      const importDone = ctl.importText(JSON.stringify(doc));
+      expect(ctl.getTemplate()).toBeNull(); // still waiting on the swap — not applied early
+      resolveFetch(syntheticSurface());
+      await importDone;
+      // The import survived the post-swap projection (previously: latest-guard superseded → dropped).
+      await vi.waitFor(() => expect(ctl.getTemplate()).not.toBeNull());
+      expect(ctl.store.getState().json_sync_status).toBe('in_sync');
+      expect(ctl.store.getState().metadata_source).toBe('engine');
+      expect(ctl.store.getState().errors).toEqual([]);
+    } finally {
+      ctl.dispose();
+      c.remove();
+    }
+  });
+});
+
 describe('FR-140 — fail-safe fallback to the snapshot surface (AC-043(c))', () => {
   it('a failing fetch leaves a functional snapshot session with a persistent metadata_fallback diagnostic', async () => {
     mockFetch.mockRejectedValue(
