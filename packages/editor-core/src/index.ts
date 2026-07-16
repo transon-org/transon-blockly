@@ -53,6 +53,7 @@ export type {
   JsonPathBlockMap,
   JsonPathBlockMapEntry,
   CodecArtifact,
+  CodecArtifacts,
   Presentation,
   RulePresentation,
   BlockDefinition,

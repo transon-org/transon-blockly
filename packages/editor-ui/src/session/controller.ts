@@ -4,7 +4,7 @@
 // data-flow logic lives here, not in React.
 
 import { encode } from '@transon/editor-core';
-import type { Json, ValidationResult, ExecutionResult } from '@transon/editor-core';
+import type { CodecArtifacts, Json, ValidationResult, ExecutionResult } from '@transon/editor-core';
 import { createEditorStore, type EditorStore } from './store.js';
 import { DEFAULT_MARKER, type EditorMode } from './types.js';
 import { applyEngineStatus, loadEngineVersions } from './engine-status.js';
@@ -120,6 +120,11 @@ export function createEditorController(
   // Live read-only flag (FR-107): initialized from the option, flipped at runtime via setReadOnly.
   let readOnly = opts.readOnly ?? false;
 
+  // The session's codec artifact set (RFC-007 P-C, AD-036): undefined = the committed snapshot
+  // artifacts (the default). Set once, on the engine-ready transition, when the session is opted
+  // into the runtime metadata source (FR-139) and the fetched catalog passed the FR-140 gate.
+  let codecArtifacts: CodecArtifacts | undefined;
+
   // Latest-call guard shared by the forward projection and the §7.15 reverse sync (§17.8
   // stale-result safety): both mutate workspace/template state, so an older async completion
   // (runForward/tryReverse resolving out of order) must not overwrite a newer one's result.
@@ -131,7 +136,7 @@ export function createEditorController(
     const isCurrent = beginSync(store);
     const workspace = mount.serialize();
     store.setState({ workspace, json_sync_status: 'in_sync' });
-    const forward = await runForward(engine, workspace, marker);
+    const forward = await runForward(engine, workspace, marker, codecArtifacts);
     if (!isCurrent() || disposed) return; // superseded, or teardown won the race: drop the stale result
     applyForward(store, forward);
     clearHighlights(mount.workspace); // a new generation supersedes prior error highlights
@@ -152,7 +157,7 @@ export function createEditorController(
   const applyReverse = async (text: string): Promise<void> => {
     if (!engine || engine.status !== 'ready') return; // gated; the panel is read-only when not ready
     const isCurrent = beginSync(store);
-    const outcome = await tryReverse(engine, text, marker);
+    const outcome = await tryReverse(engine, text, marker, codecArtifacts);
     if (!isCurrent() || disposed) return; // superseded, or teardown won the race: drop the stale outcome
     if (outcome.status === 'accepted') {
       mount.loadDocument(outcome.block);
@@ -231,7 +236,7 @@ export function createEditorController(
     // §7.15 JSON-panel accept/reject (surface check) is layered on in D5 (reverse.ts).
     if (engine && engine.status === 'ready') {
       const isCurrent = beginSync(store);
-      const block = await encode(engine, doc, marker);
+      const block = await encode(engine, doc, marker, codecArtifacts);
       if (!isCurrent() || disposed) return; // superseded, or teardown won the race, while encoding: drop it (§17.8)
       mount.loadDocument(block);
       await project();

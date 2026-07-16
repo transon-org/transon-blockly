@@ -5,7 +5,7 @@
 // through the host engine — it never re-implements the codec or the surface check (AD-032).
 
 import { encode, decode, CodecError, stableStringify, STRUCTURAL_BLOCK_TYPES } from '@transon/editor-core';
-import type { EngineProvider, Json } from '@transon/editor-core';
+import type { CodecArtifacts, EngineProvider, Json } from '@transon/editor-core';
 import { codecErrorCode, type EditorError } from './errors.js';
 
 export type ReverseOutcome =
@@ -45,6 +45,7 @@ export async function tryReverse(
   engine: EngineProvider,
   text: string,
   marker: string,
+  artifacts?: CodecArtifacts,
 ): Promise<ReverseOutcome> {
   let document: Json;
   try {
@@ -55,7 +56,7 @@ export async function tryReverse(
 
   let block: Json;
   try {
-    block = await encode(engine, document, marker);
+    block = await encode(engine, document, marker, artifacts);
   } catch (e) {
     const error: EditorError =
       e instanceof CodecError
@@ -73,7 +74,7 @@ export async function tryReverse(
 
   let roundTripped: Json;
   try {
-    roundTripped = await decode(engine, block, marker);
+    roundTripped = await decode(engine, block, marker, artifacts);
   } catch (e) {
     return {
       status: 'rejected',
