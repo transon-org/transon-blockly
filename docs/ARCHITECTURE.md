@@ -465,6 +465,40 @@ at the provider boundary.
 [RFC-004](proposals/rfc-004-codec-depth-ceiling-raise.md); engine R-32
 (`../transon/docs/proposals/transformer-recursion-depth-budget.md`).
 
+### AD-036 — Opt-in runtime metadata source: fetch + regenerate at session init, snapshot as default and fallback (RFC-007)
+**Decision.** Extend AD-030's two-place projection model with a third, **opt-in** execution point:
+a session configured with `metadataSource: 'engine'` fetches the engine's editor-metadata at
+runtime through a new **optional** `EngineProvider.getEditorMetadata()` port method
+(`metadata-contract.md` §3) and runs the committed FR-114 generators over the **fetched** catalog
+— through the same engine, once, on the engine-ready transition — producing the session's
+palette/toolbox/encoder/decoder/blockmap. The committed snapshot + artifacts remain the default
+source, the deterministic CI/gate substrate (the AD-030 strict-regeneration gate is untouched),
+and the **fail-safe fallback**: a same-major `metadata_version` gate (SPEC FR-140, contract §5)
+guards the fetched payload, and any runtime-path failure falls back to the snapshot surface with
+a `metadata_fallback` diagnostic (SPEC §16.4) — never a mixed catalog, never a broken session.
+Presentation for rules the committed data does not know comes from a **data-declared fallback**
+(SPEC FR-141; FR-127's no-TS-literals rule preserved).
+**Rationale.** FR-120's "new rule, no editor code change" previously held only through a snapshot
+re-pin + editor release; a host already running a newer engine saw the newer surface as
+`transon_unsupported` (correct per AD-004, but avoidable version lag). The generators were
+already pure and catalog-parameterized, and the codec already executes through the host engine —
+so the runtime path is orchestration, not new machinery, and is *more* faithful to AD-012
+(engine-owned metadata, consumed directly) at the same trust boundary the host already owns
+(AD-008: the host supplies the engine that executes everything; NFR-004 keeps the engine
+authoritative regardless of what the projection shows).
+**Trade-off.** Opted-in hosts run engine×editor pairings CI never proved — bounded by the version
+gate, the fallback, and the engine's runtime authority; init cost grows by one metadata fetch +
+three generator runs (measured acceptable in the Pyodide reference host). Blockly's block
+registry is global: dynamic definitions re-register by block type, so two same-page sessions with
+different catalogs share the last-registered definitions (documented limitation; one session per
+page is the supported embed shape).
+**Alternatives.** Full-dynamic (drop the snapshot) — rejected: loses the deterministic CI anchor
+and the no-engine palette render. Auto-detect (method presence ⇒ dynamic) — rejected: presence
+alone must not change behavior; the host opts in explicitly. Per-version committed artifacts —
+rejected: reintroduces the release coupling being removed.
+**SPEC link.** `SPEC.md` §7.18 (FR-139…FR-141), AC-043, §16.4 `metadata_fallback`;
+`metadata-contract.md` §3/§5; [RFC-007](proposals/rfc-007-dynamic-engine-metadata.md).
+
 ---
 
 ## 4. System overview (ports & adapters)
