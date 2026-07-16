@@ -16,6 +16,14 @@ export {
   editorMetadata,
   metadataVersion,
 } from './metadata/snapshot.js';
+export {
+  fetchRuntimeSurface,
+  validateMetadataPayload,
+  isCompatibleMetadataVersion,
+  presentationWithFallback,
+  MetadataFallbackError,
+} from './metadata/dynamic.js';
+export type { RuntimeSurface } from './metadata/dynamic.js';
 export type {
   EditorMetadata,
   EditorCatalog,

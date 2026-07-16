@@ -184,10 +184,18 @@ def _op_transform(req):
     }
 
 
+def _op_editor_metadata(_req):
+    # RFC-007/FR-139 (metadata-contract §3 runtime delivery): the full get_editor_metadata()
+    # payload, verbatim. Failures fall through to _handle's error envelope; the editor's FR-140
+    # gate then falls back to the snapshot.
+    return {"status": "ok", "metadata": get_editor_metadata()}
+
+
 _OPS = {
     "version": _op_version,
     "validate": _op_validate,
     "transform": _op_transform,
+    "editor_metadata": _op_editor_metadata,
 }
 
 

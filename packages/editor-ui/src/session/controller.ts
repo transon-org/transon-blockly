@@ -3,8 +3,9 @@
 // the vanilla createTransonEditor()/<transon-editor> surface (D6) drive this same object, so all the
 // data-flow logic lives here, not in React.
 
-import { encode } from '@transon/editor-core';
+import { encode, fetchRuntimeSurface } from '@transon/editor-core';
 import type { CodecArtifacts, Json, ValidationResult, ExecutionResult } from '@transon/editor-core';
+import { applyPaletteSurface } from '@transon/editor-blockly';
 import { createEditorStore, type EditorStore } from './store.js';
 import { DEFAULT_MARKER, type EditorMode } from './types.js';
 import { applyEngineStatus, loadEngineVersions } from './engine-status.js';
@@ -62,6 +63,12 @@ export interface EditorControllerOptions {
    *  accepted template change and on every sample-input change — debounced per NFR-027 — keeping the
    *  Output panel live without an explicit Run. Gated on a ready engine + valid input (§10.4, §16.4). */
   autorun?: boolean;
+  /** Runtime metadata source (RFC-007, SPEC §7.18, FR-139): `'engine'` fetches the host engine's
+   *  editor-metadata once on the ready transition and regenerates the session's projection surface
+   *  (palette/toolbox/codec) from the fetched catalog — so a newer engine's rules appear without an
+   *  editor release. Guarded by the FR-140 same-major gate; any failure falls back to the default
+   *  `'snapshot'` surface with a persistent `metadata_fallback` diagnostic (§16.4). */
+  metadataSource?: 'snapshot' | 'engine';
 }
 
 export interface EditorController {
@@ -189,22 +196,59 @@ export function createEditorController(
   // with an async host (e.g. the Pyodide reference host) the engine is still idle/loading at
   // construction — refreshStatus consumes this on the idle/loading→ready transition.
   let pendingInitialTemplate: Json | undefined = opts.template;
+  // Runtime metadata source (RFC-007, FR-139/140): on the ready transition of an opted-in session,
+  // fetch the engine's metadata and regenerate the projection surface from it — ONCE, before the
+  // first projection / initial-template load, so the session never projects against one catalog
+  // and then silently re-projects against another. Any failure falls back to the snapshot surface
+  // with a PERSISTENT diagnostic (§16.4 metadata_fallback; kept in its own store field so later
+  // projections don't wipe it). All-or-nothing: palette + toolbox + codec swap together (FR-140).
+  let runtimeSurfaceAttempted = false;
+  const maybeApplyRuntimeSurface = async (): Promise<void> => {
+    if (opts.metadataSource !== 'engine' || runtimeSurfaceAttempted || !engine) return;
+    runtimeSurfaceAttempted = true;
+    try {
+      const surface = await fetchRuntimeSurface(engine);
+      if (disposed) return;
+      applyPaletteSurface({
+        blocks: surface.paletteBlocks,
+        docsRules: surface.metadata.docs?.rules as { name: string }[] | undefined,
+      });
+      mount.setBaseToolbox(surface.toolbox);
+      codecArtifacts = surface.artifacts;
+      store.setState({ metadata_source: 'engine' });
+    } catch (e) {
+      if (disposed) return;
+      store.setState({
+        metadata_fallback: { code: 'metadata_fallback', message: (e as Error).message },
+      });
+    }
+  };
+
+  // The engine-ready arrival work, shared by the poll transition and the already-ready constructor
+  // path: apply the runtime metadata surface first (no-op unless opted in), then load the deferred
+  // initial template (FR-102) or project.
+  const onEngineReady = (): void => {
+    void (async () => {
+      await maybeApplyRuntimeSurface();
+      if (disposed) return;
+      if (pendingInitialTemplate !== undefined) {
+        // Deferred initial template (FR-102): load it now that the codec can run; loadDocumentSafely
+        // ends in project(), so a plain re-projection would be redundant.
+        const doc = pendingInitialTemplate;
+        pendingInitialTemplate = undefined;
+        await loadDocumentSafely(doc);
+      } else {
+        await project();
+      }
+    })();
+  };
+
   const refreshStatus = (): void => {
     if (disposed) return;
     const before = store.getState().engine_runtime_status;
     applyEngineStatus(store, engine);
     const now = store.getState().engine_runtime_status;
-    if (now === 'ready' && before !== 'ready') {
-      if (pendingInitialTemplate !== undefined) {
-        // Deferred initial template (FR-102): load it now that the codec can run; loadDocumentSafely
-        // ends in project(), so the plain re-projection below would be redundant.
-        const doc = pendingInitialTemplate;
-        pendingInitialTemplate = undefined;
-        void loadDocumentSafely(doc);
-      } else {
-        void project();
-      }
-    }
+    if (now === 'ready' && before !== 'ready') onEngineReady();
     // Load engine + metadata versions once ready (FR-080 diagnostics); idempotent, load once.
     if (now === 'ready' && store.getState().engine_version === null) void loadEngineVersions(store, engine);
     if (engine && (engine.status === 'idle' || engine.status === 'loading')) {
@@ -221,13 +265,15 @@ export function createEditorController(
   void project(); // initial projection: `unavailable` when not ready, `empty`/generated when ready
   if (engine) refreshStatus(); // poll for the ready transition
 
-  // Optional initial template (FR-102). Loaded now only when the engine is already ready (e.g. the
-  // synchronous test host); otherwise it stays pending and refreshStatus loads it on the ready
-  // transition above — without this the engine-gated loadDocumentSafely would silently drop it.
-  if (pendingInitialTemplate !== undefined && engine?.status === 'ready') {
-    const doc = pendingInitialTemplate;
-    pendingInitialTemplate = undefined;
-    void loadDocumentSafely(doc);
+  // Engine already ready at construction (e.g. the synchronous test host): run the same arrival
+  // work as the poll transition — the runtime metadata surface first when opted in (FR-139), then
+  // the initial template (FR-102) — without this the engine-gated loadDocumentSafely would
+  // silently drop the template. Guarded: with neither a pending template nor the runtime metadata
+  // opt-in there is no arrival work, and the initial project() above already ran — a redundant
+  // late projection here would supersede (and drop) an import started right after construction
+  // (§17.8 latest-guard semantics).
+  if (engine?.status === 'ready' && (pendingInitialTemplate !== undefined || opts.metadataSource === 'engine')) {
+    onEngineReady();
   }
 
   async function loadDocumentSafely(doc: Json): Promise<void> {

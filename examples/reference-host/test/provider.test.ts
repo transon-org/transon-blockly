@@ -47,6 +47,14 @@ function fakePyodide(): FakePy {
     transon_version() {
       return JSON.stringify({ engine: '0.1.6', metadata: '3.0' });
     },
+    transon_editor_metadata() {
+      // FR-139 (contract §3): ok-envelope carrying the full export; a second fake below scripts
+      // the error envelope.
+      return JSON.stringify({
+        status: 'ok',
+        metadata: { metadata_version: '3.0', catalog: { rules: [{ name: 'attr' }] } },
+      });
+    },
   };
   return {
     loadCalls: 0,
@@ -118,5 +126,27 @@ describe('Pyodide reference host (AD-025, §5.9)', () => {
     const host = createPyodideHost({ loadPyodide: async () => fakePyodide() });
     await host.init();
     expect(await host.version()).toEqual({ engine: '0.1.6', metadata: '3.0' });
+  });
+
+  it('getEditorMetadata proxies the engine export verbatim (FR-139, contract §3)', async () => {
+    const host = createPyodideHost({ loadPyodide: async () => fakePyodide() });
+    await host.init();
+    expect(await host.getEditorMetadata!()).toEqual({
+      metadata_version: '3.0',
+      catalog: { rules: [{ name: 'attr' }] },
+    });
+  });
+
+  it('getEditorMetadata rejects on the glue error envelope → the FR-140 snapshot fallback path', async () => {
+    const py = fakePyodide();
+    const fns = py.globals;
+    const orig = fns.get.bind(fns);
+    fns.get = (name: string) =>
+      name === 'transon_editor_metadata'
+        ? () => JSON.stringify({ status: 'error', error_message: 'no export on this engine' })
+        : orig(name);
+    const host = createPyodideHost({ loadPyodide: async () => py });
+    await host.init();
+    await expect(host.getEditorMetadata!()).rejects.toThrow(/no export/);
   });
 });

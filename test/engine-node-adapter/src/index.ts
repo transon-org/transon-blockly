@@ -186,6 +186,16 @@ class NodeEngineProvider implements EngineProvider {
     return res as unknown as { engine: string; metadata: string };
   }
 
+  async getEditorMetadata(): Promise<Json> {
+    // RFC-007/FR-139 (contract §3): proxy get_editor_metadata() verbatim. A runner-side error
+    // envelope becomes a rejection here → the editor's FR-140 snapshot fallback.
+    const res = await this.#request({ op: 'editor_metadata' });
+    if ((res as { status?: string }).status !== 'ok') {
+      throw new Error(String((res as { error_message?: string }).error_message ?? 'editor_metadata failed'));
+    }
+    return (res as { metadata?: Json }).metadata as Json;
+  }
+
   dispose(): void {
     this.#failAll(new Error('provider disposed'));
     this.#teardownProc();

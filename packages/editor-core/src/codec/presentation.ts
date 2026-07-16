@@ -46,6 +46,12 @@ export interface Presentation {
   structuralTitles: Record<string, string>;
   /** Colour for the import-only `transon_unsupported` placeholder (§13.11) — not a category. */
   unsupportedColour: number | string;
+  /**
+   * The §12.4 category a runtime-fetched rule falls into when the committed `rules` map does not
+   * know it (SPEC FR-141, RFC-007). Must be a member of `categoryOrder`. Data-declared here —
+   * never a TS literal (FR-127).
+   */
+  fallbackCategory: string;
   /** Per-rule title/category/advanced, keyed by rule name. Completeness-gated (FR-127). */
   rules: Record<string, RulePresentation>;
   /**
@@ -72,6 +78,7 @@ export const PRESENTATION: Presentation = {
   structuralBlocks: raw.structuralBlocks,
   structuralTitles: raw.structuralTitles,
   unsupportedColour: raw.unsupportedColour,
+  fallbackCategory: raw.fallbackCategory,
   rules: raw.rules,
   dropdownMenus: raw.dropdownMenus ?? {},
   paramLabels: raw.paramLabels ?? {},

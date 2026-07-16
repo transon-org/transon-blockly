@@ -41,6 +41,7 @@
     "transon_unsupported": "Unsupported"
   },
   "unsupportedColour": "#9aa0a6",
+  "fallbackCategory": "Custom",
   "rules": {
     "this": { "title": "This", "category": "Input / Context", "advanced": false },
     "parent": { "title": "Parent scope", "category": "Input / Context", "advanced": true },

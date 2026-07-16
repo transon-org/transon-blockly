@@ -13,6 +13,7 @@ export type ErrorCode =
   | 'runtime_transformation' // engine TransformationError via transform()
   | 'include_loader' // include template could not be resolved (§16.6)
   | 'engine_init' // host engine runtime failed to load or initialize
+  | 'metadata_fallback' // runtime metadata path unusable — session fell back to the snapshot (§7.18, FR-140)
   | 'editor_internal'; // unexpected editor error
 
 /** Human-facing category label per code (FR-095 distinct display). */
@@ -24,6 +25,7 @@ export const ERROR_CATEGORY: Record<ErrorCode, string> = {
   runtime_transformation: 'Runtime error',
   include_loader: 'Include not resolved',
   engine_init: 'Engine initialization error',
+  metadata_fallback: 'Engine metadata unavailable (using built-in catalog)',
   editor_internal: 'Editor error',
 };
 

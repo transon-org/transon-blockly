@@ -317,6 +317,17 @@ export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
           {metaMismatch ? ` (built for ${metadataVersion})` : ''}
         </span>
       ) : null}
+      {state.metadata_source === 'engine' ? (
+        // FR-139 (RFC-007): the projection surface came from the engine's runtime metadata export.
+        <span data-testid="metadata-source">catalog: engine</span>
+      ) : null}
+      {state.metadata_fallback ? (
+        // FR-140 fail-safe diagnostic (§16.4 metadata_fallback) — persistent, not wiped by later
+        // projections: the opted-in runtime metadata path was unusable; running on the snapshot.
+        <span data-testid="metadata-fallback" title={state.metadata_fallback.message}>
+          {ERROR_CATEGORY.metadata_fallback}
+        </span>
+      ) : null}
     </div>
   );
 }

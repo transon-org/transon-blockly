@@ -98,6 +98,18 @@ def transon_transform(template_json, input_json, marker, includes_json, js_loade
     )
 
 
+def transon_editor_metadata():
+    # RFC-007/FR-139 (metadata-contract §3 runtime delivery): the full get_editor_metadata()
+    # payload, verbatim, as a JSON string. Errors return an envelope the provider surfaces as a
+    # rejected promise (the editor's FR-140 gate then falls back to the snapshot).
+    try:
+        if get_editor_metadata is None:
+            raise RuntimeError("engine has no editor-metadata export (transon.metadata)")
+        return json.dumps({"status": "ok", "metadata": get_editor_metadata()})
+    except Exception as exc:  # same envelope discipline as validate/transform; never escapes Pyodide
+        return json.dumps({"status": "error", **_error_fields(exc)})
+
+
 def transon_version():
     import transon
 

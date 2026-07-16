@@ -49,6 +49,7 @@ export class TransonEditorElement extends HTMLElement {
       'back-label',
       'show-advanced',
       'hide-palette-controls',
+      'metadata-source',
     ];
   }
 
@@ -92,6 +93,9 @@ export class TransonEditorElement extends HTMLElement {
       // FR-138: open with advanced blocks shown (embed presents all blocks, no toggle/search chrome).
       paletteView: this.hasAttribute('show-advanced') ? { showAdvanced: true } : undefined,
       hidePaletteControls: this.hasAttribute('hide-palette-controls'),
+      // FR-139 (RFC-007): <transon-editor metadata-source="engine"> opts into the runtime
+      // metadata source; anything else stays on the default snapshot surface.
+      metadataSource: this.getAttribute('metadata-source') === 'engine' ? 'engine' : undefined,
       ...(backLabel != null
         ? { backLabel: backLabel || undefined, onBack: () => this.dispatchEvent(new CustomEvent('back')) }
         : {}),
