@@ -188,7 +188,7 @@
       "colour": 120,
       "flyoutLabel": "Map (map)",
       "inputsInline": false,
-      "message0": "Map %1",
+      "message0": "Map item %1",
       "output": null,
       "type": "transon_rule_map__item"
     },
@@ -202,7 +202,7 @@
       "colour": 120,
       "flyoutLabel": "Map (map)",
       "inputsInline": false,
-      "message0": "Map %1",
+      "message0": "Map items %1",
       "output": null,
       "type": "transon_rule_map__items"
     },
@@ -552,7 +552,7 @@
       "colour": 30,
       "flyoutLabel": "Expression (expr)",
       "inputsInline": false,
-      "message0": "Expression op %1 %2",
+      "message0": "Expression op %1 value %2",
       "output": null,
       "type": "transon_rule_expr__value"
     },
@@ -663,7 +663,7 @@
       "colour": 30,
       "flyoutLabel": "Expression (expr)",
       "inputsInline": false,
-      "message0": "Expression op %1 %2",
+      "message0": "Expression op %1 values %2",
       "output": null,
       "type": "transon_rule_expr__values"
     },
@@ -1043,7 +1043,7 @@
       "colour": 30,
       "flyoutLabel": "Call function (call)",
       "inputsInline": false,
-      "message0": "Call function name %1 %2",
+      "message0": "Call function name %1 value %2",
       "output": null,
       "type": "transon_rule_call__value"
     },
@@ -1235,7 +1235,7 @@
       "colour": 30,
       "flyoutLabel": "Call function (call)",
       "inputsInline": false,
-      "message0": "Call function name %1 %2",
+      "message0": "Call function name %1 values %2",
       "output": null,
       "type": "transon_rule_call__values"
     },

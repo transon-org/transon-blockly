@@ -504,15 +504,14 @@ const P_LABEL: Json = P_TITLE;
 // flyout/palette dual label: "<title> (<rule>)" (§12.5, OQ-018) — display-only projected data, not
 // part of message0/message1; @transon/editor-blockly applies it only inside a real flyout.
 const P_FLYOUT_LABEL: Json = { '@': 'join', sep: '', items: [P_TITLE, ' (', P_NAME, ')'] };
-// @-time: constant (field) params always keep their label in the default (≤1 value-input) branch
-// — dropping it would leave an unlabeled dropdown/field; only the dynamic param's segment (the
-// branch guarantees at most one) drops to a bare placeholder (§12.5 rule 4).
-const P_IS_CONSTANT_PARAM: Json = { '@': 'expr', op: '==', values: [pAt('kind'), 'constant'] };
-// The default (≤1 value input) branch's per-param segment: bare placeholder for a dynamic param
-// (the single socket), labelled segment for a constant param (field/dropdown).
+// The default (≤1 value input) branch's per-param segment: a bare placeholder only for a param
+// the driver marked `bare` — a dynamic param whose label-free face stays UNIQUE among the rule's
+// variants (§12.5, revised 2026-07-18). Constant params and colliding-variant dynamic params
+// (call/expr value vs values, map item vs items) keep the labelled segment; `bare` is computed
+// in `enrichForPalette` (presentational enrichment stays in the driver, like `multiInput`).
 const P_PARAM_SEG_DEFAULT: Json = { '@': 'cond',
-  cases: [{ when: P_IS_CONSTANT_PARAM, then: P_PARAM_SEG }],
-  default: P_PARAM_SEG_BARE,
+  cases: [{ when: pAt('bare'), then: P_PARAM_SEG_BARE }],
+  default: P_PARAM_SEG,
 };
 const P_PARAM_SEGS_MULTI: Json = { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG }] } };
 const P_PARAM_SEGS_DEFAULT: Json = { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG_DEFAULT }] } };
@@ -766,28 +765,46 @@ function enrichForPalette(entry: unknown, presentation: Presentation): Json {
   const pres = presentation.rules[e.name];
   if (!pres) throw new Error(`palette: rule '${e.name}' has no presentation entry (FR-127)`);
   const paramLabels = presentation.paramLabels[e.name] ?? {};
+  const variants = e.variants.map((v) => {
+    const params = v.params.map((p) => {
+      const options = optMap.get(p.name);
+      const menu = options ? menuFor(e.name, p.name, options, presentation) : undefined;
+      return {
+        name: p.name,
+        required: p.required,
+        kind: kindMap.get(p.name) ?? 'dynamic',
+        label: paramLabels[p.name] ?? p.name,
+        ...(options ? { options, menu } : {}),
+      };
+    });
+    // ≥2 value inputs ⇒ the title takes its own first row (FR-129, §13.10). Computed here in plain
+    // TS (presentational enrichment stays in the driver by design; the engine's `length` is
+    // reserved for codec predicates, NFR-051) so the G_palette projection just branches on the flag.
+    const multiInput = params.filter((p) => p.kind !== 'constant').length >= 2;
+    return { id: v.id, params, multiInput };
+  });
+  // §12.5 face-uniqueness (revised 2026-07-18): a lone dynamic socket drops its label ONLY when
+  // the resulting face stays unique among the rule's variants. The signature is what the block
+  // face renders — labelled constant widgets everywhere; dynamic params as labelled segments in
+  // the multi-input layout, bare sockets otherwise. Sibling variants differing solely by that one
+  // dynamic param's name (call/expr value vs values, map item vs items) collide, and each keeps
+  // its param label on the socket instead of going bare.
+  const faceSig = (v: (typeof variants)[number]): string =>
+    JSON.stringify([v.multiInput, v.params.map((p) =>
+      v.multiInput || p.kind === 'constant' ? [p.kind, p.label] : 'socket')]);
+  const faceCount = new Map<string, number>();
+  for (const v of variants) faceCount.set(faceSig(v), (faceCount.get(faceSig(v)) ?? 0) + 1);
   return {
     name: e.name,
     title: pres.title,
     colour: presentation.categoryColour[pres.category] ?? 0,
-    variants: e.variants.map((v) => {
-      const params = v.params.map((p) => {
-        const options = optMap.get(p.name);
-        const menu = options ? menuFor(e.name, p.name, options, presentation) : undefined;
-        return {
-          name: p.name,
-          required: p.required,
-          kind: kindMap.get(p.name) ?? 'dynamic',
-          label: paramLabels[p.name] ?? p.name,
-          ...(options ? { options, menu } : {}),
-        };
-      });
-      // ≥2 value inputs ⇒ the title takes its own first row (FR-129, §13.10). Computed here in plain
-      // TS (presentational enrichment stays in the driver by design; the engine's `length` is
-      // reserved for codec predicates, NFR-051) so the G_palette projection just branches on the flag.
-      const multiInput = params.filter((p) => p.kind !== 'constant').length >= 2;
-      return { id: v.id, params, multiInput };
-    }),
+    variants: variants.map((v) => ({
+      ...v,
+      params: v.params.map((p) => ({
+        ...p,
+        bare: !v.multiInput && p.kind !== 'constant' && faceCount.get(faceSig(v)) === 1,
+      })),
+    })),
   } as unknown as Json;
 }
 

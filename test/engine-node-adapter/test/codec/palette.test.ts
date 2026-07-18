@@ -91,31 +91,58 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
     }
   });
 
-  it('single-value-input variants drop the raw param-name prefix on the socket; multi-input variants keep it (§12.5, OQ-018, FR-078)', () => {
+  it('no two rule-variant blocks render the same visual face (§12.5, revised 2026-07-18)', () => {
+    // The regression gate for the value/values (call, expr) and item/items (map) collisions:
+    // strip the non-rendered arg keys (`name` is the codec key, `accept` the validation domain)
+    // and require every remaining face — messages + rendered widget shapes — to be unique.
+    const visual = (args: ArgDef[] | undefined): unknown =>
+      (args ?? []).map(({ name: _name, accept: _accept, ...rendered }) => rendered);
+    const faces = new Map<string, string>();
+    for (const b of blocks) {
+      if (!isRuleBlockType(b.type)) continue;
+      const face = JSON.stringify([b.message0, visual(b.args0), b.message1, visual(b.args1)]);
+      const prior = faces.get(face);
+      expect(prior, `${b.type} renders the same face as ${prior}`).toBeUndefined();
+      faces.set(face, b.type);
+    }
+  });
+
+  it('sibling variants that differ only by the lone dynamic param keep its label on the socket (§12.5, revised 2026-07-18)', () => {
+    // call/expr value-vs-values and map item-vs-items would otherwise be indistinguishable.
+    expect(byType.get(ruleBlockType('call', 'value'))!.message0).toBe('Call function name %1 value %2');
+    expect(byType.get(ruleBlockType('call', 'values'))!.message0).toBe('Call function name %1 values %2');
+    expect(byType.get(ruleBlockType('expr', 'value'))!.message0).toBe('Expression op %1 value %2');
+    expect(byType.get(ruleBlockType('expr', 'values'))!.message0).toBe('Expression op %1 values %2');
+    expect(byType.get(ruleBlockType('map', 'item'))!.message0).toBe('Map item %1');
+    expect(byType.get(ruleBlockType('map', 'items'))!.message0).toBe('Map items %1');
+  });
+
+  it('genuinely unambiguous single-socket variants stay bare (§12.5, OQ-018)', () => {
+    // The OQ-018 density win is kept wherever no sibling variant collides: the lone socket
+    // carries only its placeholder, no param-name prose.
+    expect(byType.get(ruleBlockType('filter', 'base'))!.message0).toBe('Filter %1');
+    expect(byType.get(ruleBlockType('set', 'base'))!.message0).toBe('Set variable %1');
+    // object__fields is single-socket and unique (the sibling key+value variant is multi-input).
+    expect(byType.get(ruleBlockType('object', 'fields'))!.message0).toBe('Build object %1');
+  });
+
+  it('multi-input variants keep every per-input label (§12.5, OQ-018, FR-078)', () => {
     for (const rule of editorMetadata.catalog.rules) {
       const kindOf = new Map((rule.params as Array<{ name: string; kind?: string }>).map((p) => [p.name, p.kind ?? 'dynamic']));
       for (const v of rule.variants as Array<{ id: string; params: Array<{ name: string }> }>) {
         const dynamicCount = v.params.filter((p) => kindOf.get(p.name) !== 'constant').length;
+        if (dynamicCount < 2) continue;
         const b = byType.get(ruleBlockType(rule.name, v.id))!;
-        const msgText = [b.message0, b.message1].filter((m): m is string => typeof m === 'string').join(' ');
-        if (dynamicCount <= 1) {
-          // No raw param-name text should appear as a label segment — the socket carries only the
-          // placeholder (%N). A dynamic param's name should not appear as standalone label prose.
-          for (const p of v.params) {
-            const label = PRESENTATION.paramLabels[rule.name]?.[p.name];
-            if (kindOf.get(p.name) !== 'constant' && !label) {
-              const re = new RegExp(`(^|\\s)${p.name}(\\s|$)`);
-              expect(re.test(msgText), `${b.type} single-input socket must not show raw param name '${p.name}'`).toBe(false);
-            }
-          }
-        } else {
-          // multi-input: every dynamic param's display text (declared short label, else metadata
-          // name) appears in the message text.
-          for (const p of v.params) {
-            if (kindOf.get(p.name) === 'constant') continue;
-            const label = PRESENTATION.paramLabels[rule.name]?.[p.name] ?? p.name;
-            expect(msgText.includes(label), `${b.type} multi-input keeps '${label}' for param '${p.name}'`).toBe(true);
-          }
+        // every dynamic param's display text (declared short label, else metadata name) renders
+        // as its COMPLETE " <label> %<n>" segment at the param's position in the inputs row
+        // (message1 — the title-own-row layout, §13.10). Matching the whole segment (label AND
+        // its positional placeholder) rules out substring false-passes like 'value' in 'values'.
+        expect(b.message1, `${b.type} has an inputs row`).toBeTruthy();
+        for (const [i, p] of v.params.entries()) {
+          if (kindOf.get(p.name) === 'constant') continue;
+          const label = PRESENTATION.paramLabels[rule.name]?.[p.name] ?? p.name;
+          const segment = ` ${label} %${i + 1}`;
+          expect(b.message1!.includes(segment), `${b.type} multi-input keeps segment '${segment}' for param '${p.name}'`).toBe(true);
         }
       }
     }

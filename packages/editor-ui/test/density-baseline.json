@@ -1,12 +1,12 @@
 {
   "WorkedExampleNestedArithmetic": {
     "blocksVisible": 10,
-    "width": 786,
+    "width": 902,
     "height": 264
   },
   "WorkedExampleReshapeRecords": {
     "blocksVisible": 15,
-    "width": 956,
+    "width": 1054,
     "height": 360
   },
   "WorkedExampleRenameAndFlatten": {
@@ -31,7 +31,7 @@
   },
   "WorkedExampleConditionalEnrichmentInsideMap": {
     "blocksVisible": 23,
-    "width": 1002,
+    "width": 1092,
     "height": 528
   },
   "RecipeReadNestedValue": {
@@ -46,7 +46,7 @@
   },
   "RecipePluckFieldFromEach": {
     "blocksVisible": 3,
-    "width": 244,
+    "width": 284,
     "height": 72
   },
   "RecipeSwapKeysAndValues": {
@@ -66,7 +66,7 @@
   },
   "RecipeConvertType": {
     "blocksVisible": 3,
-    "width": 396,
+    "width": 446,
     "height": 72
   },
   "RecipeMapCodeToLabel": {
@@ -76,22 +76,22 @@
   },
   "RecipeBucketValueByRanges": {
     "blocksVisible": 15,
-    "width": 728,
+    "width": 778,
     "height": 312
   },
   "RecipeComputeOnceUseTwice": {
     "blocksVisible": 18,
-    "width": 714,
+    "width": 732,
     "height": 456
   },
   "RecipePairUpTwoLists": {
     "blocksVisible": 15,
-    "width": 612,
+    "width": 652,
     "height": 360
   },
   "RecipeKeepItemsMatchingCondition": {
     "blocksVisible": 6,
-    "width": 580,
+    "width": 638,
     "height": 120
   },
   "AttrSimpleFixedName": {
@@ -151,32 +151,32 @@
   },
   "AttrDynamicReferenceMultipleNames": {
     "blocksVisible": 13,
-    "width": 634,
+    "width": 674,
     "height": 288
   },
   "ChainWithAttr": {
     "blocksVisible": 20,
-    "width": 490,
+    "width": 530,
     "height": 552
   },
   "CondFirstTruthyArm": {
     "blocksVisible": 11,
-    "width": 552,
+    "width": 602,
     "height": 216
   },
   "CondDefaultBranch": {
     "blocksVisible": 11,
-    "width": 552,
+    "width": 602,
     "height": 216
   },
   "ConvertValues": {
     "blocksVisible": 4,
-    "width": 376,
+    "width": 434,
     "height": 72
   },
   "ConvertValue": {
     "blocksVisible": 3,
-    "width": 446,
+    "width": 546,
     "height": 24
   },
   "ConvertNoParameters": {
@@ -206,52 +206,52 @@
   },
   "ExprSimpleMonads1": {
     "blocksVisible": 2,
-    "width": 292,
+    "width": 342,
     "height": 24
   },
   "ExprSimpleMonads2": {
     "blocksVisible": 5,
-    "width": 498,
+    "width": 548,
     "height": 72
   },
   "ExprMonadsComplex": {
     "blocksVisible": 16,
-    "width": 812,
+    "width": 912,
     "height": 288
   },
   "ExprSimpleValues1": {
     "blocksVisible": 4,
-    "width": 394,
+    "width": 452,
     "height": 72
   },
   "ExprSimpleValues2": {
     "blocksVisible": 4,
-    "width": 394,
+    "width": 452,
     "height": 72
   },
   "ExprValuesComplex": {
     "blocksVisible": 14,
-    "width": 786,
+    "width": 902,
     "height": 360
   },
   "ExprValuesIgnoresThis": {
     "blocksVisible": 5,
-    "width": 346,
+    "width": 404,
     "height": 96
   },
   "ExprLogicalAnd": {
     "blocksVisible": 2,
-    "width": 212,
+    "width": 262,
     "height": 24
   },
   "ExprLogicalOr": {
     "blocksVisible": 2,
-    "width": 204,
+    "width": 254,
     "height": 24
   },
   "ExprOrNoContentFallback": {
     "blocksVisible": 5,
-    "width": 482,
+    "width": 540,
     "height": 120
   },
   "ExprUnary1": {
@@ -266,22 +266,22 @@
   },
   "FileWriteViaMap": {
     "blocksVisible": 9,
-    "width": 684,
+    "width": 774,
     "height": 216
   },
   "FilterDict": {
     "blocksVisible": 5,
-    "width": 482,
+    "width": 540,
     "height": 72
   },
   "FilterList": {
     "blocksVisible": 5,
-    "width": 474,
+    "width": 532,
     "height": 72
   },
   "FilterListByOddIndex": {
     "blocksVisible": 5,
-    "width": 482,
+    "width": 540,
     "height": 72
   },
   "FilterListNoContent": {
@@ -291,22 +291,22 @@
   },
   "FormatFromSingleValue": {
     "blocksVisible": 3,
-    "width": 260,
+    "width": 300,
     "height": 96
   },
   "FormatFromDict": {
     "blocksVisible": 3,
-    "width": 316,
+    "width": 356,
     "height": 96
   },
   "FormatFromList": {
     "blocksVisible": 3,
-    "width": 260,
+    "width": 300,
     "height": 96
   },
   "FormatWithValue": {
     "blocksVisible": 9,
-    "width": 728,
+    "width": 826,
     "height": 192
   },
   "FormatWithDynamicPattern": {
@@ -341,12 +341,12 @@
   },
   "MinOfArray": {
     "blocksVisible": 3,
-    "width": 376,
+    "width": 434,
     "height": 48
   },
   "MaxWithDefault": {
     "blocksVisible": 4,
-    "width": 376,
+    "width": 434,
     "height": 72
   },
   "SortedArray": {
@@ -376,7 +376,7 @@
   },
   "RoundWithDigits": {
     "blocksVisible": 4,
-    "width": 392,
+    "width": 450,
     "height": 72
   },
   "BoolOfNull": {
@@ -391,17 +391,17 @@
   },
   "FromEpochCustomFormat": {
     "blocksVisible": 4,
-    "width": 466,
+    "width": 524,
     "height": 72
   },
   "ToEpochIso": {
     "blocksVisible": 3,
-    "width": 416,
+    "width": 474,
     "height": 48
   },
   "ToEpochCustomFormat": {
     "blocksVisible": 4,
-    "width": 522,
+    "width": 580,
     "height": 72
   },
   "B64Encode": {
@@ -416,22 +416,22 @@
   },
   "Uuid5Dns": {
     "blocksVisible": 4,
-    "width": 450,
+    "width": 508,
     "height": 72
   },
   "RegexMatchGroups": {
     "blocksVisible": 4,
-    "width": 498,
+    "width": 556,
     "height": 72
   },
   "RegexMatchNone": {
     "blocksVisible": 4,
-    "width": 450,
+    "width": 508,
     "height": 72
   },
   "RegexReplace": {
     "blocksVisible": 5,
-    "width": 456,
+    "width": 514,
     "height": 96
   },
   "UpperString": {
@@ -451,17 +451,17 @@
   },
   "ReplaceSubstring": {
     "blocksVisible": 5,
-    "width": 408,
+    "width": 466,
     "height": 96
   },
   "RemovePrefix": {
     "blocksVisible": 4,
-    "width": 506,
+    "width": 564,
     "height": 72
   },
   "RemoveSuffix": {
     "blocksVisible": 4,
-    "width": 450,
+    "width": 508,
     "height": 72
   },
   "StripWhitespace": {
@@ -471,22 +471,22 @@
   },
   "LstripChars": {
     "blocksVisible": 4,
-    "width": 400,
+    "width": 458,
     "height": 72
   },
   "RstripChars": {
     "blocksVisible": 4,
-    "width": 400,
+    "width": 458,
     "height": 72
   },
   "SliceString": {
     "blocksVisible": 5,
-    "width": 392,
+    "width": 450,
     "height": 96
   },
   "SliceArray": {
     "blocksVisible": 4,
-    "width": 392,
+    "width": 450,
     "height": 72
   },
   "ReversedString": {
@@ -511,7 +511,7 @@
   },
   "Include": {
     "blocksVisible": 3,
-    "width": 340,
+    "width": 380,
     "height": 72
   },
   "JoinWithStaticNoOverrides": {
@@ -546,7 +546,7 @@
   },
   "JoinManyDynamicDicts": {
     "blocksVisible": 15,
-    "width": 630,
+    "width": 670,
     "height": 504
   },
   "JoinSkipsMissingStringFields": {
@@ -566,17 +566,17 @@
   },
   "MapListToNestedListWithItem": {
     "blocksVisible": 5,
-    "width": 492,
+    "width": 532,
     "height": 96
   },
   "MapListToList": {
     "blocksVisible": 16,
-    "width": 632,
+    "width": 672,
     "height": 384
   },
   "MapDictToList": {
     "blocksVisible": 4,
-    "width": 288,
+    "width": 328,
     "height": 72
   },
   "MapDictToDictItems": {
@@ -586,7 +586,7 @@
   },
   "MapDictToListItems": {
     "blocksVisible": 4,
-    "width": 280,
+    "width": 328,
     "height": 72
   },
   "MapListsToDict": {
@@ -616,7 +616,7 @@
   },
   "NoContentForMappingList": {
     "blocksVisible": 13,
-    "width": 448,
+    "width": 496,
     "height": 336
   },
   "NoContentForMappingDict": {
@@ -641,67 +641,67 @@
   },
   "OperatorLessThan": {
     "blocksVisible": 2,
-    "width": 244,
+    "width": 294,
     "height": 24
   },
   "OperatorLessOrEqual": {
     "blocksVisible": 2,
-    "width": 212,
+    "width": 262,
     "height": 24
   },
   "OperatorEqual": {
     "blocksVisible": 2,
-    "width": 244,
+    "width": 294,
     "height": 24
   },
   "OperatorNotEqual": {
     "blocksVisible": 2,
-    "width": 244,
+    "width": 294,
     "height": 24
   },
   "OperatorGreaterOrEqual": {
     "blocksVisible": 2,
-    "width": 204,
+    "width": 254,
     "height": 24
   },
   "OperatorGreaterThan": {
     "blocksVisible": 2,
-    "width": 236,
+    "width": 286,
     "height": 24
   },
   "OperatorSubtract": {
     "blocksVisible": 2,
-    "width": 244,
+    "width": 294,
     "height": 24
   },
   "OperatorMultiply": {
     "blocksVisible": 2,
-    "width": 244,
+    "width": 294,
     "height": 24
   },
   "OperatorDivide": {
     "blocksVisible": 2,
-    "width": 244,
+    "width": 294,
     "height": 24
   },
   "OperatorModulo": {
     "blocksVisible": 2,
-    "width": 244,
+    "width": 294,
     "height": 24
   },
   "OperatorInArray": {
     "blocksVisible": 5,
-    "width": 306,
+    "width": 356,
     "height": 96
   },
   "OperatorInObjectKey": {
     "blocksVisible": 4,
-    "width": 370,
+    "width": 420,
     "height": 72
   },
   "OperatorInString": {
     "blocksVisible": 2,
-    "width": 252,
+    "width": 302,
     "height": 24
   },
   "SetVisibleToLaterSiblingKey": {
@@ -731,12 +731,12 @@
   },
   "SetBeforeMapVisibleInsideIteration": {
     "blocksVisible": 7,
-    "width": 396,
+    "width": 436,
     "height": 120
   },
   "SetInsideMapNotVisibleAfterLoop": {
     "blocksVisible": 8,
-    "width": 430,
+    "width": 470,
     "height": 120
   },
   "SplitString": {
@@ -801,7 +801,7 @@
   },
   "TypeDispatchWithSwitch": {
     "blocksVisible": 7,
-    "width": 364,
+    "width": 414,
     "height": 144
   },
   "ZipLists": {

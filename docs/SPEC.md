@@ -1324,11 +1324,21 @@ stays visible where it is *learned*:
 - **The flyout/palette keeps the dual label** — `Get attribute (attr)` — so the mapping is taught
   at pick time.
 - **The tooltip carries the rule name**: `<rule> — <description>` (FR-078).
-- A variant with a **single value input omits the parameter-name prefix** on that socket (the
-  socket is unambiguous; the tooltip still names it); variants with several inputs keep per-input
-  labels. The committed presentation data may declare **short display labels** for long parameter
-  names (curated, display-only data per FR-127 / `metadata-contract.md` §2.9) — parameter *names*
-  in the JSON are always the metadata names.
+- A variant with a **single value input omits the parameter-name prefix** on that socket **only
+  when the resulting face stays unique among the rule's variants** (revised 2026-07-18; the
+  original unconditional omission left sibling variants that differ solely by that one dynamic
+  parameter's name — `call`/`expr` `value` vs `values`, `map` `item` vs `items` — rendering
+  pixel-identical in both palette and canvas). When two or more variants of a rule would
+  otherwise render the same face, each keeps its parameter label (the declared short display
+  label, else the metadata name) on the socket; genuinely unambiguous single-socket variants
+  stay bare. Variants with several inputs always keep per-input labels. The committed
+  presentation data may declare **short display labels** for long parameter names (curated,
+  display-only data per FR-127 / `metadata-contract.md` §2.9) — parameter *names* in the JSON
+  are always the metadata names.
+- **The flyout dual-label substitution preserves any trailing label text** (revised 2026-07-18):
+  when the title and a following parameter label share one rendered text run (e.g. `Map items`),
+  the flyout substitutes only the title portion (`Map (map) items`), so the disambiguating label
+  from the rule above survives at pick time.
 
 All of this is display-only (§21.12): the codec reads fields/inputs by name, never by label.
 
