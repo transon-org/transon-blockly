@@ -168,6 +168,13 @@ export function mountBlockly(container: HTMLElement, opts: TransonMountOptions =
     // and the workspace is not read-only) so the contract holds regardless of toolbox shape or a
     // future Blockly default change — matching the explicit `zoom`/`move` options above.
     collapse: true,
+    // NFR-052: network-hermetic mount. Without this, Blockly's WorkspaceAudio preloads its UI
+    // sounds from the DEFAULT media path — https://static.blockly.com/media/ — on every inject.
+    // An embeddable component must not silently call a third-party CDN from the host page, and
+    // the DOM test suites must not depend on that CDN being reachable (its timeout failed CI as
+    // unhandled fetch rejections). The audio preload is the media path's only consumer in our
+    // surface, so disabling sounds removes the editor's last external fetch.
+    sounds: false,
   });
 
   // FR-133 zoom-to-fit — one-action framing of the whole template (@blockly/zoom-to-fit).
