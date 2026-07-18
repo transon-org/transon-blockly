@@ -133,12 +133,16 @@ describe('G_palette block definitions (FR-084, FR-089, FR-118)', () => {
         const dynamicCount = v.params.filter((p) => kindOf.get(p.name) !== 'constant').length;
         if (dynamicCount < 2) continue;
         const b = byType.get(ruleBlockType(rule.name, v.id))!;
-        const msgText = [b.message0, b.message1].filter((m): m is string => typeof m === 'string').join(' ');
-        // every dynamic param's display text (declared short label, else metadata name) appears.
-        for (const p of v.params) {
+        // every dynamic param's display text (declared short label, else metadata name) renders
+        // as its COMPLETE " <label> %<n>" segment at the param's position in the inputs row
+        // (message1 — the title-own-row layout, §13.10). Matching the whole segment (label AND
+        // its positional placeholder) rules out substring false-passes like 'value' in 'values'.
+        expect(b.message1, `${b.type} has an inputs row`).toBeTruthy();
+        for (const [i, p] of v.params.entries()) {
           if (kindOf.get(p.name) === 'constant') continue;
           const label = PRESENTATION.paramLabels[rule.name]?.[p.name] ?? p.name;
-          expect(msgText.includes(label), `${b.type} multi-input keeps '${label}' for param '${p.name}'`).toBe(true);
+          const segment = ` ${label} %${i + 1}`;
+          expect(b.message1!.includes(segment), `${b.type} multi-input keeps segment '${segment}' for param '${p.name}'`).toBe(true);
         }
       }
     }
