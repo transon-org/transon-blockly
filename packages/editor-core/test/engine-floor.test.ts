@@ -35,11 +35,21 @@ describe('isBelowEngineFloor (FR-142)', () => {
     expect(isBelowEngineFloor('v0.1.7')).toBe(true);
     expect(isBelowEngineFloor('v0.2.0')).toBe(false);
   });
+  it('accepts standard pre-release/build separators after the numeric core', () => {
+    expect(isBelowEngineFloor('0.1.7-rc1')).toBe(true);
+    expect(isBelowEngineFloor('0.1.8-rc1')).toBe(false);
+    expect(isBelowEngineFloor('0.1.7+build5')).toBe(true);
+  });
   it('unknown/unparsable versions are NEVER below the floor (no diagnostic on unknown)', () => {
     expect(isBelowEngineFloor(null)).toBe(false);
     expect(isBelowEngineFloor(undefined)).toBe(false);
     expect(isBelowEngineFloor('')).toBe(false);
     expect(isBelowEngineFloor('fake-0.0.0')).toBe(false);
     expect(isBelowEngineFloor('unknown')).toBe(false);
+  });
+  it('a numeric prefix with trailing junk is unknown, not parsed (review PR #16)', () => {
+    expect(isBelowEngineFloor('0.1.7garbage')).toBe(false);
+    expect(isBelowEngineFloor('0.1.7.unknown')).toBe(false);
+    expect(isBelowEngineFloor('0.1.x')).toBe(false);
   });
 });

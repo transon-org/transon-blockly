@@ -3,8 +3,12 @@
 // surfaces a PERSISTENT, non-blocking `engine_floor` diagnostic; at/above the floor — and when
 // the version is unknown — no diagnostic. Mirrors the metadata_fallback pattern.
 import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { CODEC_ENGINE_FLOOR } from '@transon/editor-core';
 import { createEditorStore } from '../src/session/store.js';
 import { loadEngineVersions } from '../src/session/engine-status.js';
+import { StatusBar } from '../src/components/panels.js';
+import { emptySession } from '../src/session/types.js';
 import { createFakeEngine } from './fake-engine.js';
 
 describe('engine-floor diagnostic (FR-142, AC-044(d))', () => {
@@ -56,5 +60,32 @@ describe('engine-floor diagnostic (FR-142, AC-044(d))', () => {
     expect(store.getState().engine_floor).not.toBeNull();
     expect(store.getState().validation_status).toBe(before.validation);
     expect(store.getState().execution_status).toBe(before.execution);
+  });
+});
+
+// FR-142 — the StatusBar rendering of the diagnostic (§7.19): both versions and the remediation
+// must be VISIBLE text (not hover-title-only) and announced via role="status" (review PR #16).
+describe('engine-floor StatusBar badge (FR-142, AC-044(d))', () => {
+  it('renders both versions + remediation as visible text with role="status"', () => {
+    render(
+      <StatusBar
+        state={emptySession({
+          engine_version: '0.1.7',
+          engine_floor: { code: 'engine_floor', message: 'full diagnostic message' },
+        })}
+      />,
+    );
+    const badge = screen.getByTestId('engine-floor');
+    expect(badge.getAttribute('role')).toBe('status');
+    expect(badge.textContent).toContain('0.1.7');
+    expect(badge.textContent).toContain(CODEC_ENGINE_FLOOR);
+    expect(badge.textContent).toMatch(/upgrade/i);
+    // the full store message stays available as the supplemental title
+    expect(badge.getAttribute('title')).toBe('full diagnostic message');
+  });
+
+  it('renders no badge when the diagnostic is absent', () => {
+    render(<StatusBar state={emptySession({ engine_version: '0.2.0' })} />);
+    expect(screen.queryByTestId('engine-floor')).toBeNull();
   });
 });

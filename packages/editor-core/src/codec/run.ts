@@ -51,16 +51,19 @@ export const CODEC_ENGINE_FLOOR = '0.1.8';
 
 /**
  * FR-142: is a host-reported engine version strictly BELOW the codec engine floor?
- * Total and never-throwing: compares the leading dotted-numeric component (optional `v` prefix)
- * numerically with implicit-zero padding; an absent or unparsable version is **never** below
- * the floor (SPEC §7.19: no diagnostic on unknown).
+ * Total and never-throwing: parses a dotted-numeric version (optional `v` prefix) that is
+ * either the whole string or followed by a standard pre-release/build separator (`-`/`+`,
+ * e.g. `0.1.8-rc1`), and compares numerically with implicit-zero padding. Anything else —
+ * absent, empty, or carrying trailing junk (`0.1.7garbage`, `0.1.7.unknown`) — is treated as
+ * UNKNOWN and is **never** below the floor (SPEC §7.19: no diagnostic on unknown; a junk
+ * suffix must not smuggle a below-floor verdict in on the digits it happens to start with).
  */
 export function isBelowEngineFloor(
   version: string | null | undefined,
   floor: string = CODEC_ENGINE_FLOOR,
 ): boolean {
   const parse = (v: string): number[] | null => {
-    const digits = /^v?(\d+(?:\.\d+)*)/.exec(v.trim())?.[1];
+    const digits = /^v?(\d+(?:\.\d+)*)(?=[-+]|$)/.exec(v.trim())?.[1];
     return digits ? digits.split('.').map(Number) : null;
   };
   const a = version ? parse(version) : null;
