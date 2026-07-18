@@ -8,13 +8,35 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `fb2a4ed` — Merge pull request #16 from transon-org/rfc-008-generator-shrink |
-| Branch | `fix-variant-face-collision` |
+| Repo HEAD | `21921e2` — Merge pull request #18 from transon-org/fix-hermetic-mount |
+| Branch | `fix-examples-picker-host-corpus` |
 | Engine pin | transon `v0.2.0` @ `58391ecc49bd` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**FR-132 PICKER HARDENING FOR HOST CORPORA (2026-07-19, branch `fix-examples-picker-host-corpus`,
+SPEC v2.8, uncommitted):** user-reported "examples duplicated and uncategorised" — root cause:
+the FR-132 tiered picker derives `tier`/`rule` only inside `buildExampleCorpus`, which a
+host-supplied `host.examples` override bypasses; the docs-site embed
+(transon-org.github.io `EditorView.tsx` → `toExampleCases`) hand-maps the engine corpus dropping
+the joins, so all 163 cases rendered under one "Reference · other" optgroup with colliding
+doc-sentence labels (doc first sentences are NOT unique — the pinned corpus collides in 3 rule
+groups even when categorised). SPEC-first amendment of **FR-132** (v2.8, no new IDs): (1)
+per-group label disambiguation — colliding labels suffixed " — <case name>"; (2) a corpus with NO
+tier/rule membership renders flat (no fabricated "other" header); (3) corpus builder exported for
+embedders. Implementation: `buildExampleCorpusFromDocs(docs)` split out of `buildExampleCorpus`
+(examples.ts; takes the `get_all_docs()`-isomorphic `EditorDocs` shape), `groupExamples` returns
+`label: null` for group-less corpora + `disambiguatedLabels` per group (panels.tsx), value
+re-exports from `@transon/editor-react` + `@transon/editor-element` (+ `EditorDocs`/
+`EditorMetadata` types). Tests red-first in examples-picker.test.tsx (flat degradation, mixed
+corpus keeps "other", collision suffix, per-group scoping, from-docs parity); traceability FR-132
+row updated. All gates green (traceability, parity 23/29/34, snapshot); editor-ui 206 / react 5 /
+element 12 pass; **live-verified** (Pyodide reference host): 163 options, 22 groups, 0 dup values,
+0 remaining within-group label collisions, console clean. **Next:** commit + PR; then the
+docs-site follow-up (swap `toExampleCases` for the exported `buildExampleCorpusFromDocs` to
+restore tiers/groups in the embedded picker — needs a new editor release/tarball first)._
 
 _**NFR-052 NETWORK-HERMETIC MOUNT (2026-07-18, branch `fix-hermetic-mount`):** main's
 `agentic-checks/tests` went red on the last two merge pushes with 8 unhandled `fetch failed`
