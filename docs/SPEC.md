@@ -1,6 +1,17 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 2.5 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-17
+> **Version:** 2.6 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-18
+
+> **v2.6 — engine 0.2.0 re-pin: the RFC 0007 builtin surface (engine R-33).** The committed
+> metadata snapshot moves 0.1.7 → **0.2.0**, folding the engine's additive 0.1.8 surface into the
+> projected editor vocabulary with **no projection-template change** (the FR-114/AC-034/AC-037
+> path, exercised for real): the new **`split` rule** (§14.17, added to FR-040), the total
+> **`in` membership operator** (§14.14), and the **30 new `call` functions** (§14.15 — the engine
+> RFC 0007 builtin library). Presentation additions only (`split` entry; `expr.op` menu gains
+> `in`, alias-free since its symbol and name coincide, FR-130). No FR/NFR/AC semantics change;
+> the reference host pin follows the snapshot (AD-025). Editor follow-up design record:
+> [RFC-008](proposals/rfc-008-generator-shrink-via-in.md) (generator shrink via `in` — not part
+> of this re-pin).
 
 > **v2.5 — opt-in runtime metadata source (RFC-007).** Adds **§7.18 (FR-139…FR-141)** and
 > **AC-043**: a host may opt a session into fetching the engine's editor-metadata **at runtime**
@@ -458,8 +469,8 @@ itself (FR-121, AC-036).
 
 - **FR-040** The editor shall support all built-in Transon rules, enumerated in §14 and
   categorized in §12.4: `this`, `parent`, `item`, `index`, `key`, `value`, `set`, `get`,
-  `attr`, `object`, `map`, `filter`, `zip`, `join`, `chain`, `expr`, `call`, `format`, `file`,
-  `include`, `switch`, `cond`. `switch`/`cond` are first-class authored rules (§14.16) like every
+  `attr`, `object`, `map`, `filter`, `zip`, `join`, `split`, `chain`, `expr`, `call`, `format`,
+  `file`, `include`, `switch`, `cond`. `switch`/`cond` are first-class authored rules (§14.16) like every
   other rule; the generated codec also uses them internally for dispatch (FR-118), which is
   independent of their availability as authored blocks.
 - **FR-041** The editor shall support all built-in `expr` operators (§14.14).
@@ -1567,11 +1578,31 @@ Built-in `expr` operators shall be supported:
 
 - comparisons: `lt`, `le`, `eq`, `ne`, `ge`, `gt`, `<`, `<=`, `==`, `!=`, `>=`, `>`;
 - arithmetic: `add`, `sub`, `mul`, `div`, `mod`, `+`, `-`, `*`, `/`, `%`;
-- logical: `and`, `or`, `not`, `&&`, `||`, `!`.
+- logical: `and`, `or`, `not`, `&&`, `||`, `!`;
+- membership: `in` (engine 0.1.8) — array→element, string→substring, object→**key presence**.
+  Its symbol and mnemonic are the same token, so it carries no alias pair. **Total** — never
+  raises (documented like the type function's totality; the property RFC-008 builds on).
 
 ### 14.15 Functions
 
-Built-in `call` functions shall be supported: `str`, `int`, `float`, `type`. The `type` function
+Built-in `call` functions shall be supported. The original four: `str`, `int`, `float`, `type`.
+The engine-0.1.8 builtin library (engine RFC 0007, R-33) — every one an ordinary registered
+function whose docs/examples arrive through the metadata export (AD-012), grouped here as the
+engine changelog groups them:
+
+- conversions: `bool` (completing the `str`/`int`/`float`/`bool` family; total);
+- string helpers: `upper`, `lower`, `capitalize`, `replace`, `removeprefix`, `removesuffix`,
+  `strip`, `lstrip`, `rstrip`;
+- slicing: `slice` (strings + arrays);
+- epoch dates: `from_epoch`, `to_epoch` (fixed ISO-8601 UTC or a locale-free whitelisted format);
+- collections: `length`, `flatten`, `sum`, `min`, `max`, `sorted`, `reversed`, `unique`;
+- numerics: `abs`, `floor`, `ceil`, `round`;
+- encoding: `b64encode`, `b64decode`; deterministic `uuid5`;
+- regex: `regex_match`, `regex_replace` (Python re dialect; ReDoS is a host responsibility).
+
+Each wraps its documented failure modes as engine TransformationErrors (never a bare Python
+error), and each carries docs + corpus examples in the export — the editor's dropdown domain and
+example surface grow from metadata alone, with no editor enumeration. The `type` function
 returns the JSON type of a value — one of object, array, string, int, float, boolean, or null — and
 is **total** (never raises on well-formed JSON), making it the one operation a switch/cond key can
 safely apply to an unknown node; it is the node-type-dispatch primitive the generated codec relies on
@@ -1593,6 +1624,15 @@ any other rule — including the pre-derived variant signatures ([`metadata-cont
 §2.5) and the optional `default` parameter. Separately, the **generated codec** uses these same
 engine rules internally for its own dispatch (FR-118); that internal use is orthogonal to their
 availability as authored blocks.
+
+### 14.17 Splitting
+
+`split` (engine 0.1.8; numbered append-only per §21.1, topically the inverse of §14.7 Joining).
+Parameter `sep` (required, dynamic). Splits the current value by `sep`: string → list of strings;
+array → list of lists; `NO_CONTENT` passes through. The editor projects it from metadata like any
+other rule (category *Composition*, presentation entry required by FR-127); it was the first rule
+to fold into the released editor via the runtime-metadata path (AC-043) before landing in the
+committed snapshot.
 
 ---
 

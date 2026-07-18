@@ -153,6 +153,10 @@ export const M1_CORPUS: CorpusEntry[] = [
   { name: 'join-sep', template: { $: 'join', items: ['a', 'b', 'c'], sep: '-' }, input: null },
   { name: 'join-default', template: { $: 'join', items: [], sep: ',', default: 'empty' }, input: null },
 
+  // ---- split (required: sep) — engine 0.1.8, the inverse of join (FR-040, SPEC §14.17) ----
+  { name: 'split-string', template: { $: 'split', sep: '/' }, input: 'refs/heads/main' },
+  { name: 'split-array', template: { $: 'split', sep: 'x' }, input: ['a', 'x', 'b', 'c'] },
+
   // ---- chain (required: funcs) ----
   // FR-040: `chain` — pipeline
   {

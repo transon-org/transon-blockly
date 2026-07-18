@@ -444,6 +444,10 @@
                 "$": "include",
                 "name": "enc__set"
               },
+              "split": {
+                "$": "include",
+                "name": "enc__split"
+              },
               "switch": {
                 "$": "include",
                 "name": "enc__switch"
@@ -8740,6 +8744,302 @@
                                         },
                                         [
                                           "name"
+                                        ],
+                                        {
+                                          "$": "filter",
+                                          "cond": {
+                                            "$": "expr",
+                                            "op": "==",
+                                            "values": [
+                                              {
+                                                "$": "this"
+                                              },
+                                              {
+                                                "$": "get",
+                                                "name": "_fk"
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    "sep": ","
+                                  },
+                                  "transon::absent-key"
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        "sep": ","
+                      },
+                      "transon::absent-key"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "default": {
+            "$": "object",
+            "fields": {
+              "extraState": {
+                "$": "object",
+                "fields": {
+                  "raw": {
+                    "$": "this"
+                  }
+                }
+              },
+              "type": "transon_unsupported"
+            }
+          }
+        }
+      ]
+    },
+    "enc__split": {
+      "$": "chain",
+      "funcs": [
+        {
+          "$": "set",
+          "name": "node"
+        },
+        {
+          "$": "cond",
+          "cases": [
+            {
+              "then": {
+                "$": "join",
+                "items": [
+                  {
+                    "$": "object",
+                    "fields": {
+                      "type": "transon_rule_split__base"
+                    }
+                  },
+                  {
+                    "$": "object",
+                    "fields": {
+                      "inputs": {
+                        "$": "object",
+                        "fields": {
+                          "sep": {
+                            "$": "cond",
+                            "cases": [
+                              {
+                                "then": {
+                                  "$": "object",
+                                  "fields": {
+                                    "block": {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "attr",
+                                          "name": "sep"
+                                        },
+                                        {
+                                          "$": "include",
+                                          "name": "enc"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "when": {
+                                  "$": "expr",
+                                  "op": "!=",
+                                  "values": [
+                                    {
+                                      "$": "join",
+                                      "default": "transon::absent-key",
+                                      "items": {
+                                        "$": "chain",
+                                        "funcs": [
+                                          {
+                                            "$": "chain",
+                                            "funcs": [
+                                              {
+                                                "$": "get",
+                                                "name": "node"
+                                              },
+                                              {
+                                                "$": "map",
+                                                "item": {
+                                                  "$": "key"
+                                                }
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "$": "filter",
+                                            "cond": {
+                                              "$": "expr",
+                                              "op": "==",
+                                              "values": [
+                                                {
+                                                  "$": "this"
+                                                },
+                                                "sep"
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      "sep": ","
+                                    },
+                                    "transon::absent-key"
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "sep": ""
+              },
+              "when": {
+                "$": "expr",
+                "op": "and",
+                "values": [
+                  {
+                    "$": "expr",
+                    "op": "==",
+                    "values": [
+                      {
+                        "$": "join",
+                        "default": "transon::absent-key",
+                        "items": {
+                          "$": "chain",
+                          "funcs": [
+                            [
+                              "sep"
+                            ],
+                            {
+                              "$": "filter",
+                              "cond": {
+                                "$": "chain",
+                                "funcs": [
+                                  {
+                                    "$": "set",
+                                    "name": "_rp"
+                                  },
+                                  {
+                                    "$": "expr",
+                                    "op": "==",
+                                    "values": [
+                                      {
+                                        "$": "join",
+                                        "default": "transon::absent-key",
+                                        "items": {
+                                          "$": "chain",
+                                          "funcs": [
+                                            {
+                                              "$": "chain",
+                                              "funcs": [
+                                                {
+                                                  "$": "get",
+                                                  "name": "node"
+                                                },
+                                                {
+                                                  "$": "map",
+                                                  "item": {
+                                                    "$": "key"
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "$": "filter",
+                                              "cond": {
+                                                "$": "expr",
+                                                "op": "==",
+                                                "values": [
+                                                  {
+                                                    "$": "this"
+                                                  },
+                                                  {
+                                                    "$": "get",
+                                                    "name": "_rp"
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        "sep": ","
+                                      },
+                                      "transon::absent-key"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        "sep": ","
+                      },
+                      "transon::absent-key"
+                    ]
+                  },
+                  {
+                    "$": "expr",
+                    "op": "==",
+                    "values": [
+                      {
+                        "$": "join",
+                        "default": "transon::absent-key",
+                        "items": {
+                          "$": "chain",
+                          "funcs": [
+                            {
+                              "$": "chain",
+                              "funcs": [
+                                {
+                                  "$": "get",
+                                  "name": "node"
+                                },
+                                {
+                                  "$": "map",
+                                  "item": {
+                                    "$": "key"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "$": "filter",
+                              "cond": {
+                                "$": "expr",
+                                "op": "!=",
+                                "values": [
+                                  {
+                                    "$": "this"
+                                  },
+                                  "transon::document-marker"
+                                ]
+                              }
+                            },
+                            {
+                              "$": "filter",
+                              "cond": {
+                                "$": "expr",
+                                "op": "==",
+                                "values": [
+                                  {
+                                    "$": "join",
+                                    "default": "transon::absent-key",
+                                    "items": {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "set",
+                                          "name": "_fk"
+                                        },
+                                        [
+                                          "sep"
                                         ],
                                         {
                                           "$": "filter",

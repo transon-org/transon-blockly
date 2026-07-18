@@ -58,6 +58,7 @@
     "zip": { "title": "Zip", "category": "Composition", "advanced": true },
     "file": { "title": "Write file", "category": "Side Effects", "advanced": true },
     "join": { "title": "Join", "category": "Composition", "advanced": false },
+    "split": { "title": "Split", "category": "Composition", "advanced": false },
     "chain": { "title": "Chain", "category": "Composition", "advanced": false },
     "expr": { "title": "Expression", "category": "Computation", "advanced": false },
     "call": { "title": "Call function", "category": "Computation", "advanced": false },
@@ -85,7 +86,8 @@
         { "value": "%",  "label": "% (mod)", "aliases": ["mod"] },
         { "value": "&&", "label": "&& (and)", "aliases": ["and"] },
         { "value": "||", "label": "|| (or)", "aliases": ["or"] },
-        { "value": "!",  "label": "! (not)", "aliases": ["not"] }
+        { "value": "!",  "label": "! (not)", "aliases": ["not"] },
+        { "value": "in", "label": "in" }
       ]
     }
   }

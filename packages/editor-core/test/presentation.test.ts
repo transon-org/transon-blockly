@@ -145,15 +145,19 @@ describe('dropdown-menu curation (FR-130, metadata-contract §2.9)', () => {
     }
   });
 
-  it('expr.op curates the 28-token domain into 14 symbol-first entries', () => {
+  it('expr.op curates the 29-token domain into 15 symbol-first entries', () => {
     const domain = optionsOf('expr', 'op');
-    expect(domain.length).toBe(28);
+    expect(domain.length).toBe(29);
     const menu = PRESENTATION.dropdownMenus.expr!.op!;
-    expect(menu.length).toBe(14);
-    // canonical spelling = symbol (matches the metadata's symbol-first pair order)
+    expect(menu.length).toBe(15);
+    // canonical spelling = symbol (matches the metadata's symbol-first pair order). `in`
+    // (engine 0.1.8) is the one operator whose symbol IS the word — same token for both
+    // spellings, so it carries no alias (menuFor rejects a token claimed twice).
     for (const entry of menu) {
+      if (entry.value === 'in') continue;
       expect(/^[^a-zA-Z]/.test(entry.value), `${entry.value} should be a symbol token`).toBe(true);
     }
+    expect(menu.some((e) => e.value === 'in')).toBe(true);
   });
 });
 
