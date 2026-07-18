@@ -34,8 +34,11 @@ generators and writes a near-noop). Artifacts: encoder **419→244 KB (−42%)**
 badge; unit + wiring tests. All gates green; full suite green (1611 adapter + 198 ui incl. new);
 **live-verified** (Pyodide, engine 0.2.0): no floor badge; `{"$":"this","transon::absent-key":1}`
 JSON edit now **rejected** `import_unsupported` workspace-unchanged (previously silently accepted
-+ key dropped); control `{"$":"this"}` accepted; console clean. Review pending (round-trip-reviewer,
-maker≠checker) — REQUIRED before merge._
++ key dropped); control `{"$":"this"}` accepted; console clean. **Review done (maker≠checker): `round-trip-reviewer` verdict READY TO
+MERGE, no 🔴/🟡** — it independently verified `in`/`length`/`!` totality against the pinned
+engine source, predicate equivalence (incl. zero-param vacuous cases), escape/malformed operand
+totality, the decoder `default:{}` hardening (472 resave/load cases), blockmap parity, and
+FR-142 wiring (floor probes incl. `-rc`/unknown)._
 
 _**RE-PINNED ENGINE 0.1.7 → 0.2.0 (2026-07-18, RFC-008 slice 1, SPEC v2.6, NOT committed):**
 snapshot regenerated from a clean `v0.2.0` tag worktree (23 rules / 15 operators / 34 functions;
