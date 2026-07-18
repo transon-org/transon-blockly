@@ -172,12 +172,25 @@ regen commit, gate-verified.
 
 ## Open questions — **all ratified by the maintainer, 2026-07-18**
 
-1. **OQ (engine floor): DECIDED — session-init check as a new FR.** At session ready, compare the
-   host engine version against a declared codec engine floor; below it, fail loud with a clear
-   status-bar diagnostic (mirroring the FR-140 `metadata_fallback` pattern) instead of letting the
-   first codec run surface an opaque engine error. Lands with slice 2 (SPEC-first; FR hint
-   **FR-142** + §16.4 code + AC), on top of RFC-007's existing version plumbing. The
-   documentation half (metadata-contract §5, SPEC §16.4 floor statement) lands with it.
+1. **OQ (engine floor): DECIDED — session-init check as a new FR, with its own §16.4 code.** At
+   session ready, once the FR-080 version load reports the host engine version, compare it
+   against the declared codec engine floor (one exported constant). Below the floor, surface a
+   diagnostic with this contract — a **distinct** taxonomy entry, NOT a reuse of FR-140's
+   `metadata_fallback` (that code means "runtime metadata path unusable"; this is an engine
+   *capability* incompatibility):
+   - **Code:** `engine_floor` (new §16.4 row, raised at *runtime init* only).
+   - **Category label:** "Engine version below the editor's supported floor".
+   - **Message:** names **both** versions (the host's reported version and the floor) and what
+     the floor buys (the codec's total `in`/`length` primitives), so the failure is explained at
+     init instead of surfacing as an opaque engine error on the first codec run.
+   - **Persistence:** persistent for the session (its own store field, like `metadata_fallback` —
+     not wiped by later projections/errors) and **non-blocking**: authoring and raw-JSON handling
+     stay available; engine-backed actions fail on such a host exactly as they would anyway.
+   - **Unknown version:** an absent/unparsable engine version **never** raises it.
+
+   Lands with slice 2 (SPEC-first; FR hint **FR-142** + the §16.4 `engine_floor` row + AC), on
+   top of RFC-007's existing version plumbing. The documentation half (metadata-contract §5
+   floor note, SPEC §16.4 row) lands in the same slice.
 2. **OQ (negation form): DECIDED — chained unary `!`**, uniformly:
    `{"$":"chain","funcs":[<in/length expr>, {"$":"expr","op":"!"}]}`. Operands are total (`in`,
    `length`), so the boolean is always well-typed; engine mode-1 unary applies to the chained
