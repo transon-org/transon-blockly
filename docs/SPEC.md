@@ -1011,6 +1011,13 @@ option (a)).
 - **NFR-042** The editor shall not require a backend for v1 operation.
 - **NFR-043** The editor shall be embeddable into the documentation site or another React app.
 - **NFR-044** The editor shall be usable in a standalone demo application.
+- **NFR-052** Mounting the canvas shall be **network-hermetic**: injecting a workspace shall
+  trigger no external network request. In particular, Blockly's default media path
+  (`static.blockly.com`) must never be fetched — workspace UI **sounds are disabled** (the audio
+  preload is that path's only consumer in the editor's surface). Rationale: an embeddable
+  component (NFR-043) must not silently call a third-party CDN from the host page, and the DOM
+  test suites must not depend on that CDN being reachable (added 2026-07-18 after its timeout
+  failed CI as unhandled fetch rejections).
 
 ### 8.9 Accessibility
 

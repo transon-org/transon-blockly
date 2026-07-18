@@ -211,8 +211,11 @@ describe('NFR-049 density harness over the docs example corpus (§19.4, AC-041(d
       }
       expect(regressions, regressions.join('\n')).toEqual([]);
     },
-    // CI runners took ~55s pre-§12.6 and hit the old 60s ceiling after — headroom, not license
-    // to slow down: the empty-palette mount above restores the old per-run cost.
-    120_000,
+    // CI runners took ~55s pre-§12.6 at 121 corpus examples; the RFC-008 re-pin grew the corpus
+    // to 163 and CI now measures 98–120s (main 98.6s / PR#17 112.3s / PR#18 120.3s — the last hit
+    // the old 120s ceiling exactly, on runner variance alone). 240s is headroom over that
+    // measured band, not license to slow down: the empty-palette mount above keeps the per-run
+    // cost, and local runs stay ~13s.
+    240_000,
   );
 });

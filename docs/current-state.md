@@ -16,6 +16,19 @@
 
 ## Last action
 
+_**NFR-052 NETWORK-HERMETIC MOUNT (2026-07-18, branch `fix-hermetic-mount`):** main's
+`agentic-checks/tests` went red on the last two merge pushes with 8 unhandled `fetch failed`
+rejections — diagnosed to Blockly's DEFAULT media path: `mountBlockly` passed no `media`/`sounds`
+option, so `WorkspaceAudio` preloaded 4 sounds from `static.blockly.com` (IPs in the CI error
+match that domain exactly; reproduced locally with a `--require` fetch logger) on every jsdom
+mount; PR runs passed only because the CDN happened to respond. SPEC-first: **NFR-052** appended
+(§8.8): mount is network-hermetic, sounds disabled (the audio preload is the media path's only
+consumer in our surface); id-ledger +1; traceability row. Red-first:
+`packages/editor-ui/test/hermetic-mount.test.ts` (rejecting fetch spy + `hasSounds === false`;
+failed pre-fix with the exact CI signature). Fix: `sounds: false` in `mount.ts` inject options.
+Verified: fetch-logger sweep over geometry+density corpus suites shows ZERO fetches; full suite +
+gates green. Display-only, no artifact change._
+
 _**VARIANT FACE-COLLISION FIX (2026-07-18, branch `fix-variant-face-collision`, not merged):**
 user-reported: `call`/`expr` `value` vs `values` and `map` `item` vs `items` rendered
 pixel-identical in palette AND canvas — §12.5's unconditional "lone value input goes bare"
