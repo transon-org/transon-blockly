@@ -39,6 +39,8 @@ export {
   CodecError,
   CODEC_MARKER,
   CODEC_MAX_INCLUDE_DEPTH,
+  CODEC_ENGINE_FLOOR,
+  isBelowEngineFloor,
   STRUCTURAL_BLOCK_TYPES,
   ruleBlockType,
   isRuleBlockType,

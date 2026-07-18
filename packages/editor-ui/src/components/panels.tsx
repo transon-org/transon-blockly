@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, JSX } from 'react';
-import { stableStringify, metadataVersion } from '@transon/editor-core';
+import { stableStringify, metadataVersion, CODEC_ENGINE_FLOOR } from '@transon/editor-core';
 import type { EditorSession } from '../session/types.js';
 import type { EditorController, ToolbarActionId } from '../session/controller.js';
 import type { ExampleCase } from '../session/host.js';
@@ -326,6 +326,17 @@ export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
         // projections: the opted-in runtime metadata path was unusable; running on the snapshot.
         <span data-testid="metadata-fallback" title={state.metadata_fallback.message}>
           {ERROR_CATEGORY.metadata_fallback}
+        </span>
+      ) : null}
+      {state.engine_floor ? (
+        // FR-142 codec engine-floor diagnostic (§7.19, §16.4 engine_floor) — persistent,
+        // non-blocking: the host engine predates the primitives the generated codec executes.
+        // Both versions + the remediation render as VISIBLE text (not hover-only, NFR-045-style
+        // discoverability for keyboard/touch users); role="status" announces it to assistive
+        // tech; the full store message stays available as the title.
+        <span data-testid="engine-floor" role="status" title={state.engine_floor.message}>
+          {ERROR_CATEGORY.engine_floor}
+          {` — engine ${state.engine_version ?? '?'} < required ${CODEC_ENGINE_FLOOR}; upgrade the host engine`}
         </span>
       ) : null}
     </div>

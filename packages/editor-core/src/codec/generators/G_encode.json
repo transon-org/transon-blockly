@@ -133,50 +133,16 @@
                                                                 },
                                                                 "when": {
                                                                   "$": "expr",
-                                                                  "op": "!=",
+                                                                  "op": "in",
                                                                   "values": [
                                                                     {
-                                                                      "$": "join",
-                                                                      "default": "transon::absent-key",
-                                                                      "items": {
-                                                                        "$": "chain",
-                                                                        "funcs": [
-                                                                          {
-                                                                            "$": "chain",
-                                                                            "funcs": [
-                                                                              {
-                                                                                "$": "get",
-                                                                                "name": "node"
-                                                                              },
-                                                                              {
-                                                                                "$": "map",
-                                                                                "item": {
-                                                                                  "$": "key"
-                                                                                }
-                                                                              }
-                                                                            ]
-                                                                          },
-                                                                          {
-                                                                            "$": "filter",
-                                                                            "cond": {
-                                                                              "$": "expr",
-                                                                              "op": "==",
-                                                                              "values": [
-                                                                                {
-                                                                                  "$": "this"
-                                                                                },
-                                                                                {
-                                                                                  "@": "attr",
-                                                                                  "name": "name"
-                                                                                }
-                                                                              ]
-                                                                            }
-                                                                          }
-                                                                        ]
-                                                                      },
-                                                                      "sep": ","
+                                                                      "@": "attr",
+                                                                      "name": "name"
                                                                     },
-                                                                    "transon::absent-key"
+                                                                    {
+                                                                      "$": "get",
+                                                                      "name": "node"
+                                                                    }
                                                                   ]
                                                                 }
                                                               }
@@ -194,49 +160,36 @@
                                       ],
                                       "when": {
                                         "@": "expr",
-                                        "op": "!=",
+                                        "op": ">",
                                         "values": [
                                           {
-                                            "@": "join",
-                                            "default": "transon::absent-key@gen",
-                                            "items": {
+                                            "@": "call",
+                                            "name": "length",
+                                            "value": {
                                               "@": "chain",
                                               "funcs": [
                                                 {
-                                                  "@": "chain",
-                                                  "funcs": [
-                                                    {
-                                                      "@": "attr",
-                                                      "name": "params"
-                                                    },
-                                                    {
-                                                      "@": "filter",
-                                                      "cond": {
-                                                        "@": "expr",
-                                                        "op": "==",
-                                                        "values": [
-                                                          {
-                                                            "@": "attr",
-                                                            "name": "kind"
-                                                          },
-                                                          "constant"
-                                                        ]
-                                                      }
-                                                    }
-                                                  ]
+                                                  "@": "attr",
+                                                  "name": "params"
                                                 },
                                                 {
-                                                  "@": "map",
-                                                  "item": {
-                                                    "@": "attr",
-                                                    "name": "name"
+                                                  "@": "filter",
+                                                  "cond": {
+                                                    "@": "expr",
+                                                    "op": "==",
+                                                    "values": [
+                                                      {
+                                                        "@": "attr",
+                                                        "name": "kind"
+                                                      },
+                                                      "constant"
+                                                    ]
                                                   }
                                                 }
                                               ]
-                                            },
-                                            "sep": ","
+                                            }
                                           },
-                                          "transon::absent-key@gen"
+                                          0
                                         ]
                                       }
                                     }
@@ -314,50 +267,16 @@
                                                           },
                                                           "when": {
                                                             "$": "expr",
-                                                            "op": "!=",
+                                                            "op": "in",
                                                             "values": [
                                                               {
-                                                                "$": "join",
-                                                                "default": "transon::absent-key",
-                                                                "items": {
-                                                                  "$": "chain",
-                                                                  "funcs": [
-                                                                    {
-                                                                      "$": "chain",
-                                                                      "funcs": [
-                                                                        {
-                                                                          "$": "get",
-                                                                          "name": "node"
-                                                                        },
-                                                                        {
-                                                                          "$": "map",
-                                                                          "item": {
-                                                                            "$": "key"
-                                                                          }
-                                                                        }
-                                                                      ]
-                                                                    },
-                                                                    {
-                                                                      "$": "filter",
-                                                                      "cond": {
-                                                                        "$": "expr",
-                                                                        "op": "==",
-                                                                        "values": [
-                                                                          {
-                                                                            "$": "this"
-                                                                          },
-                                                                          {
-                                                                            "@": "attr",
-                                                                            "name": "name"
-                                                                          }
-                                                                        ]
-                                                                      }
-                                                                    }
-                                                                  ]
-                                                                },
-                                                                "sep": ","
+                                                                "@": "attr",
+                                                                "name": "name"
                                                               },
-                                                              "transon::absent-key"
+                                                              {
+                                                                "$": "get",
+                                                                "name": "node"
+                                                              }
                                                             ]
                                                           }
                                                         }
@@ -390,9 +309,9 @@
                                 "op": "==",
                                 "values": [
                                   {
-                                    "$": "join",
-                                    "default": "transon::absent-key",
-                                    "items": {
+                                    "$": "call",
+                                    "name": "length",
+                                    "value": {
                                       "$": "chain",
                                       "funcs": [
                                         {
@@ -424,65 +343,29 @@
                                             "$": "chain",
                                             "funcs": [
                                               {
-                                                "$": "set",
-                                                "name": "_rp"
+                                                "$": "expr",
+                                                "op": "in",
+                                                "values": [
+                                                  {
+                                                    "$": "this"
+                                                  },
+                                                  {
+                                                    "$": "get",
+                                                    "name": "node"
+                                                  }
+                                                ]
                                               },
                                               {
                                                 "$": "expr",
-                                                "op": "==",
-                                                "values": [
-                                                  {
-                                                    "$": "join",
-                                                    "default": "transon::absent-key",
-                                                    "items": {
-                                                      "$": "chain",
-                                                      "funcs": [
-                                                        {
-                                                          "$": "chain",
-                                                          "funcs": [
-                                                            {
-                                                              "$": "get",
-                                                              "name": "node"
-                                                            },
-                                                            {
-                                                              "$": "map",
-                                                              "item": {
-                                                                "$": "key"
-                                                              }
-                                                            }
-                                                          ]
-                                                        },
-                                                        {
-                                                          "$": "filter",
-                                                          "cond": {
-                                                            "$": "expr",
-                                                            "op": "==",
-                                                            "values": [
-                                                              {
-                                                                "$": "this"
-                                                              },
-                                                              {
-                                                                "$": "get",
-                                                                "name": "_rp"
-                                                              }
-                                                            ]
-                                                          }
-                                                        }
-                                                      ]
-                                                    },
-                                                    "sep": ","
-                                                  },
-                                                  "transon::absent-key"
-                                                ]
+                                                "op": "!"
                                               }
                                             ]
                                           }
                                         }
                                       ]
-                                    },
-                                    "sep": ","
+                                    }
                                   },
-                                  "transon::absent-key"
+                                  0
                                 ]
                               },
                               {
@@ -490,9 +373,9 @@
                                 "op": "==",
                                 "values": [
                                   {
-                                    "$": "join",
-                                    "default": "transon::absent-key",
-                                    "items": {
+                                    "$": "call",
+                                    "name": "length",
+                                    "value": {
                                       "$": "chain",
                                       "funcs": [
                                         {
@@ -526,64 +409,44 @@
                                         {
                                           "$": "filter",
                                           "cond": {
-                                            "$": "expr",
-                                            "op": "==",
-                                            "values": [
+                                            "$": "chain",
+                                            "funcs": [
                                               {
-                                                "$": "join",
-                                                "default": "transon::absent-key",
-                                                "items": {
-                                                  "$": "chain",
-                                                  "funcs": [
-                                                    {
-                                                      "$": "set",
-                                                      "name": "_fk"
-                                                    },
-                                                    {
-                                                      "@": "chain",
-                                                      "funcs": [
-                                                        {
+                                                "$": "expr",
+                                                "op": "in",
+                                                "values": [
+                                                  {
+                                                    "$": "this"
+                                                  },
+                                                  {
+                                                    "@": "chain",
+                                                    "funcs": [
+                                                      {
+                                                        "@": "attr",
+                                                        "name": "params"
+                                                      },
+                                                      {
+                                                        "@": "map",
+                                                        "item": {
                                                           "@": "attr",
-                                                          "name": "params"
-                                                        },
-                                                        {
-                                                          "@": "map",
-                                                          "item": {
-                                                            "@": "attr",
-                                                            "name": "name"
-                                                          }
+                                                          "name": "name"
                                                         }
-                                                      ]
-                                                    },
-                                                    {
-                                                      "$": "filter",
-                                                      "cond": {
-                                                        "$": "expr",
-                                                        "op": "==",
-                                                        "values": [
-                                                          {
-                                                            "$": "this"
-                                                          },
-                                                          {
-                                                            "$": "get",
-                                                            "name": "_fk"
-                                                          }
-                                                        ]
                                                       }
-                                                    }
-                                                  ]
-                                                },
-                                                "sep": ","
+                                                    ]
+                                                  }
+                                                ]
                                               },
-                                              "transon::absent-key"
+                                              {
+                                                "$": "expr",
+                                                "op": "!"
+                                              }
                                             ]
                                           }
                                         }
                                       ]
-                                    },
-                                    "sep": ","
+                                    }
                                   },
-                                  "transon::absent-key"
+                                  0
                                 ]
                               }
                             ]

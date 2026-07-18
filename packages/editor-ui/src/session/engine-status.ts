@@ -7,6 +7,7 @@
 // place that decides "is the engine usable right now" and reflects it into the session.
 
 import type { EngineProvider } from '@transon/editor-core';
+import { CODEC_ENGINE_FLOOR, isBelowEngineFloor } from '@transon/editor-core';
 import type { EditorStore } from './store.js';
 import type { EngineRuntimeStatus } from './types.js';
 
@@ -33,9 +34,28 @@ export async function loadEngineVersions(
   if (!isEngineReady(engine)) return;
   try {
     const v = await engine!.version();
-    store.setState({ engine_version: v.engine ?? null, metadata_version: v.metadata ?? null });
+    // FR-142 (§7.19): codec engine-floor check, once the version is known. Persistent
+    // (survives later projections/errors — it is only ever re-derived from a fresh version
+    // response, so a stale warning clears if a later load reports a compliant or unknown
+    // engine) and NON-blocking (mirrors metadata_fallback): the diagnostic explains at init
+    // what would otherwise surface as an opaque engine error on the first codec run. An
+    // unknown or unparsable version never triggers it (isBelowEngineFloor is total).
+    store.setState({
+      engine_version: v.engine ?? null,
+      metadata_version: v.metadata ?? null,
+      engine_floor: isBelowEngineFloor(v.engine)
+        ? {
+            code: 'engine_floor',
+            message:
+              `host engine ${v.engine} is below the editor's codec engine floor ` +
+              `${CODEC_ENGINE_FLOOR} — the generated codec uses engine primitives (the total ` +
+              '`in` operator and `length` function) this engine lacks; engine-backed actions ' +
+              'will fail until the host upgrades its transon engine',
+          }
+        : null,
+    });
   } catch {
-    /* diagnostics only — leave the versions null on failure */
+    /* diagnostics only — leave the versions (and any prior floor diagnostic) unchanged on failure */
   }
 }
 

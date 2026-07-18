@@ -16,6 +16,32 @@
 
 ## Last action
 
+_**RFC-008 SLICES 2–3 IMPLEMENTED (2026-07-18, branch `rfc-008-generator-shrink`, SPEC v2.7):**
+slice 2 SPEC-first: **FR-142** (§7.19 session-init codec engine-floor check, §16.4 `engine_floor`
+persistent non-blocking diagnostic), **NFR-051** (structural predicates = total `in`/`length`,
+never value sentinels), **AC-044**, **AD-037** (ARCHITECTURE), metadata-contract §5 floor note,
+id-ledger +4. Slice 3 red-first: `sentinel-collision.test.ts` + 3 `unsupported-sentinel-*`
+corpus entries reproduced the AD-004 defect (5 tests red), then the `codegen.ts` rewrite —
+`keyPresent`/`thisHasKey`/`fieldsHasMarkerKey`/dec presence → direct `in`;
+`allRequiredPresent`/`noForeignKey`/escape emptiness → `length == 0` (R1 empty-operand fix
+preserved vacuously, `_rp`/`_fk` save-restore dances deleted); `@`-time predicates → `length > 0`;
+marker presence → `in`; negation = chained unary `!` (OQ2); ALL four sentinel strings deleted.
+**Regen trap:** after editing the builders, rebuild editor-core → regen → rebuild AGAIN (the
+dist inlines G_*.json + artifacts at build time; first regen otherwise runs the stale inlined
+generators and writes a near-noop). Artifacts: encoder **419→244 KB (−42%)**, decoder
+**163→104 KB (−36%)**. FR-142: `CODEC_ENGINE_FLOOR='0.1.8'` + total `isBelowEngineFloor`
+(run.ts, exported), wired into `loadEngineVersions`, `engine_floor` store field + StatusBar
+badge; unit + wiring tests. All gates green; full suite green (**full-package runs**: 1611
+engine-node-adapter + 198 editor-ui — a wider scope than AC-027's seven-suite workspace figure
+in traceability, which counts only the workspace suites);
+**live-verified** (Pyodide, engine 0.2.0): no floor badge; `{"$":"this","transon::absent-key":1}`
+JSON edit now **rejected** `import_unsupported` workspace-unchanged (previously silently accepted
++ key dropped); control `{"$":"this"}` accepted; console clean. **Review done (maker≠checker): `round-trip-reviewer` verdict READY TO
+MERGE, no 🔴/🟡** — it independently verified `in`/`length`/`!` totality against the pinned
+engine source, predicate equivalence (incl. zero-param vacuous cases), escape/malformed operand
+totality, the decoder `default:{}` hardening (472 resave/load cases), blockmap parity, and
+FR-142 wiring (floor probes incl. `-rc`/unknown)._
+
 _**RE-PINNED ENGINE 0.1.7 → 0.2.0 (2026-07-18, RFC-008 slice 1, SPEC v2.6, NOT committed):**
 snapshot regenerated from a clean `v0.2.0` tag worktree (23 rules / 15 operators / 34 functions;
 metadata 3.0); `presentation.json` +`split` (Composition) + `expr.op` menu `in` entry
@@ -1106,17 +1132,14 @@ living read of it.
 
 ## Next steps (ordered)
 
--1. **RFC-008 (generator shrink via `in`) — RATIFIED; slice 1 (re-pin 0.2.0) in PR #14; execute
-   slices 2–3 next** (see
+-1. **RFC-008 — COMPLETE on this branch; remaining action: merge PR #16** (see
    [`proposals/rfc-008-generator-shrink-via-in.md`](proposals/rfc-008-generator-shrink-via-in.md)).
-   All four OQs decided 2026-07-18: session-init engine-floor check as a new FR (hint FR-142) ·
-   negation = chained unary `!` · no interim hotfix, straight to rewrite · `call`-menu curation
-   deferred to the canvas-UX track. Slice 2: SPEC-first (§21.2) — engine-floor FR + the §16.4
-   `engine_floor` row + the metadata-contract §5 floor note (RFC-008 requires both documentation
-   locations) + failing corpus fixtures for the reproduced AD-004 sentinel-collision hole. Slice 3:
-   `codegen.ts` rewrite + AD-030 regen. `review-gate` mandatory (codec/matcher/marker-escape
-   surface); maker ≠ checker. The AD-004 hole makes this **higher priority than RFC-006 Tier A**
-   — it is a live strict-round-trip defect, not paper debt.
+   Slice 1 (re-pin 0.2.0) merged via PR #14; all four OQs ratified 2026-07-18 (PR #15); slices
+   2–3 (SPEC v2.7 — FR-142 engine floor + §16.4 `engine_floor` + metadata-contract §5 note;
+   red-first AD-004 collision fixtures; the total-membership `codegen.ts` rewrite + AD-030
+   regen) implemented and reviewed on `rfc-008-generator-shrink` (PR #16, stacked on #15) —
+   `round-trip-reviewer` verdict READY TO MERGE (see **Last action**). One deliberately-deferred
+   remainder: `call`-menu curation rides the canvas-UX track (M7 / RFC-006 Tier C, OQ4).
 
 0. **Answer RFC-006 open questions** (or defer with owner/date) — checklist in
    [`docs/proposals/rfc-006-post-m6-consistency-backlog.md`](proposals/rfc-006-post-m6-consistency-backlog.md)

@@ -199,32 +199,22 @@
                   },
                   "when": {
                     "$": "expr",
-                    "op": "!=",
+                    "op": "in",
                     "values": [
+                      "transon::document-marker",
                       {
                         "$": "chain",
                         "funcs": [
                           {
-                            "$": "chain",
-                            "funcs": [
-                              {
-                                "$": "get",
-                                "name": "self"
-                              },
-                              {
-                                "$": "attr",
-                                "name": "n"
-                              }
-                            ]
+                            "$": "get",
+                            "name": "self"
                           },
                           {
                             "$": "attr",
-                            "default": "__transon_no_marker__",
-                            "name": "transon::document-marker"
+                            "name": "n"
                           }
                         ]
-                      },
-                      "__transon_no_marker__"
+                      }
                     ]
                   }
                 }

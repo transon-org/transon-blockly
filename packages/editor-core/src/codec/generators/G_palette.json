@@ -73,19 +73,18 @@
                                   },
                                   {
                                     "@": "expr",
-                                    "op": "!=",
+                                    "op": ">",
                                     "values": [
                                       {
-                                        "@": "join",
-                                        "default": "@noopt",
-                                        "items": {
+                                        "@": "call",
+                                        "name": "length",
+                                        "value": {
                                           "@": "attr",
                                           "default": [],
                                           "name": "options"
-                                        },
-                                        "sep": ","
+                                        }
                                       },
-                                      "@noopt"
+                                      0
                                     ]
                                   }
                                 ]
@@ -312,19 +311,18 @@
                               },
                               {
                                 "@": "expr",
-                                "op": "!=",
+                                "op": ">",
                                 "values": [
                                   {
-                                    "@": "join",
-                                    "default": "@noopt",
-                                    "items": {
+                                    "@": "call",
+                                    "name": "length",
+                                    "value": {
                                       "@": "attr",
                                       "default": [],
                                       "name": "options"
-                                    },
-                                    "sep": ","
+                                    }
                                   },
-                                  "@noopt"
+                                  0
                                 ]
                               }
                             ]

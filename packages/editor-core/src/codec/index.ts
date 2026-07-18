@@ -1,7 +1,7 @@
 // Public codec surface (M1): the generated encoder/decoder runner + the block vocabulary.
 // The codec executes through a host EngineProvider (AD-008); it bundles no engine.
 
-export { encode, decode, blockMap, runCodecArtifact, CodecError, CODEC_MARKER, CODEC_MAX_INCLUDE_DEPTH } from './run.js';
+export { encode, decode, blockMap, runCodecArtifact, CodecError, CODEC_MARKER, CODEC_MAX_INCLUDE_DEPTH, CODEC_ENGINE_FLOOR, isBelowEngineFloor } from './run.js';
 export type { CodecArtifacts } from './run.js';
 export {
   STRUCTURAL_BLOCK_TYPES,

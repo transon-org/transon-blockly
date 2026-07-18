@@ -52,6 +52,12 @@ export const M1_CORPUS: CorpusEntry[] = [
   // review #2 regression: ambiguous (name+names) and foreign-param `attr` are out-of-surface
   { name: 'unsupported-attr-ambiguous', template: { $: 'attr', name: 'a', names: ['b'] } },
   { name: 'unsupported-attr-foreign-param', template: { $: 'attr', name: 'a', bogusparam: 1 } },
+  // AC-044 / NFR-051 (RFC-008): sentinel-collision honesty — a foreign key literally equal to the
+  // retired join-sentinel string must NOT forge "no foreign key" / "empty" (reproduced AD-004
+  // violation: pre-rewrite these matched the variant and the key was silently dropped).
+  { name: 'unsupported-sentinel-zero-param-rule', template: { $: 'this', 'transon::absent-key': 1 } },
+  { name: 'unsupported-sentinel-param-rule', template: { $: 'attr', name: 'a', 'transon::absent-key': 1 } },
+  { name: 'unsupported-sentinel-escape-extra-key', template: { $: 'object', fields: { $: 'v' }, 'transon::absent-key': 1 } },
 
   // ---- mixed deep structure ----
   { name: 'mixed', template: [{ $: 'attr', name: 'a' }, { k: [1, { $: 'attr', name: 'd', default: 0 }] }], input: { a: 5 } },

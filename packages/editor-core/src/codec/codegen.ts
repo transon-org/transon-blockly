@@ -39,20 +39,30 @@ const blockType = (variantIdHole: Json): Json => ({
 });
 
 // Value-independent presence + variant matching ($-runtime). Presence must NOT be decided by
-// comparing a param's VALUE to a sentinel — a param whose value equals the sentinel would be
-// misread as absent (review #1). Instead, decide from the node's KEY set: required/allowed param
-// names are generation-time-known, so membership unrolls to == / != against literal names, and
-// only the node's keys are walked at runtime. This also rejects ambiguous / foreign-param nodes
-// as out-of-surface (review #2): they match no variant exactly → the cond default → unsupported.
-const KEY_NIL = 'transon::absent-key'; // join-of-empty marker; a real param/key name never equals it
+// comparing a param's VALUE to anything — and, since the NFR-051/AD-037 rewrite, structural
+// predicates must not rest on VALUE-SENTINEL comparisons either: the historical join-sentinel
+// idiom ("a real key never equals `transon::absent-key`") was forgeable by a user document
+// carrying exactly that key, which matched a variant and silently dropped the key (the AC-044
+// reproduced AD-004 violation). Every structural predicate below therefore uses the engine's
+// TOTAL primitives — the `in` membership operator and the `length` function (engine ≥ 0.1.8,
+// the FR-142 codec engine floor) — negated only via the chained unary `!` (ratified RFC-008
+// OQ2). Total operands keep every `cond`/`switch` key throw-free, and no document value can
+// forge a boolean/int. Ambiguous / foreign-param nodes still match no variant exactly → the
+// cond default → unsupported (review #2).
 const THIS_T: Json = { $: 'this' };
-const NODE_KEYS: Json = { $: 'chain', funcs: [{ $: 'get', name: 'node' }, { $: 'map', item: { $: 'key' } }] };
+const NODE: Json = { $: 'get', name: 'node' };
+const NODE_KEYS: Json = { $: 'chain', funcs: [NODE, { $: 'map', item: { $: 'key' } }] };
 const eqv = (a: Json, b: Json): Json => ({ $: 'expr', op: '==', values: [a, b] });
 const nev = (a: Json, b: Json): Json => ({ $: 'expr', op: '!=', values: [a, b] });
-const joinNames = (list: Json): Json => ({ $: 'join', items: list, sep: ',', default: KEY_NIL });
-// the node has a key === paramHole (paramHole is a generation-time literal name spliced via @)
-const keyPresent = (paramHole: Json): Json =>
-  nev(joinNames({ $: 'chain', funcs: [NODE_KEYS, { $: 'filter', cond: eqv(THIS_T, paramHole) }] }), KEY_NIL);
+// total membership: `item in container` (array→element, string→substring, object→KEY presence)
+const inv = (item: Json, container: Json): Json => ({ $: 'expr', op: 'in', values: [item, container] });
+// negation via chained unary `!` (mode-1 unary applies to the chained context) — OQ2
+const notv = (expr: Json): Json => ({ $: 'chain', funcs: [expr, { $: 'expr', op: '!' }] });
+const lenOf = (x: Json): Json => ({ $: 'call', name: 'length', value: x });
+const isEmpty = (list: Json): Json => eqv(lenOf(list), 0);
+// the node has a key === paramHole (paramHole is a generation-time literal name spliced via @):
+// direct O(1) object-key membership — no key materialization, nothing to forge.
+const keyPresent = (paramHole: Json): Json => inv(paramHole, NODE);
 
 // The codec inspects the DOCUMENT marker via this placeholder (distinct from the codec template's
 // own `$` marker); the runtime substitutes the configured marker (default `$`) before executing,
@@ -61,22 +71,14 @@ const DOC_MARKER = DOC_MARKER_PLACEHOLDER;
 
 // keys of `this` (used by the skeleton, which walks `this` directly rather than via `set node`).
 const THIS_KEYS: Json = { $: 'map', item: { $: 'key' } };
-const isEmptyNames = (list: Json): Json => eqv(joinNames(list), KEY_NIL);
-const thisHasKey = (name: Json): Json =>
-  nev(joinNames({ $: 'chain', funcs: [THIS_KEYS, { $: 'filter', cond: eqv(THIS_T, name) }] }), KEY_NIL);
+const thisHasKey = (name: Json): Json => inv(name, THIS_T);
 
 // True when the node's `fields` payload itself contains the marker key. This is what makes the
 // §11.4 escape (a literal object that must *contain* the marker key) distinguishable from the
 // `object`/`fields` RULE: a marker-bearing payload (e.g. `{<marker>:"v"}`) cannot be written as a
-// plain literal, so it is the escape; a marker-FREE payload is the rule.
-const fieldsHasMarkerKey: Json = nev(
-  joinNames({ $: 'chain', funcs: [
-    { $: 'attr', name: 'fields', default: {} },
-    { $: 'map', item: { $: 'key' } },
-    { $: 'filter', cond: eqv(THIS_T, DOC_MARKER) },
-  ] }),
-  KEY_NIL,
-);
+// plain literal, so it is the escape; a marker-FREE payload is the rule. The `{}` default keeps
+// the operand total for a node without `fields` (expr `and` evaluates every operand).
+const fieldsHasMarkerKey: Json = inv(DOC_MARKER, { $: 'attr', name: 'fields', default: {} });
 
 // The skeleton-owned literal-marker escape (FR-123, §11.4): `this` is an EXACTLY-shaped
 // `{<marker>: "object", fields: X}` — marker value `object`, a `fields` key, no other key, AND the
@@ -89,7 +91,7 @@ const isEscape: Json = {
   $: 'expr', op: 'and', values: [
     eqv({ $: 'attr', name: DOC_MARKER }, 'object'),
     thisHasKey('fields'),
-    isEmptyNames({ $: 'chain', funcs: [
+    isEmpty({ $: 'chain', funcs: [
       THIS_KEYS, { $: 'filter', cond: nev(THIS_T, DOC_MARKER) }, { $: 'filter', cond: nev(THIS_T, 'fields') },
     ] }),
     fieldsHasMarkerKey,
@@ -141,14 +143,10 @@ const AT_DYNAMIC_PARAMS: Json = { '@': 'chain', funcs: [
   at('params'),
   { '@': 'filter', cond: { '@': 'expr', op: '!=', values: [at('kind'), 'constant'] } },
 ] };
-// @-time sentinel for "no constant params" (separate from $-runtime KEY_NIL):
-const AT_KEY_NIL = 'transon::absent-key@gen';
-// True at @-time when there is at least one constant param in the variant:
-const atHasConstantParams: Json = { '@': 'expr', op: '!=', values: [
-  { '@': 'join', sep: ',', default: AT_KEY_NIL, items: { '@': 'chain', funcs: [
-    AT_CONSTANT_PARAMS, { '@': 'map', item: at('name') },
-  ] } },
-  AT_KEY_NIL,
+// True at @-time when there is at least one constant param in the variant (`length` — no
+// sentinel, NFR-051/AD-037; the @-stage runs on the build/runtime engine, same ≥ 0.1.8 floor):
+const atHasConstantParams: Json = { '@': 'expr', op: '>', values: [
+  { '@': 'call', name: 'length', value: AT_CONSTANT_PARAMS }, 0,
 ] };
 
 // per-param constant field ($): reads the raw scalar verbatim from the node (FR-024).
@@ -176,68 +174,35 @@ const encRecurse = (paramHole: Json): Json =>
 // WHEN: the node is an EXACT match for this variant — every required param is a key AND no
 // non-marker key is foreign to the variant's declared params.
 //
-// R1 FIX (empty-operand): The six zero-param rules (`this`, `parent`, `item`, `key`, `index`,
-// `value`) have an empty required-param list and an empty variant-param list. The ORIGINAL
-// `allRequiredPresent` (expr and over [keyPresent(p) for required p]) and `isForeignKey`
-// (expr and over [nev(this, p.name) for p in variant.params]) both used `expr and` over a
-// $-runtime list that may be empty → DefinitionError (engine requires ≥1 operand for `and`).
+// Empty-operand note (the R1 fix, preserved): the six zero-param rules (`this`, `parent`,
+// `item`, `key`, `index`, `value`) have empty required-param and variant-param lists, and
+// `expr and` rejects an empty operand list. Both predicates therefore stay list-shaped —
+// filter the @-time literal name array at $-runtime, then test `length == 0` — which is
+// vacuously true/complete on empty lists with no special case.
 //
-// FIX: reframe both onto the join-of-empty membership pattern already used by `keyPresent`/
-// `noForeignKey`. `{$:join, items:[], default:KEY_NIL}` → `KEY_NIL`, so `join == KEY_NIL` is
-// vacuously true on empty lists.
-//
-// allRequiredPresent:
-//   NEW: "no required param is absent from node keys"
-//   Build the @-time literal array of required param names, embed it in the $-codec, then at
-//   $-runtime filter it keeping only names absent from node keys, join, compare to KEY_NIL.
-//   Empty required list → $:filter over [] → [] → join default → KEY_NIL == KEY_NIL → true ✓
-//
-//   Inner filter condition: save the current param name as _rp, then check if _rp is absent
-//   from node keys using a keyPresent-style $-filter on NODE_KEYS.
-//
-const allRequiredPresent: Json = eqv(
-  joinNames({ $: 'chain', funcs: [
-    // @-time: produce literal array of required param names ([] for zero-param rules)
-    { '@': 'chain', funcs: [
-      at('params'), { '@': 'filter', cond: at('required') }, { '@': 'map', item: at('name') }
-    ] },
-    // $-time: filter keeping those ABSENT from node keys
-    { $: 'filter', cond: { $: 'chain', funcs: [
-      { $: 'set', name: '_rp' },   // save current param name (this = param name in outer $:filter)
-      // is _rp not a node key?
-      eqv(
-        joinNames({ $: 'chain', funcs: [NODE_KEYS, { $: 'filter', cond: eqv(THIS_T, { $: 'get', name: '_rp' }) }] }),
-        KEY_NIL,
-      ),
-    ] } },
-  ] }),
-  KEY_NIL,
-);
+// allRequiredPresent: "no required param is absent from the node's keys" —
+//   filter the @-time literal array of required names down to those NOT `in` the node
+//   (total membership, chained-`!` negation), then require the survivors to be empty.
+//   Empty required list → filter over [] → length 0 → true ✓
+const allRequiredPresent: Json = isEmpty({ $: 'chain', funcs: [
+  // @-time: produce literal array of required param names ([] for zero-param rules)
+  { '@': 'chain', funcs: [
+    at('params'), { '@': 'filter', cond: at('required') }, { '@': 'map', item: at('name') }
+  ] },
+  // $-time: keep names ABSENT from the node — `this` is the param name being filtered, so the
+  // membership test needs no save/restore variable dance.
+  { $: 'filter', cond: notv(inv(THIS_T, NODE)) },
+] });
 
-// isForeignKey: THIS is a node key; foreign === no declared param name equals THIS key.
-//   NEW: "no declared param has this name"
-//   Build the @-time literal array of variant param names, embed in the $-codec, then at
-//   $-runtime save the node key as _fk, filter the param names by == _fk, join, compare
-//   to KEY_NIL.
-//   Empty params list → $:filter over [] → [] → join default → KEY_NIL == KEY_NIL → true
-//   (correct: with no declared params every key is foreign) ✓
-//
-const isForeignKey: Json = eqv( // THIS is a node key; foreign === no declared param has this name
-  joinNames({ $: 'chain', funcs: [
-    { $: 'set', name: '_fk' },    // save node key (this = node key in outer $:filter over NODE_KEYS)
-    // @-time: produce literal array of variant param names ([] for zero-param rules)
-    { '@': 'chain', funcs: [at('params'), { '@': 'map', item: at('name') }] },
-    // $-time: filter keeping param names that match the saved node key
-    { $: 'filter', cond: eqv({ $: 'this' }, { $: 'get', name: '_fk' }) },
-  ] }),
-  KEY_NIL,
-);
-const noForeignKey: Json = eqv(
-  joinNames({ $: 'chain', funcs: [
-    NODE_KEYS, { $: 'filter', cond: nev(THIS_T, DOC_MARKER) }, { $: 'filter', cond: isForeignKey },
-  ] }),
-  KEY_NIL,
-);
+// isForeignKey: THIS is a node key; foreign === the key is not `in` the @-time literal array of
+// declared param names (array→element membership). Empty params list → `in []` → false → not →
+// true (correct: with no declared params every key is foreign). Nothing a document key VALUE
+// can do forges this — the forgeable join-sentinel form this replaces was the AC-044 defect.
+const isForeignKey: Json = notv(inv(THIS_T,
+  { '@': 'chain', funcs: [at('params'), { '@': 'map', item: at('name') }] }));
+const noForeignKey: Json = isEmpty({ $: 'chain', funcs: [
+  NODE_KEYS, { $: 'filter', cond: nev(THIS_T, DOC_MARKER) }, { $: 'filter', cond: isForeignKey },
+] });
 const ENC_WHEN: Json = lit({ $: 'expr', op: 'and', values: [allRequiredPresent, noForeignKey] });
 
 // FR-118 / FR-124 / FR-047: emit the block as a $:join of 2 or 3 $-objects so the
@@ -300,9 +265,11 @@ const G_RULE_ENCODE: Json = { '@': 'chain', funcs: [
 // Presence is key-based (never value-based — review #1).
 
 const decField = (paramHole: Json): Json => {
-  // present === the block's `fields` object has a key === paramHole
-  const fieldKeys: Json = { $: 'chain', funcs: [{ $: 'get', name: 'blk' }, { $: 'attr', name: 'fields' }, { $: 'map', item: { $: 'key' } }] };
-  const fieldPresent: Json = nev(joinNames({ $: 'chain', funcs: [fieldKeys, { $: 'filter', cond: eqv(THIS_T, paramHole) }] }), KEY_NIL);
+  // present === the block's `fields` object has a key === paramHole. Direct total membership;
+  // the `{}` default additionally tolerates a block with NO `fields` key at all (Blockly's
+  // save() drops empty maps — same hardening the transon_array decode arm carries).
+  const fieldPresent: Json = inv(paramHole,
+    { $: 'chain', funcs: [{ $: 'get', name: 'blk' }, { $: 'attr', name: 'fields', default: {} }] });
   return lit({
     $: 'cond',
     cases: [{
@@ -317,9 +284,11 @@ const decField = (paramHole: Json): Json => {
 
 const decInput = (paramHole: Json): Json => {
   // present === the block's `inputs` object has a key === paramHole (key-based, not value-based:
-  // the codec never confuses a value with a key, mirroring the encoder — review #1).
-  const inputKeys: Json = { $: 'chain', funcs: [{ $: 'get', name: 'blk' }, { $: 'attr', name: 'inputs' }, { $: 'map', item: { $: 'key' } }] };
-  const inputPresent: Json = nev(joinNames({ $: 'chain', funcs: [inputKeys, { $: 'filter', cond: eqv(THIS_T, paramHole) }] }), KEY_NIL);
+  // the codec never confuses a value with a key, mirroring the encoder — review #1). The `{}`
+  // default tolerates an all-optional-variant block whose empty `inputs:{}` a Blockly resave
+  // dropped (the transon_array precedent).
+  const inputPresent: Json = inv(paramHole,
+    { $: 'chain', funcs: [{ $: 'get', name: 'blk' }, { $: 'attr', name: 'inputs', default: {} }] });
   return lit({
     $: 'cond',
     cases: [{
@@ -366,8 +335,8 @@ const encSkeleton = (dispatchCases: Json): Json => ({
                 value: { $: 'object', fields: { block: { $: 'include', name: 'enc' } } } } } },
     object: { $: 'cond',
       cases: [
-        // marker absent → a normal literal object
-        { when: eqv({ $: 'attr', name: DOC_MARKER, default: '__transon_no_marker__' }, '__transon_no_marker__'),
+        // marker absent → a normal literal object (total membership + `!`, no default sentinel)
+        { when: notv(inv(DOC_MARKER, THIS_T)),
           then: encObjectLiteral },
         // malformed object/fields (non-dict `fields` payload) → out of surface (§15.7, FR-123).
         // Must precede the escape so the non-dict payload never reaches a dict-walking path.
@@ -445,7 +414,7 @@ const BLOCKMAP_ENCODER: Json = { $: 'chain', funcs: [
   { $: 'switch', key: { $: 'call', name: 'type', value: M_N },
     cases: {
       object: { $: 'cond',
-        cases: [{ when: nev({ $: 'chain', funcs: [M_N, { $: 'attr', name: DOC_MARKER, default: '__transon_no_marker__' }] }, '__transon_no_marker__'),
+        cases: [{ when: inv(DOC_MARKER, M_N),
                   then: mNode({ $: 'chain', funcs: [M_N, { $: 'attr', name: DOC_MARKER }] }, mChildren(M_KEY, M_KEY, true)) }],
         default: mNode(null, mChildren(M_KEY, undefined, false)) },
       array: mNode(null, mChildren(M_INDEX, undefined, false)),
@@ -549,8 +518,8 @@ const P_PARAM_SEGS_MULTI: Json = { '@': 'join', sep: '', items: { '@': 'chain', 
 const P_PARAM_SEGS_DEFAULT: Json = { '@': 'join', sep: '', items: { '@': 'chain', funcs: [pAt('params'), { '@': 'map', item: P_PARAM_SEG_DEFAULT }] } };
 // @-time predicates on a param: constant? has a resolved enum domain (`options`)?
 const P_IS_CONSTANT: Json = { '@': 'expr', op: '==', values: [pAt('kind'), 'constant'] };
-const P_HAS_OPTIONS: Json = { '@': 'expr', op: '!=', values: [
-  { '@': 'join', sep: ',', default: '@noopt', items: { '@': 'attr', name: 'options', default: [] } }, '@noopt',
+const P_HAS_OPTIONS: Json = { '@': 'expr', op: '>', values: [
+  { '@': 'call', name: 'length', value: { '@': 'attr', name: 'options', default: [] } }, 0,
 ] };
 // one args0 entry per param — the FR-118 widget decision (lazy @:cond, only one branch taken).
 // FR-130: constant+options always uses the custom field — `menu` (from enrichForPalette) is the
@@ -568,7 +537,7 @@ const P_TYPE: Json = { '@': 'join', sep: '', items: ['transon_rule_', P_NAME, '_
 // One block definition per variant. External inputs (FR-129, §13.10, AD-033): every value parameter
 // connects from the SIDE via a puzzle socket (thrasos); the block body holds only fields + mutator
 // controls, never inline-embedded values. When the variant has ≥2 value inputs (`multiInput`, a flag
-// the driver computes — Transon has no length function) the title takes its own first row (a leading
+// the driver computes as presentational enrichment, kept in TS by design) the title takes its own first row (a leading
 // dummy input) and the named inputs start on the second row; otherwise the title and inputs share the
 // flow. Display-only; round-trip-neutral (§21.12) — codec unchanged.
 const P_VARIANT_DEF: Json = { '@': 'cond',
@@ -814,7 +783,8 @@ function enrichForPalette(entry: unknown, presentation: Presentation): Json {
         };
       });
       // ≥2 value inputs ⇒ the title takes its own first row (FR-129, §13.10). Computed here in plain
-      // TS (Transon has no length function) so the G_palette projection just branches on the flag.
+      // TS (presentational enrichment stays in the driver by design; the engine's `length` is
+      // reserved for codec predicates, NFR-051) so the G_palette projection just branches on the flag.
       const multiInput = params.filter((p) => p.kind !== 'constant').length >= 2;
       return { id: v.id, params, multiInput };
     }),
