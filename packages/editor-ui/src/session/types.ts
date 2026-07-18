@@ -69,6 +69,10 @@ export interface EditorSession {
   /** The FR-140 fail-safe diagnostic: set (and kept — not wiped by later projections) when a
    *  session opted into the runtime source fell back to the snapshot (§16.4 metadata_fallback). */
   metadata_fallback: EditorError | null;
+  /** The FR-142 codec engine-floor diagnostic (§7.19, §16.4 engine_floor): set (persistent,
+   *  non-blocking) when the host engine's reported version is below CODEC_ENGINE_FLOOR; never
+   *  set when the version is unknown. */
+  engine_floor: EditorError | null;
 }
 
 /** The catalog source of a session's projection surface (SPEC §7.18, FR-139). */
@@ -100,6 +104,7 @@ export function emptySession(overrides: Partial<EditorSession> = {}): EditorSess
     expected_output_json: null,
     metadata_source: 'snapshot',
     metadata_fallback: null,
+    engine_floor: null,
     ...overrides,
   };
 }

@@ -25,8 +25,8 @@ export const CODEC_MARKER = '$';
  * rule-dense walk needs include depth 52 and peaks at ~1113 Python frames (measured, engine
  * 0.1.7) — above CPython's default 1000-frame recursion limit. The ceiling therefore comes with
  * TWO host-side prerequisites, both enforced as data/contract (never bundled, AD-008):
- *   - engine ≥ 0.1.7 (R-32 per-level recursion budget), pinned by `metadata-snapshot.json` +
- *     the parity gate;
+ *   - engine ≥ CODEC_ENGINE_FLOOR (declared below; subsumes the R-32 ≥ 0.1.7 per-level
+ *     recursion budget), pinned by `metadata-snapshot.json` + the parity gate;
  *   - the reference hosts raise the interpreter recursion limit to HOST_RECURSION_LIMIT = 1400
  *     (Node `runner.py`; Pyodide glue — browser-verified), giving ~290 frames of headroom over
  *     the deepest committed file while the literal-nesting wall (~68 at 1400) stays ABOVE this
@@ -36,6 +36,43 @@ export const CODEC_MARKER = '$';
  * both map to `runtime_transformation`, never `import_unsupported` (§16.4, AD-035).
  */
 export const CODEC_MAX_INCLUDE_DEPTH = 55;
+
+/**
+ * The codec engine floor (SPEC §7.19/FR-142, NFR-051, AD-037): the minimum host engine whose
+ * rule/operator/function surface the COMMITTED codec artifacts require. Engine **0.1.8**
+ * introduced the total `in` membership operator and the `length` function, which every
+ * structural predicate in the codec now uses (AD-037 — the value-sentinel idiom is retired).
+ * Declared exactly once; the session-init check (FR-142) compares the host's reported version
+ * against it and surfaces the persistent `engine_floor` diagnostic (§16.4) below it. The FR-140
+ * metadata gate cannot subsume this: engine 0.1.7 advertises the same metadata major while
+ * lacking the primitives.
+ */
+export const CODEC_ENGINE_FLOOR = '0.1.8';
+
+/**
+ * FR-142: is a host-reported engine version strictly BELOW the codec engine floor?
+ * Total and never-throwing: compares the leading dotted-numeric component (optional `v` prefix)
+ * numerically with implicit-zero padding; an absent or unparsable version is **never** below
+ * the floor (SPEC §7.19: no diagnostic on unknown).
+ */
+export function isBelowEngineFloor(
+  version: string | null | undefined,
+  floor: string = CODEC_ENGINE_FLOOR,
+): boolean {
+  const parse = (v: string): number[] | null => {
+    const m = /^v?(\d+(?:\.\d+)*)/.exec(v.trim());
+    return m ? m[1].split('.').map(Number) : null;
+  };
+  const a = version ? parse(version) : null;
+  const b = parse(floor);
+  if (!a || !b) return false;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const x = a[i] ?? 0;
+    const y = b[i] ?? 0;
+    if (x !== y) return x < y;
+  }
+  return false;
+}
 
 interface Artifact {
   entry: string;

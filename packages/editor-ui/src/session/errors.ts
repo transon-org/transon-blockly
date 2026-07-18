@@ -14,6 +14,7 @@ export type ErrorCode =
   | 'include_loader' // include template could not be resolved (§16.6)
   | 'engine_init' // host engine runtime failed to load or initialize
   | 'metadata_fallback' // runtime metadata path unusable — session fell back to the snapshot (§7.18, FR-140)
+  | 'engine_floor' // host engine below the declared codec engine floor (§7.19, FR-142)
   | 'editor_internal'; // unexpected editor error
 
 /** Human-facing category label per code (FR-095 distinct display). */
@@ -26,6 +27,7 @@ export const ERROR_CATEGORY: Record<ErrorCode, string> = {
   include_loader: 'Include not resolved',
   engine_init: 'Engine initialization error',
   metadata_fallback: 'Engine metadata unavailable (using built-in catalog)',
+  engine_floor: 'Engine version below the editor’s supported floor',
   editor_internal: 'Editor error',
 };
 

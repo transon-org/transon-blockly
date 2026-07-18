@@ -128,54 +128,26 @@
                                   },
                                   "when": {
                                     "$": "expr",
-                                    "op": "!=",
+                                    "op": "in",
                                     "values": [
                                       {
-                                        "$": "join",
-                                        "default": "transon::absent-key",
-                                        "items": {
-                                          "$": "chain",
-                                          "funcs": [
-                                            {
-                                              "$": "chain",
-                                              "funcs": [
-                                                {
-                                                  "$": "get",
-                                                  "name": "blk"
-                                                },
-                                                {
-                                                  "$": "attr",
-                                                  "name": "fields"
-                                                },
-                                                {
-                                                  "$": "map",
-                                                  "item": {
-                                                    "$": "key"
-                                                  }
-                                                }
-                                              ]
-                                            },
-                                            {
-                                              "$": "filter",
-                                              "cond": {
-                                                "$": "expr",
-                                                "op": "==",
-                                                "values": [
-                                                  {
-                                                    "$": "this"
-                                                  },
-                                                  {
-                                                    "@": "attr",
-                                                    "name": "name"
-                                                  }
-                                                ]
-                                              }
-                                            }
-                                          ]
-                                        },
-                                        "sep": ","
+                                        "@": "attr",
+                                        "name": "name"
                                       },
-                                      "transon::absent-key"
+                                      {
+                                        "$": "chain",
+                                        "funcs": [
+                                          {
+                                            "$": "get",
+                                            "name": "blk"
+                                          },
+                                          {
+                                            "$": "attr",
+                                            "default": {},
+                                            "name": "fields"
+                                          }
+                                        ]
+                                      }
                                     ]
                                   }
                                 }
@@ -259,54 +231,26 @@
                                   },
                                   "when": {
                                     "$": "expr",
-                                    "op": "!=",
+                                    "op": "in",
                                     "values": [
                                       {
-                                        "$": "join",
-                                        "default": "transon::absent-key",
-                                        "items": {
-                                          "$": "chain",
-                                          "funcs": [
-                                            {
-                                              "$": "chain",
-                                              "funcs": [
-                                                {
-                                                  "$": "get",
-                                                  "name": "blk"
-                                                },
-                                                {
-                                                  "$": "attr",
-                                                  "name": "inputs"
-                                                },
-                                                {
-                                                  "$": "map",
-                                                  "item": {
-                                                    "$": "key"
-                                                  }
-                                                }
-                                              ]
-                                            },
-                                            {
-                                              "$": "filter",
-                                              "cond": {
-                                                "$": "expr",
-                                                "op": "==",
-                                                "values": [
-                                                  {
-                                                    "$": "this"
-                                                  },
-                                                  {
-                                                    "@": "attr",
-                                                    "name": "name"
-                                                  }
-                                                ]
-                                              }
-                                            }
-                                          ]
-                                        },
-                                        "sep": ","
+                                        "@": "attr",
+                                        "name": "name"
                                       },
-                                      "transon::absent-key"
+                                      {
+                                        "$": "chain",
+                                        "funcs": [
+                                          {
+                                            "$": "get",
+                                            "name": "blk"
+                                          },
+                                          {
+                                            "$": "attr",
+                                            "default": {},
+                                            "name": "inputs"
+                                          }
+                                        ]
+                                      }
                                     ]
                                   }
                                 }

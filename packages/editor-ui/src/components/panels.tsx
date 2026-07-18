@@ -328,6 +328,13 @@ export function StatusBar({ state }: { state: EditorSession }): JSX.Element {
           {ERROR_CATEGORY.metadata_fallback}
         </span>
       ) : null}
+      {state.engine_floor ? (
+        // FR-142 codec engine-floor diagnostic (§7.19, §16.4 engine_floor) — persistent,
+        // non-blocking: the host engine predates the primitives the generated codec executes.
+        <span data-testid="engine-floor" title={state.engine_floor.message}>
+          {ERROR_CATEGORY.engine_floor}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -16,6 +16,27 @@
 
 ## Last action
 
+_**RFC-008 SLICES 2–3 IMPLEMENTED (2026-07-18, branch `rfc-008-generator-shrink`, SPEC v2.7):**
+slice 2 SPEC-first: **FR-142** (§7.19 session-init codec engine-floor check, §16.4 `engine_floor`
+persistent non-blocking diagnostic), **NFR-051** (structural predicates = total `in`/`length`,
+never value sentinels), **AC-044**, **AD-037** (ARCHITECTURE), metadata-contract §5 floor note,
+id-ledger +4. Slice 3 red-first: `sentinel-collision.test.ts` + 3 `unsupported-sentinel-*`
+corpus entries reproduced the AD-004 defect (5 tests red), then the `codegen.ts` rewrite —
+`keyPresent`/`thisHasKey`/`fieldsHasMarkerKey`/dec presence → direct `in`;
+`allRequiredPresent`/`noForeignKey`/escape emptiness → `length == 0` (R1 empty-operand fix
+preserved vacuously, `_rp`/`_fk` save-restore dances deleted); `@`-time predicates → `length > 0`;
+marker presence → `in`; negation = chained unary `!` (OQ2); ALL four sentinel strings deleted.
+**Regen trap:** after editing the builders, rebuild editor-core → regen → rebuild AGAIN (the
+dist inlines G_*.json + artifacts at build time; first regen otherwise runs the stale inlined
+generators and writes a near-noop). Artifacts: encoder **419→244 KB (−42%)**, decoder
+**163→104 KB (−36%)**. FR-142: `CODEC_ENGINE_FLOOR='0.1.8'` + total `isBelowEngineFloor`
+(run.ts, exported), wired into `loadEngineVersions`, `engine_floor` store field + StatusBar
+badge; unit + wiring tests. All gates green; full suite green (1611 adapter + 198 ui incl. new);
+**live-verified** (Pyodide, engine 0.2.0): no floor badge; `{"$":"this","transon::absent-key":1}`
+JSON edit now **rejected** `import_unsupported` workspace-unchanged (previously silently accepted
++ key dropped); control `{"$":"this"}` accepted; console clean. Review pending (round-trip-reviewer,
+maker≠checker) — REQUIRED before merge._
+
 _**RE-PINNED ENGINE 0.1.7 → 0.2.0 (2026-07-18, RFC-008 slice 1, SPEC v2.6, NOT committed):**
 snapshot regenerated from a clean `v0.2.0` tag worktree (23 rules / 15 operators / 34 functions;
 metadata 3.0); `presentation.json` +`split` (Composition) + `expr.op` menu `in` entry
