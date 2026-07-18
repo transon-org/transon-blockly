@@ -1,6 +1,6 @@
 {
   "name": "@transon/editor-react",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "type": "module",
   "description": "Native React surface for the Transon Visual Editor: <TransonEditor {...options} ref={handle} /> with React as a PEER dependency (AD-019). Bundles the internal UI (@transon/editor-ui) + Blockly runtime; ships no engine (AD-008) and no React (the host app supplies its single React instance).",

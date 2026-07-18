@@ -1,5 +1,20 @@
 # @transon/editor-react
 
+## 0.2.1
+
+### Patch Changes
+
+- FR-132 (SPEC v2.8) Examples-picker hardening for host-supplied corpora: a corpus in which no
+  entry carries tier or rule membership now renders as a flat, ungrouped list (previously every
+  entry was shoved under one fabricated "Reference · other" optgroup), and entries in the same
+  group whose doc-first-sentence labels collide are disambiguated with a ` — <case name>` suffix
+  (the engine guarantees unique names, not unique doc sentences). Selection semantics unchanged.
+- New embedder seam: `buildExampleCorpus` / `buildExampleCorpusFromDocs` (and the
+  `EditorDocs`/`EditorMetadata` types) are exported. Hosts overriding `host.examples` should
+  derive their corpus from the engine docs payload (`get_editor_metadata().docs` or the
+  `get_all_docs()` export) via `buildExampleCorpusFromDocs` instead of hand-mapping — a
+  hand-mapped corpus drops the `rule`/`tier` joins the tiered picker groups by.
+
 ## 0.2.0
 
 ### Minor Changes

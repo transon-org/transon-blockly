@@ -1,5 +1,13 @@
 # @transon/editor-element
 
+## 0.2.1
+
+### Patch Changes
+
+- FR-132 (SPEC v2.8) Examples-picker hardening for host-supplied corpora + the
+  `buildExampleCorpus`/`buildExampleCorpusFromDocs` embedder exports — see
+  @transon/editor-react 0.2.1 for the full behavior.
+
 ## 0.2.0
 
 ### Minor Changes
