@@ -191,7 +191,8 @@ function groupExamples(examples: ExampleCase[]): Array<{ label: string | null; e
   }
   const rules = [...byRule.keys()].filter((r) => r !== '').sort();
   if (!worked.length && !recipes.length && !rules.length) {
-    return examples.length ? [{ label: null, entries: examples }] : [];
+    // The panel renders nothing for an empty corpus, so `examples` is non-empty here.
+    return [{ label: null, entries: examples }];
   }
   if (byRule.has('')) rules.push('');
   return [
@@ -219,7 +220,7 @@ function disambiguatedLabels(entries: ExampleCase[]): Map<string, string> {
   const out = new Map<string, string>();
   for (const ex of entries) {
     const label = exampleLabel(ex);
-    out.set(ex.name, (counts.get(label) ?? 0) > 1 ? `${label} — ${ex.name}` : label);
+    out.set(ex.name, counts.get(label)! > 1 ? `${label} — ${ex.name}` : label);
   }
   return out;
 }

@@ -6,7 +6,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { editorMetadata } from '@transon/editor-core';
-import type { EditorMetadata } from '@transon/editor-core';
+import type { EditorDocs, EditorMetadata } from '@transon/editor-core';
 import { buildExampleCorpus, buildExampleCorpusFromDocs } from '../src/session/examples.js';
 import { ExamplesPanel } from '../src/components/panels.js';
 import type { ExampleCase } from '../src/session/host.js';
@@ -130,6 +130,8 @@ describe('ExamplesPanel tiered rendering (FR-132)', () => {
   });
 
   it('a partially categorised corpus keeps the "Reference · other" group for the rule-less tail', () => {
+    // FR-132 (v2.8): the flat degradation applies only to corpora with NO grouping at all —
+    // partially categorised corpora retain "Reference · other" for the rule-less entries.
     const mixed: ExampleCase[] = [
       { name: 'Ruled', doc: 'Ruled case.', template: {}, rule: 'attr' },
       { name: 'RuleLess', doc: 'Rule-less case.', template: {} },
@@ -163,6 +165,8 @@ describe('ExamplesPanel tiered rendering (FR-132)', () => {
   });
 
   it('disambiguation is scoped per group: the same label in two different groups stays bare', () => {
+    // FR-132 (v2.8 disambiguation): per-group scoping — the same sentence under two different
+    // rules is already told apart by its optgroup, so it takes no case-name suffix.
     const cases2: ExampleCase[] = [
       { name: 'a1', doc: 'Same sentence.', template: {}, rule: 'attr' },
       { name: 'm1', doc: 'Same sentence.', template: {}, rule: 'map' },
@@ -185,5 +189,25 @@ describe('buildExampleCorpusFromDocs (FR-132) — the embedder seam', () => {
     const byName = new Map(corpus.map((e) => [e.name, e]));
     expect(byName.get('Worked1')!.tier).toBe('worked-example');
     expect(byName.get('RefC')!.rule).toBe('attr');
+  });
+
+  it('tolerates a sparse or malformed docs payload (FR-132: engine owns the shape, AD-012)', () => {
+    // Missing curated lists, a non-list rule `examples` field, and a non-string param reference
+    // must all degrade to "no membership" — never throw on an engine payload the editor does not
+    // fully recognize.
+    const sparse = {
+      examples: [{ name: 'Only', doc: null, template: 1, data: null, result: 1, tags: [] }],
+      rules: [{ name: 'r', examples: 'not-a-list', params: [{ name: 'p', examples: [42] }] }],
+      operators: [],
+      functions: [],
+    } as unknown as EditorDocs;
+    const corpus = buildExampleCorpusFromDocs(sparse);
+    expect(corpus.map((e) => e.name)).toEqual(['Only']);
+    expect(corpus[0]!.rule).toBeUndefined();
+    expect(corpus[0]!.tier).toBeUndefined();
+    // A payload with no corpus at all yields an empty ExampleCase[] (the panel then renders null).
+    expect(
+      buildExampleCorpusFromDocs({ rules: [], operators: [], functions: [] } as unknown as EditorDocs),
+    ).toEqual([]);
   });
 });
