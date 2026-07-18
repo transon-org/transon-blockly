@@ -8,16 +8,30 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `21921e2` — Merge pull request #18 from transon-org/fix-hermetic-mount |
-| Branch | `fix-examples-picker-host-corpus` |
+| Repo HEAD | `bf0790e` — Release 0.2.1: FR-132 picker hardening + corpus-builder embedder exports |
+| Branch | `main` |
 | Engine pin | transon `v0.2.0` @ `58391ecc49bd` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
 
+_**RELEASE 0.2.1 + DOCS-SITE CORPUS SWAP (2026-07-19, main):** PR #19 (FR-132 v2.8 picker
+hardening) merged after CodeRabbit review (citation comments added, Codecov patch gaps closed —
+sparse-payload test → examples.ts 100%, two dead branches dropped in panels.tsx). Released
+**v0.2.1** (editor-react + editor-element patch bumps + CHANGELOGs, tag `v0.2.1`); the tag-push
+automation built the GitHub release + `transon-editor-react-0.2.1.tgz` asset (verified to contain
+`buildExampleCorpusFromDocs` before pinning). Docs site (`transon-org.github.io` master
+`2c44468`): pin bumped to the v0.2.1 tarball; `toExampleCases` now wraps the editor's
+`buildExampleCorpusFromDocs` over the full `get_all_docs()` payload (only the rule-entry shape is
+unwrapped — wire refs verified identical to editor-metadata refs on engine 0.2.2; EditorView takes
+`docs`, not the flat examples list). **Live-verified** on the built site + PyScript engine 0.2.2:
+embedded picker shows Worked examples (7) / Recipes (12) / per-rule groups — 163 cases, 22
+groups, 0 dup values, 0 label collisions, console clean. Push to master triggers the site deploy
+workflow. **Next:** nothing pending on this thread; the deploy workflow should be confirmed green._
+
 _**FR-132 PICKER HARDENING FOR HOST CORPORA (2026-07-19, branch `fix-examples-picker-host-corpus`,
-SPEC v2.8, uncommitted):** user-reported "examples duplicated and uncategorised" — root cause:
+SPEC v2.8, merged as PR #19):** user-reported "examples duplicated and uncategorised" — root cause:
 the FR-132 tiered picker derives `tier`/`rule` only inside `buildExampleCorpus`, which a
 host-supplied `host.examples` override bypasses; the docs-site embed
 (transon-org.github.io `EditorView.tsx` → `toExampleCases`) hand-maps the engine corpus dropping
