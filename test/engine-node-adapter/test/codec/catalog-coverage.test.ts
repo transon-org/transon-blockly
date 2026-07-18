@@ -2,7 +2,7 @@
 //
 // This test asserts:
 //   1. CATALOG_RULES equals editorMetadata.catalog.rules.map(r=>r.name) (FR-040, AD-012).
-//   2. generateCodec(engine) produces an enc__<name> encode fragment for each of the 22
+//   2. generateCodec(engine) produces an enc__<name> encode fragment for each of the 23
 //      catalog rules (FR-040, AC-006).
 //   3. generateCodec(engine) produces a decode case per variant for each rule (FR-052/053/054).
 //   4. Every entry in the corpus round-trips via the generated codec (AC-035, §15.8).
@@ -24,15 +24,15 @@ describe('CATALOG_RULES is metadata-derived (FR-040, AD-012)', () => {
     expect(CATALOG_RULES).toEqual(fromMeta);
   });
 
-  it('contains exactly 22 rules', () => { // FR-040, AC-006
-    expect(CATALOG_RULES).toHaveLength(22);
+  it('contains exactly 23 rules', () => { // FR-040, AC-006
+    expect(CATALOG_RULES).toHaveLength(23);
   });
 
   it('contains all expected rule names', () => { // FR-040
     const expected = [
       'this', 'parent', 'item', 'key', 'index', 'value',
       'set', 'get', 'attr', 'object', 'map', 'filter', 'zip', 'file',
-      'join', 'chain', 'expr', 'call', 'format', 'include', 'switch', 'cond',
+      'join', 'split', 'chain', 'expr', 'call', 'format', 'include', 'switch', 'cond',
     ];
     for (const name of expected) {
       expect(CATALOG_RULES).toContain(name);
@@ -40,7 +40,7 @@ describe('CATALOG_RULES is metadata-derived (FR-040, AD-012)', () => {
   });
 });
 
-describe('generateCodec produces encode + decode arms for all 22 rules (FR-040, AC-006)', () => {
+describe('generateCodec produces encode + decode arms for all 23 rules (FR-040, AC-006)', () => {
   it('encoder has enc__<name> fragment for every catalog rule', async () => { // FR-040, AC-006
     const { encoder } = await generateCodec(engine);
     for (const name of CATALOG_RULES) {

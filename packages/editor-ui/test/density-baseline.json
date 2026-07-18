@@ -319,6 +319,186 @@
     "width": 314,
     "height": 144
   },
+  "LengthOfString": {
+    "blocksVisible": 1,
+    "width": 242,
+    "height": 24
+  },
+  "LengthOfArray": {
+    "blocksVisible": 1,
+    "width": 242,
+    "height": 24
+  },
+  "FlattenOneLevel": {
+    "blocksVisible": 1,
+    "width": 250,
+    "height": 24
+  },
+  "SumNumbers": {
+    "blocksVisible": 1,
+    "width": 218,
+    "height": 24
+  },
+  "MinOfArray": {
+    "blocksVisible": 3,
+    "width": 376,
+    "height": 48
+  },
+  "MaxWithDefault": {
+    "blocksVisible": 4,
+    "width": 376,
+    "height": 72
+  },
+  "SortedArray": {
+    "blocksVisible": 1,
+    "width": 242,
+    "height": 24
+  },
+  "UniquePreserveOrder": {
+    "blocksVisible": 1,
+    "width": 242,
+    "height": 24
+  },
+  "AbsNumber": {
+    "blocksVisible": 1,
+    "width": 218,
+    "height": 24
+  },
+  "FloorNumber": {
+    "blocksVisible": 1,
+    "width": 234,
+    "height": 24
+  },
+  "CeilNumber": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 24
+  },
+  "RoundWithDigits": {
+    "blocksVisible": 4,
+    "width": 392,
+    "height": 72
+  },
+  "BoolOfNull": {
+    "blocksVisible": 1,
+    "width": 226,
+    "height": 24
+  },
+  "FromEpochIso": {
+    "blocksVisible": 1,
+    "width": 274,
+    "height": 24
+  },
+  "FromEpochCustomFormat": {
+    "blocksVisible": 4,
+    "width": 466,
+    "height": 72
+  },
+  "ToEpochIso": {
+    "blocksVisible": 3,
+    "width": 416,
+    "height": 48
+  },
+  "ToEpochCustomFormat": {
+    "blocksVisible": 4,
+    "width": 522,
+    "height": 72
+  },
+  "B64Encode": {
+    "blocksVisible": 1,
+    "width": 266,
+    "height": 24
+  },
+  "B64Decode": {
+    "blocksVisible": 1,
+    "width": 266,
+    "height": 24
+  },
+  "Uuid5Dns": {
+    "blocksVisible": 4,
+    "width": 450,
+    "height": 72
+  },
+  "RegexMatchGroups": {
+    "blocksVisible": 4,
+    "width": 498,
+    "height": 72
+  },
+  "RegexMatchNone": {
+    "blocksVisible": 4,
+    "width": 450,
+    "height": 72
+  },
+  "RegexReplace": {
+    "blocksVisible": 5,
+    "width": 456,
+    "height": 96
+  },
+  "UpperString": {
+    "blocksVisible": 1,
+    "width": 234,
+    "height": 24
+  },
+  "LowerString": {
+    "blocksVisible": 1,
+    "width": 234,
+    "height": 24
+  },
+  "CapitalizeString": {
+    "blocksVisible": 1,
+    "width": 274,
+    "height": 24
+  },
+  "ReplaceSubstring": {
+    "blocksVisible": 5,
+    "width": 408,
+    "height": 96
+  },
+  "RemovePrefix": {
+    "blocksVisible": 4,
+    "width": 506,
+    "height": 72
+  },
+  "RemoveSuffix": {
+    "blocksVisible": 4,
+    "width": 450,
+    "height": 72
+  },
+  "StripWhitespace": {
+    "blocksVisible": 1,
+    "width": 234,
+    "height": 24
+  },
+  "LstripChars": {
+    "blocksVisible": 4,
+    "width": 400,
+    "height": 72
+  },
+  "RstripChars": {
+    "blocksVisible": 4,
+    "width": 400,
+    "height": 72
+  },
+  "SliceString": {
+    "blocksVisible": 5,
+    "width": 392,
+    "height": 96
+  },
+  "SliceArray": {
+    "blocksVisible": 4,
+    "width": 392,
+    "height": 72
+  },
+  "ReversedString": {
+    "blocksVisible": 1,
+    "width": 258,
+    "height": 24
+  },
+  "ReversedArray": {
+    "blocksVisible": 1,
+    "width": 258,
+    "height": 24
+  },
   "LookupMissingAttr": {
     "blocksVisible": 2,
     "width": 210,
@@ -509,6 +689,21 @@
     "width": 244,
     "height": 24
   },
+  "OperatorInArray": {
+    "blocksVisible": 5,
+    "width": 306,
+    "height": 96
+  },
+  "OperatorInObjectKey": {
+    "blocksVisible": 4,
+    "width": 370,
+    "height": 72
+  },
+  "OperatorInString": {
+    "blocksVisible": 2,
+    "width": 252,
+    "height": 24
+  },
   "SetVisibleToLaterSiblingKey": {
     "blocksVisible": 5,
     "width": 298,
@@ -543,6 +738,21 @@
     "blocksVisible": 8,
     "width": 430,
     "height": 120
+  },
+  "SplitString": {
+    "blocksVisible": 2,
+    "width": 100,
+    "height": 24
+  },
+  "SplitArrayOnElement": {
+    "blocksVisible": 2,
+    "width": 100,
+    "height": 24
+  },
+  "SplitArrayOnSubsequence": {
+    "blocksVisible": 4,
+    "width": 202,
+    "height": 72
   },
   "SwitchDispatchOnKey": {
     "blocksVisible": 6,

@@ -12,8 +12,8 @@ describe('metadata snapshot loader (AD-012, NFR-047)', () => {
     expect(editorMetadata.metadata_version).toBe('3.0');
   });
 
-  it('exposes the full structural rule catalog (22 rules)', () => {
-    expect(editorMetadata.catalog.rules.length).toBe(22);
+  it('exposes the full structural rule catalog (23 rules)', () => {
+    expect(editorMetadata.catalog.rules.length).toBe(23);
     // Every rule entry is named (the catalog/docs join key, metadata-contract §2).
     for (const rule of editorMetadata.catalog.rules) {
       expect(typeof rule.name).toBe('string');

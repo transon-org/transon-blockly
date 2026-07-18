@@ -313,6 +313,20 @@
     {
       "args0": [
         {
+          "name": "sep",
+          "type": "input_value"
+        }
+      ],
+      "colour": 165,
+      "flyoutLabel": "Split (split)",
+      "inputsInline": false,
+      "message0": "Split %1",
+      "output": null,
+      "type": "transon_rule_split__base"
+    },
+    {
+      "args0": [
+        {
           "name": "funcs",
           "type": "input_value"
         }
@@ -355,7 +369,8 @@
             "||",
             "or",
             "!",
-            "not"
+            "not",
+            "in"
           ],
           "name": "op",
           "options": [
@@ -414,6 +429,10 @@
             [
               "! (not)",
               "!"
+            ],
+            [
+              "in",
+              "in"
             ]
           ],
           "type": "field_transon_dropdown"
@@ -457,7 +476,8 @@
             "||",
             "or",
             "!",
-            "not"
+            "not",
+            "in"
           ],
           "name": "op",
           "options": [
@@ -516,6 +536,10 @@
             [
               "! (not)",
               "!"
+            ],
+            [
+              "in",
+              "in"
             ]
           ],
           "type": "field_transon_dropdown"
@@ -563,7 +587,8 @@
             "||",
             "or",
             "!",
-            "not"
+            "not",
+            "in"
           ],
           "name": "op",
           "options": [
@@ -622,6 +647,10 @@
             [
               "! (not)",
               "!"
+            ],
+            [
+              "in",
+              "in"
             ]
           ],
           "type": "field_transon_dropdown"
@@ -645,7 +674,37 @@
             "str",
             "int",
             "float",
-            "type"
+            "type",
+            "bool",
+            "upper",
+            "lower",
+            "capitalize",
+            "replace",
+            "removeprefix",
+            "removesuffix",
+            "strip",
+            "lstrip",
+            "rstrip",
+            "slice",
+            "from_epoch",
+            "to_epoch",
+            "length",
+            "flatten",
+            "sum",
+            "min",
+            "max",
+            "sorted",
+            "reversed",
+            "unique",
+            "abs",
+            "floor",
+            "ceil",
+            "round",
+            "b64encode",
+            "b64decode",
+            "uuid5",
+            "regex_match",
+            "regex_replace"
           ],
           "name": "name",
           "options": [
@@ -664,6 +723,126 @@
             [
               "type",
               "type"
+            ],
+            [
+              "bool",
+              "bool"
+            ],
+            [
+              "upper",
+              "upper"
+            ],
+            [
+              "lower",
+              "lower"
+            ],
+            [
+              "capitalize",
+              "capitalize"
+            ],
+            [
+              "replace",
+              "replace"
+            ],
+            [
+              "removeprefix",
+              "removeprefix"
+            ],
+            [
+              "removesuffix",
+              "removesuffix"
+            ],
+            [
+              "strip",
+              "strip"
+            ],
+            [
+              "lstrip",
+              "lstrip"
+            ],
+            [
+              "rstrip",
+              "rstrip"
+            ],
+            [
+              "slice",
+              "slice"
+            ],
+            [
+              "from_epoch",
+              "from_epoch"
+            ],
+            [
+              "to_epoch",
+              "to_epoch"
+            ],
+            [
+              "length",
+              "length"
+            ],
+            [
+              "flatten",
+              "flatten"
+            ],
+            [
+              "sum",
+              "sum"
+            ],
+            [
+              "min",
+              "min"
+            ],
+            [
+              "max",
+              "max"
+            ],
+            [
+              "sorted",
+              "sorted"
+            ],
+            [
+              "reversed",
+              "reversed"
+            ],
+            [
+              "unique",
+              "unique"
+            ],
+            [
+              "abs",
+              "abs"
+            ],
+            [
+              "floor",
+              "floor"
+            ],
+            [
+              "ceil",
+              "ceil"
+            ],
+            [
+              "round",
+              "round"
+            ],
+            [
+              "b64encode",
+              "b64encode"
+            ],
+            [
+              "b64decode",
+              "b64decode"
+            ],
+            [
+              "uuid5",
+              "uuid5"
+            ],
+            [
+              "regex_match",
+              "regex_match"
+            ],
+            [
+              "regex_replace",
+              "regex_replace"
             ]
           ],
           "type": "field_transon_dropdown"
@@ -683,7 +862,37 @@
             "str",
             "int",
             "float",
-            "type"
+            "type",
+            "bool",
+            "upper",
+            "lower",
+            "capitalize",
+            "replace",
+            "removeprefix",
+            "removesuffix",
+            "strip",
+            "lstrip",
+            "rstrip",
+            "slice",
+            "from_epoch",
+            "to_epoch",
+            "length",
+            "flatten",
+            "sum",
+            "min",
+            "max",
+            "sorted",
+            "reversed",
+            "unique",
+            "abs",
+            "floor",
+            "ceil",
+            "round",
+            "b64encode",
+            "b64decode",
+            "uuid5",
+            "regex_match",
+            "regex_replace"
           ],
           "name": "name",
           "options": [
@@ -702,6 +911,126 @@
             [
               "type",
               "type"
+            ],
+            [
+              "bool",
+              "bool"
+            ],
+            [
+              "upper",
+              "upper"
+            ],
+            [
+              "lower",
+              "lower"
+            ],
+            [
+              "capitalize",
+              "capitalize"
+            ],
+            [
+              "replace",
+              "replace"
+            ],
+            [
+              "removeprefix",
+              "removeprefix"
+            ],
+            [
+              "removesuffix",
+              "removesuffix"
+            ],
+            [
+              "strip",
+              "strip"
+            ],
+            [
+              "lstrip",
+              "lstrip"
+            ],
+            [
+              "rstrip",
+              "rstrip"
+            ],
+            [
+              "slice",
+              "slice"
+            ],
+            [
+              "from_epoch",
+              "from_epoch"
+            ],
+            [
+              "to_epoch",
+              "to_epoch"
+            ],
+            [
+              "length",
+              "length"
+            ],
+            [
+              "flatten",
+              "flatten"
+            ],
+            [
+              "sum",
+              "sum"
+            ],
+            [
+              "min",
+              "min"
+            ],
+            [
+              "max",
+              "max"
+            ],
+            [
+              "sorted",
+              "sorted"
+            ],
+            [
+              "reversed",
+              "reversed"
+            ],
+            [
+              "unique",
+              "unique"
+            ],
+            [
+              "abs",
+              "abs"
+            ],
+            [
+              "floor",
+              "floor"
+            ],
+            [
+              "ceil",
+              "ceil"
+            ],
+            [
+              "round",
+              "round"
+            ],
+            [
+              "b64encode",
+              "b64encode"
+            ],
+            [
+              "b64decode",
+              "b64decode"
+            ],
+            [
+              "uuid5",
+              "uuid5"
+            ],
+            [
+              "regex_match",
+              "regex_match"
+            ],
+            [
+              "regex_replace",
+              "regex_replace"
             ]
           ],
           "type": "field_transon_dropdown"
@@ -725,7 +1054,37 @@
             "str",
             "int",
             "float",
-            "type"
+            "type",
+            "bool",
+            "upper",
+            "lower",
+            "capitalize",
+            "replace",
+            "removeprefix",
+            "removesuffix",
+            "strip",
+            "lstrip",
+            "rstrip",
+            "slice",
+            "from_epoch",
+            "to_epoch",
+            "length",
+            "flatten",
+            "sum",
+            "min",
+            "max",
+            "sorted",
+            "reversed",
+            "unique",
+            "abs",
+            "floor",
+            "ceil",
+            "round",
+            "b64encode",
+            "b64decode",
+            "uuid5",
+            "regex_match",
+            "regex_replace"
           ],
           "name": "name",
           "options": [
@@ -744,6 +1103,126 @@
             [
               "type",
               "type"
+            ],
+            [
+              "bool",
+              "bool"
+            ],
+            [
+              "upper",
+              "upper"
+            ],
+            [
+              "lower",
+              "lower"
+            ],
+            [
+              "capitalize",
+              "capitalize"
+            ],
+            [
+              "replace",
+              "replace"
+            ],
+            [
+              "removeprefix",
+              "removeprefix"
+            ],
+            [
+              "removesuffix",
+              "removesuffix"
+            ],
+            [
+              "strip",
+              "strip"
+            ],
+            [
+              "lstrip",
+              "lstrip"
+            ],
+            [
+              "rstrip",
+              "rstrip"
+            ],
+            [
+              "slice",
+              "slice"
+            ],
+            [
+              "from_epoch",
+              "from_epoch"
+            ],
+            [
+              "to_epoch",
+              "to_epoch"
+            ],
+            [
+              "length",
+              "length"
+            ],
+            [
+              "flatten",
+              "flatten"
+            ],
+            [
+              "sum",
+              "sum"
+            ],
+            [
+              "min",
+              "min"
+            ],
+            [
+              "max",
+              "max"
+            ],
+            [
+              "sorted",
+              "sorted"
+            ],
+            [
+              "reversed",
+              "reversed"
+            ],
+            [
+              "unique",
+              "unique"
+            ],
+            [
+              "abs",
+              "abs"
+            ],
+            [
+              "floor",
+              "floor"
+            ],
+            [
+              "ceil",
+              "ceil"
+            ],
+            [
+              "round",
+              "round"
+            ],
+            [
+              "b64encode",
+              "b64encode"
+            ],
+            [
+              "b64decode",
+              "b64decode"
+            ],
+            [
+              "uuid5",
+              "uuid5"
+            ],
+            [
+              "regex_match",
+              "regex_match"
+            ],
+            [
+              "regex_replace",
+              "regex_replace"
             ]
           ],
           "type": "field_transon_dropdown"

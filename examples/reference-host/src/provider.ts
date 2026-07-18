@@ -9,7 +9,7 @@ import { GLUE_PY } from './glue.js';
 
 /** The engine version this reference host pins, matching docs/metadata-snapshot.md (AD-025).
  *  ≥ 0.1.7 is REQUIRED by the codec depth ceiling (R-32 recursion budget, AD-035/RFC-004). */
-export const PINNED_ENGINE_VERSION = '0.1.7';
+export const PINNED_ENGINE_VERSION = '0.2.0';
 
 /** A pinned Pyodide build (the editor ships no engine; this loads it at runtime, AD-008). */
 export const PYODIDE_VERSION = 'v0.28.3';

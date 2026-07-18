@@ -9,11 +9,11 @@ built against a fixed, reproducible metadata contract rather than a moving engin
 
 | Field | Value |
 |---|---|
-| Engine commit | `f8541f6db7f6d17455bc3102b21f3ad0f33eec0a` |
-| Engine describe | `v0.1.7` |
+| Engine commit | `58391ecc49bdef12e2146693e3213c6fd3bffa2a` |
+| Engine describe | `v0.2.0` |
 | `metadata_version` | `3.0` |
-| `engine_version` | `0.1.7` |
-| Catalog rules | 22 |
+| `engine_version` | `0.2.0` |
+| Catalog rules | 23 |
 
 **Regenerate** (requires the engine importable — `pip install transon` or
 `export TRANSON_REPO=../transon`):

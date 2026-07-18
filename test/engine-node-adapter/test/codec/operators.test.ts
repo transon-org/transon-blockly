@@ -56,9 +56,10 @@ describe('FR-041 / AC-007: expr operators — constant op encoded in fields (FR-
     kind: 'unary' | 'binary';
   }>;
 
-  // Verify we have the expected count: 14 canonical operators (each has a canonical name + alternative)
-  it('metadata exposes the expected operator catalog (14 operators = 28 tokens)', () => {
-    expect(operators.length).toBe(14);
+  // Verify we have the expected count: 15 canonical operators (each has a canonical name +
+  // alternative; `in` — engine 0.1.8 — spells both the same, so 15 operators = 29 tokens)
+  it('metadata exposes the expected operator catalog (15 operators = 29 tokens)', () => {
+    expect(operators.length).toBe(15);
   });
 
   for (const opMeta of operators) {
@@ -93,9 +94,9 @@ describe('FR-042 / AC-008: call functions — constant name encoded in fields (F
   // AC-008: "Functions available"
   const functions = editorMetadata.catalog.functions as Array<{ name: string }>;
 
-  // Verify we have the expected 4 functions
-  it('metadata exposes the expected function catalog (4 functions)', () => {
-    expect(functions.length).toBe(4);
+  // Verify we have the expected 34 functions (4 pre-0.1.8 + the RFC 0007 builtin library)
+  it('metadata exposes the expected function catalog (34 functions)', () => {
+    expect(functions.length).toBe(34);
   });
 
   for (const fnMeta of functions) {

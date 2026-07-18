@@ -8,13 +8,45 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `7080482` — RFC-007 review fix: imperative loads wait out the dynamic-arrival work |
-| Branch | `rfc-007-dynamic-metadata` |
-| Engine pin | transon `v0.1.7` @ `f8541f6db7f6` (see [metadata-snapshot.md](metadata-snapshot.md)) |
+| Repo HEAD | `5e564dc` — Handoff: docs-site embed opted into runtime metadata, live-verified |
+| Branch | `main` |
+| Engine pin | transon `v0.2.0` @ `58391ecc49bd` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**RE-PINNED ENGINE 0.1.7 → 0.2.0 (2026-07-18, RFC-008 slice 1, SPEC v2.6, NOT committed):**
+snapshot regenerated from a clean `v0.2.0` tag worktree (23 rules / 15 operators / 34 functions;
+metadata 3.0); `presentation.json` +`split` (Composition) + `expr.op` menu `in` entry
+(alias-free — symbol == name, `menuFor` rejects duplicate tokens); artifacts regenerated
+(`UPDATE_ARTIFACTS=1`, **rebuild `@transon/editor-core` first** — the adapter consumes the
+built dist, so a stale build silently regenerates from the old snapshot); density baseline
+regenerated (`UPDATE_DENSITY=1`, corpus 121→163); reference-host `PINNED_ENGINE_VERSION`
+0.1.7→0.2.0 (wheel confirmed on PyPI); count-assertion tests updated (23 rules / 15 ops / 34 fns;
+the `expr.op` symbol-first test now exempts `in`, whose symbol IS the word); SPEC **v2.6** (§14.14
+`in`, §14.15 function library, **§14.17 `split`** appended per §21.1, FR-040 +`split`). **Trap
+found:** the pyenv `python3` (used by pre-commit/CI gates) carries the pinned wheel — upgraded
+to 0.2.0, else `update_memory.py --check` fails on engine_version drift. **All gates green**
+(parity: 23/29/34), full suite green (1579 adapter tests), **live-verified** in the Pyodide
+reference host: status `engine 0.2.0 · metadata 3.0`, `Split (split)` in the default palette,
+`SplitString` corpus example loads, round-trips, runs → `["refs","heads","main"]` matches
+expected, console clean. RFC-008 slices 2–3 (sentinel→`in` rewrite) NOT started._
+
+_**RFC-008 DRAFTED (2026-07-18, analysis session, no code change):**
+[`docs/proposals/rfc-008-generator-shrink-via-in.md`](proposals/rfc-008-generator-shrink-via-in.md)
+— the editor-side follow-up to **engine RFC 0007** (0.1.8's builtin-function batch; its changelog
+names "`transon-blockly` generator shrink via `in`"). Proposes: re-pin snapshot 0.1.7 → 0.2.1
+(the RFC-007 skew test is done; `presentation.json` needs a `split` entry + `expr.op` `in` menu
+entry or `generateToolbox` fail-louds), then rewrite the `codegen.ts` membership/emptiness
+helpers onto the total `in` operator + `length` (kills the `transon::absent-key` /
+`@gen`/`@noopt`/`__transon_no_marker__` sentinels; est. encoder −38 %, decoder −21 %). **Found &
+reproduced an AD-004 violation** against the committed artifacts (real engine): a rule node whose
+only foreign key is literally `"transon::absent-key"` encodes as the rule and decodes with the
+key silently dropped (`{"$":"this","transon::absent-key":1}` → `{"$":"this"}`) — the join-sentinel
+`noForeignKey` guard is forgeable from user documents; the `in` rewrite is the structural fix.
+Maintainer decisions pending (RFC-008 OQs: engine-floor check FR or docs-only; negation form;
+hotfix sequencing; `call` menu curation). Not committed/pushed by the analysis session._
 
 _**RELEASED 0.2.0 (2026-07-17):** PR #13 merged (`feef227`); `@transon/editor-react` +
 `@transon/editor-element` **0.2.0**, `@transon/reference-host` 0.0.3 (`6a94b4c`, tag `v0.2.0`);
@@ -1073,6 +1105,14 @@ living read of it.
   `ready`). **1551 tests**; all gates green. See **Last action**.
 
 ## Next steps (ordered)
+
+-1. **RFC-008 (generator shrink via `in`) — slice 1 (re-pin 0.2.0) DONE, uncommitted; commit it,
+   then decide the remaining OQs and execute slices 2–3** (see
+   [`proposals/rfc-008-generator-shrink-via-in.md`](proposals/rfc-008-generator-shrink-via-in.md)):
+   slice 2 SPEC-first (§21.2) + failing corpus fixtures for the reproduced AD-004
+   sentinel-collision hole; slice 3 `codegen.ts` rewrite + AD-030 regen. `review-gate` mandatory
+   (codec/matcher/marker-escape surface); maker ≠ checker. The AD-004 hole makes this **higher
+   priority than RFC-006 Tier A** — it is a live strict-round-trip defect, not paper debt.
 
 0. **Answer RFC-006 open questions** (or defer with owner/date) — checklist in
    [`docs/proposals/rfc-006-post-m6-consistency-backlog.md`](proposals/rfc-006-post-m6-consistency-backlog.md)

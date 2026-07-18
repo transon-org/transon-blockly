@@ -3688,6 +3688,106 @@
                 }
               ]
             },
+            "transon_rule_split__base": {
+              "$": "join",
+              "items": [
+                {
+                  "$": "object",
+                  "key": "transon::document-marker",
+                  "value": "split"
+                },
+                {
+                  "$": "object",
+                  "fields": {}
+                },
+                {
+                  "$": "object",
+                  "fields": {
+                    "sep": {
+                      "$": "cond",
+                      "cases": [
+                        {
+                          "then": {
+                            "$": "chain",
+                            "funcs": [
+                              {
+                                "$": "get",
+                                "name": "blk"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "inputs"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "sep"
+                              },
+                              {
+                                "$": "attr",
+                                "name": "block"
+                              },
+                              {
+                                "$": "include",
+                                "name": "dec"
+                              }
+                            ]
+                          },
+                          "when": {
+                            "$": "expr",
+                            "op": "!=",
+                            "values": [
+                              {
+                                "$": "join",
+                                "default": "transon::absent-key",
+                                "items": {
+                                  "$": "chain",
+                                  "funcs": [
+                                    {
+                                      "$": "chain",
+                                      "funcs": [
+                                        {
+                                          "$": "get",
+                                          "name": "blk"
+                                        },
+                                        {
+                                          "$": "attr",
+                                          "name": "inputs"
+                                        },
+                                        {
+                                          "$": "map",
+                                          "item": {
+                                            "$": "key"
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "$": "filter",
+                                      "cond": {
+                                        "$": "expr",
+                                        "op": "==",
+                                        "values": [
+                                          {
+                                            "$": "this"
+                                          },
+                                          "sep"
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "sep": ","
+                              },
+                              "transon::absent-key"
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
             "transon_rule_switch__base": {
               "$": "join",
               "items": [
