@@ -1,9 +1,11 @@
 # RFC-008: Generator shrink via the total `in` operator (engine RFC 0007 follow-up)
 
-- **Status:** **Proposed** (2026-07-18). Design record only — **not** part of the contract. Where
-  this and `SPEC.md` / `ARCHITECTURE.md` / `ROADMAP.md` / `AGENTS.md` disagree, **they win**. No
-  FR/NFR/AC/AD/OQ IDs are registered by this document; next-free numbers below are **hints**
-  (§21.1) — verify against the ledger when a slice lands.
+- **Status:** **Ratified** (2026-07-18; proposed and OQs decided same day — OQ1 session-init
+  engine-floor check as a new FR · OQ2 chained unary `!` · OQ3 straight to rewrite, no hotfix ·
+  OQ4 `call` menu curation deferred). Slice 1 (re-pin) merged via PR #14. Design record only —
+  **not** part of the contract. Where this and `SPEC.md` / `ARCHITECTURE.md` / `ROADMAP.md` /
+  `AGENTS.md` disagree, **they win**. No FR/NFR/AC/AD/OQ IDs are registered by this document;
+  next-free numbers below are **hints** (§21.1) — verify against the ledger when a slice lands.
 - **Type:** Codec-projection refactor + latent round-trip **bug fix** + engine re-pin. Touches the
   generator authoring source (`codegen.ts`), the committed `G_*` generators and codec artifacts
   (AD-030 regen), `presentation.json`, and the metadata snapshot pin.
@@ -146,9 +148,9 @@ regen commit, gate-verified.
    require a host engine **≥ 0.1.8** (`in`, `length`). Record in `docs/metadata-contract.md`
    (§5 compatibility) and SPEC §16.4 (NFR hint: **NFR-051**): a pre-0.1.8 host fails codec
    execution outright, and the FR-140 gate does **not** catch it — 0.1.7 also advertises
-   metadata 3.0, so the same-major check passes while `in` is absent. Decide whether a
-   session-init engine-version check with a clean diagnostic is worth an FR (hint: **FR-142**)
-   or whether the documented floor + reference-host pin suffices (OQ below).
+   metadata 3.0, so the same-major check passes while `in` is absent. **Decided (OQ1):** a
+   session-init engine-version check with a clean status-bar diagnostic lands as a new FR
+   (hint: **FR-142**) alongside the documented floor.
 3. **Vocabulary growth from the re-pin** (independent of the rewrite): `split` block, `expr`
    `in` option, ~30 `call` names — covered by existing FR-114/118/130 machinery; presentation
    additions as listed above.
@@ -168,17 +170,25 @@ regen commit, gate-verified.
    exact `review-gate` trigger list. Run `harness/workflows/review-gate` on the branch;
    maker ≠ checker.
 
-## Open questions for the maintainer
+## Open questions — **all ratified by the maintainer, 2026-07-18**
 
-1. **OQ (engine floor):** document-only floor (metadata-contract §5 + reference-host pin), or a
-   session-init engine-version check with a status-bar diagnostic (new FR)? The silent failure
-   mode without a check is an opaque engine error from the first codec run on a stale host.
-2. **OQ (negation form):** chained unary `!` (recommended; `in`/`length` are total so the
-   boolean is always well-typed) vs `== false` — pick one and use it uniformly.
-3. **OQ (fix sequencing):** the AD-004 collision hole is fixable *without* `in` (e.g. a
-   second sentinel round guarding the first) — rejected here as compounding the disease, but if
-   the re-pin is delayed for any reason, decide whether the hole warrants an interim hotfix.
-4. **OQ (call dropdown):** curate/group the ~34-entry `call` name menu now or later?
+1. **OQ (engine floor): DECIDED — session-init check as a new FR.** At session ready, compare the
+   host engine version against a declared codec engine floor; below it, fail loud with a clear
+   status-bar diagnostic (mirroring the FR-140 `metadata_fallback` pattern) instead of letting the
+   first codec run surface an opaque engine error. Lands with slice 2 (SPEC-first; FR hint
+   **FR-142** + §16.4 code + AC), on top of RFC-007's existing version plumbing. The
+   documentation half (metadata-contract §5, SPEC §16.4 floor statement) lands with it.
+2. **OQ (negation form): DECIDED — chained unary `!`**, uniformly:
+   `{"$":"chain","funcs":[<in/length expr>, {"$":"expr","op":"!"}]}`. Operands are total (`in`,
+   `length`), so the boolean is always well-typed; engine mode-1 unary applies to the chained
+   context.
+3. **OQ (fix sequencing): DECIDED — straight to the rewrite, no interim hotfix.** Slice 1 (the
+   re-pin) merged same-day (PR #14), so nothing blocks slices 2–3; the collision needs a
+   pathological key (`transon::absent-key`) to trigger, and a sentinel-hardening hotfix would
+   compound the disease only to be discarded by the rewrite.
+4. **OQ (call dropdown): DECIDED — defer curation.** The 34-entry identity menu is complete and
+   functional; grouping needs dropdown machinery beyond today's flat `[[label, value]]` curation
+   and belongs to the canvas-UX track (M7 / RFC-006 Tier C), not this one.
 
 ## IDs (hints only, next-free per ledger as of 2026-07-18)
 

@@ -1106,13 +1106,16 @@ living read of it.
 
 ## Next steps (ordered)
 
--1. **RFC-008 (generator shrink via `in`) — slice 1 (re-pin 0.2.0) DONE, uncommitted; commit it,
-   then decide the remaining OQs and execute slices 2–3** (see
-   [`proposals/rfc-008-generator-shrink-via-in.md`](proposals/rfc-008-generator-shrink-via-in.md)):
-   slice 2 SPEC-first (§21.2) + failing corpus fixtures for the reproduced AD-004
-   sentinel-collision hole; slice 3 `codegen.ts` rewrite + AD-030 regen. `review-gate` mandatory
-   (codec/matcher/marker-escape surface); maker ≠ checker. The AD-004 hole makes this **higher
-   priority than RFC-006 Tier A** — it is a live strict-round-trip defect, not paper debt.
+-1. **RFC-008 (generator shrink via `in`) — RATIFIED; slice 1 (re-pin 0.2.0) in PR #14; execute
+   slices 2–3 next** (see
+   [`proposals/rfc-008-generator-shrink-via-in.md`](proposals/rfc-008-generator-shrink-via-in.md)).
+   All four OQs decided 2026-07-18: session-init engine-floor check as a new FR (hint FR-142) ·
+   negation = chained unary `!` · no interim hotfix, straight to rewrite · `call`-menu curation
+   deferred to the canvas-UX track. Slice 2: SPEC-first (§21.2) — engine-floor FR + §16.4 code +
+   failing corpus fixtures for the reproduced AD-004 sentinel-collision hole. Slice 3:
+   `codegen.ts` rewrite + AD-030 regen. `review-gate` mandatory (codec/matcher/marker-escape
+   surface); maker ≠ checker. The AD-004 hole makes this **higher priority than RFC-006 Tier A**
+   — it is a live strict-round-trip defect, not paper debt.
 
 0. **Answer RFC-006 open questions** (or defer with owner/date) — checklist in
    [`docs/proposals/rfc-006-post-m6-consistency-backlog.md`](proposals/rfc-006-post-m6-consistency-backlog.md)
