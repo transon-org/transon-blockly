@@ -55,8 +55,10 @@ describe('AC-044(a) — a sentinel-named foreign key cannot forge a variant matc
     await expectHonestlyUnsupported({ $: 'attr', name: 'a', [SENTINEL]: 1 });
   });
   it('control: the same nodes without the collision key stay in-surface', async () => {
-    expect((await encode(engine, { $: 'this' }) as { type: string }).type).toBe('transon_rule_this__base');
-    expect((await encode(engine, { $: 'attr', name: 'a' }) as { type: string }).type).toBe('transon_rule_attr__name');
+    // in-surface === anything but the unsupported placeholder; the concrete block-type ids are
+    // metadata-derived and owned by the projection tests, not hardcoded here (review PR #16).
+    expect((await encode(engine, { $: 'this' }) as { type: string }).type).not.toBe('transon_unsupported');
+    expect((await encode(engine, { $: 'attr', name: 'a' }) as { type: string }).type).not.toBe('transon_unsupported');
   });
 });
 

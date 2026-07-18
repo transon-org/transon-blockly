@@ -514,6 +514,7 @@ rejected: reintroduces the release coupling being removed.
 `metadata-contract.md` §3/§5; [RFC-007](proposals/rfc-007-dynamic-engine-metadata.md).
 
 ### AD-037 — Codec structural predicates use total membership primitives; value sentinels retired; engine floor declared once (RFC-008)
+
 **Decision.** Every structural predicate in the projection codec — parameter/key presence,
 foreign-key detection, key-set/list emptiness, marker presence — is expressed with the engine's
 **total** primitives: the `in` membership operator and the `length` function (engine ≥ 0.1.8),

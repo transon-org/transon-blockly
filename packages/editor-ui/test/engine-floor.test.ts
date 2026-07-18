@@ -32,6 +32,20 @@ describe('engine-floor diagnostic (FR-142, AC-044(d))', () => {
     expect(store.getState().engine_floor).toBeNull();
   });
 
+  it('a later load from a compliant (or unknown) engine clears a stale diagnostic', async () => {
+    const store = createEditorStore();
+    await loadEngineVersions(store, createFakeEngine({ status: 'ready', engineVersion: '0.1.7' }));
+    expect(store.getState().engine_floor).not.toBeNull();
+    // same store, upgraded engine → the condition no longer holds → diagnostic clears
+    await loadEngineVersions(store, createFakeEngine({ status: 'ready', engineVersion: '0.2.0' }));
+    expect(store.getState().engine_floor).toBeNull();
+    // and an unknown version never claims below-floor either
+    await loadEngineVersions(store, createFakeEngine({ status: 'ready', engineVersion: '0.1.7' }));
+    expect(store.getState().engine_floor).not.toBeNull();
+    await loadEngineVersions(store, createFakeEngine({ status: 'ready' }));
+    expect(store.getState().engine_floor).toBeNull();
+  });
+
   it('non-blocking: the diagnostic does not gate validation/execution state', async () => {
     const store = createEditorStore();
     const before = {

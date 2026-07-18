@@ -60,8 +60,8 @@ export function isBelowEngineFloor(
   floor: string = CODEC_ENGINE_FLOOR,
 ): boolean {
   const parse = (v: string): number[] | null => {
-    const m = /^v?(\d+(?:\.\d+)*)/.exec(v.trim());
-    return m ? m[1].split('.').map(Number) : null;
+    const digits = /^v?(\d+(?:\.\d+)*)/.exec(v.trim())?.[1];
+    return digits ? digits.split('.').map(Number) : null;
   };
   const a = version ? parse(version) : null;
   const b = parse(floor);

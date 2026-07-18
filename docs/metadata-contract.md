@@ -311,8 +311,9 @@ the current metadata (AD-030; see [`traceability.md`](traceability.md)).
   rule/operator/function surface the committed codec requires (**0.1.8** as of SPEC v2.7) — and
   compares it against the host engine's reported version at session init, surfacing the
   persistent, non-blocking `engine_floor` diagnostic (SPEC §16.4) when the host is below it.
-  Hosts pinning the engine from the committed snapshot (`engine_version`, AD-025) satisfy the
-  floor by construction.
+  An **unknown or unparsable** engine version is never treated as below the floor and never
+  raises the diagnostic (SPEC §7.19/FR-142). Hosts pinning the engine from the committed
+  snapshot (`engine_version`, AD-025) satisfy the floor by construction.
 
 ---
 
