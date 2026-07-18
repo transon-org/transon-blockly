@@ -1,6 +1,18 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 2.6 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-18
+> **Version:** 2.7 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-18
+
+> **v2.7 — total-membership codec + engine floor (RFC-008 slices 2–3, ratified OQs).** Adds
+> **§7.19 (FR-142)**: a session-init **codec engine-floor check** with a persistent, non-blocking
+> `engine_floor` diagnostic (§16.4) when the host engine predates the primitives the committed
+> codec requires (the FR-140 gate cannot catch this — engine 0.1.7 advertises the same
+> metadata major). Adds **NFR-051**: the codec's structural predicates (key presence,
+> foreign-key detection, emptiness) must use **total** engine primitives (`in`, `length`) —
+> never value-sentinel comparisons, which a user document can forge (the reproduced
+> `transon::absent-key` collision violated AD-004 round-trip: the key was silently dropped).
+> Adds **AC-044** (collision honesty + floor diagnostic). The generator rewrite itself is
+> mechanical under AD-030 (regenerated artifacts; `ARCHITECTURE.md` **AD-037**). Design record:
+> [RFC-008](proposals/rfc-008-generator-shrink-via-in.md) (all four OQs ratified 2026-07-18).
 
 > **v2.6 — engine 0.2.0 re-pin: the RFC 0007 builtin surface (engine R-33).** The committed
 > metadata snapshot moves 0.1.7 → **0.2.0**, folding the engine's additive 0.1.8 surface into the
@@ -844,6 +856,23 @@ measured against the pinned engine and are carried unchanged as a **conservative
 runtime path: a newer engine may afford more headroom, never less is assumed (RFC-007 P-E,
 option (a)).
 
+### 7.19 Codec engine floor (RFC-008)
+
+- **FR-142** The session shall perform a **codec engine-floor check** once the host engine's
+  version is known (the FR-080 version load on the ready transition): the version is compared
+  against the editor's declared **codec engine floor** — a single exported constant naming the
+  minimum engine whose rule/operator/function surface the committed codec artifacts require
+  (**0.1.8** as of v2.7: the codec's structural predicates use the total `in` operator and the
+  `length` function, NFR-051). A host **below** the floor shall surface a **persistent
+  `engine_floor` diagnostic** (§16.4) naming both versions, so the failure is explained at init
+  instead of surfacing as an opaque engine error on the first codec run. The check is
+  **diagnostic and non-blocking** (mirroring `metadata_fallback`): block authoring and raw JSON
+  handling remain available, and engine-backed actions fail on such a host exactly as they would
+  have anyway. An **unknown** engine version (the version query failed or is unimplemented)
+  shall **not** trigger the diagnostic. The FR-140 metadata gate cannot subsume this check: a
+  pre-floor engine may advertise the same `metadata_version` major (0.1.7 advertises 3.0) while
+  lacking the primitives.
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -944,6 +973,16 @@ option (a)).
   fractional centering or sub-pixel seams at non-integer zoom). Renderer-constant changes (e.g.
   NFR-049 density tuning) must keep this harness green — density gains never buy geometry
   defects.
+- **NFR-051** The committed codec artifacts and the `@`-staged generators shall not rest
+  **structural decisions** — parameter/key presence, foreign-key detection, list/key-set
+  emptiness — on **value-sentinel comparisons** (joining values and comparing to a reserved
+  string): a user document containing the reserved string can forge the comparison and break
+  strict round-trip (AD-004; the reproduced `transon::absent-key` collision encoded a foreign
+  key away silently). Every such predicate shall use **total engine primitives** — the `in`
+  membership operator and the `length` function (engine ≥ 0.1.8) — whose results no document
+  value can forge. The minimum engine these primitives require is declared **once** (the FR-142
+  codec engine floor constant) and never duplicated. (`ARCHITECTURE.md` AD-037; design record
+  RFC-008.)
 
 ### 8.6 Security
 
@@ -1762,6 +1801,7 @@ The single canonical error taxonomy. FR-095 (error display) and §17 reference t
 | `include_loader` | Include template could not be resolved (§16.6) | validation/execution |
 | `engine_init` | Host engine runtime failed to load or initialize | runtime init |
 | `metadata_fallback` | The opt-in runtime metadata path (§7.18, FR-140) could not be used — `getEditorMetadata` absent/rejected, payload malformed or `metadata_version`-incompatible, or surface generation failed — and the session fell back to the bundled snapshot catalog. Diagnostic, non-blocking: the editor stays fully functional on the snapshot surface. | runtime init |
+| `engine_floor` | The host engine's reported version is **below the declared codec engine floor** (§7.19, FR-142): the committed codec artifacts use engine primitives this host lacks (the total `in` operator / `length` function, engine 0.1.8). Persistent diagnostic, non-blocking; engine-backed actions will fail on this host until it is upgraded. Not raised when the engine version is unknown. | runtime init |
 | `editor_internal` | Unexpected editor error | any |
 
 Captured `file` writes (§16.5) are a side-effect result, not an error category.
@@ -2047,6 +2087,20 @@ Version 1 is acceptable when all criteria below are met.
   major) leaves the session on the snapshot surface, fully functional, with `metadata_fallback`
   surfaced (§16.4); **(d)** a fetched rule unknown to the committed presentation projects via the
   FR-141 fallback (metadata name as title, data-declared fallback category, advanced).
+
+- **AC-044 — Total-membership codec: sentinel-collision honesty + engine floor (RFC-008).**
+  Against the committed codec artifacts: **(a)** a rule node whose only foreign key is literally
+  the historical sentinel string — `{"<marker>": "this", "transon::absent-key": 1}` — encodes to
+  `transon_unsupported` with the raw node preserved and **round-trips verbatim** (AD-004, §15.7;
+  before the NFR-051 rewrite it wrongly matched the variant and the key was silently dropped);
+  **(b)** the same honesty holds where the escape's third-key emptiness check used the sentinel
+  (a marker-bearing `object`/`fields` node carrying an extra sentinel-named key is **not**
+  misread as the §11.4 escape); **(c)** the committed generators and codec artifacts contain
+  **no occurrence** of the retired sentinel strings (`transon::absent-key`,
+  `transon::absent-key@gen`, `@noopt`, `__transon_no_marker__`); **(d)** a session whose host
+  engine reports a version below the declared codec floor surfaces the persistent `engine_floor`
+  diagnostic at ready (FR-142), and a session at/above the floor (and one whose engine version
+  is unknown) does not.
 
 ---
 

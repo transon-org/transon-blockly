@@ -10,7 +10,7 @@
 > port, guarded by a same-major `metadata_version` gate with fail-safe fallback to the committed
 > snapshot. The snapshot + committed artifacts remain the default and the CI substrate. Post-v2.0
 > decisions also recorded since the v2.0 header: AD-032 (no codec↔Blockly mapping layer), AD-033
-> (thrasos renderer), AD-035 (codec depth ceiling, RFC-004), AD-036 (this change; AD-034 stays
+> (thrasos renderer), AD-035 (codec depth ceiling, RFC-004), AD-036, AD-037 (total-membership codec, RFC-008; AD-034 stays
 > reserved by RFC-003 P-E).
 
 > **v2.0 — template-driven projection pivot.** The editor surface (palette, toolbox, encoder,
@@ -26,7 +26,7 @@
 > append-only and never renumbered (`SPEC.md` §21.1); superseded decisions are marked in place.
 
 This document is the source of truth for **how** the Transon Visual Editor is built: the
-architectural principles, the architecture decision records (`AD-001..AD-036`), the
+architectural principles, the architecture decision records (`AD-001..AD-037`), the
 package/module structure, the host boundary and public API, the **template-driven projections**
 (generators `G_*` and the generated codec) that replace the former typed IR, the metadata
 reshape and dispatch primitives, the validation/execution flows, distribution, and build tooling.
@@ -46,7 +46,7 @@ It complements — and does not restate — [`SPEC.md`](SPEC.md) (the *what*),
 | Document | Owns (source of truth for) | Does **not** contain |
 |---|---|---|
 | [`SPEC.md`](SPEC.md) | Product behavior: use cases, FR/NFR/AC, conceptual domain model, UX model, rule coverage, import/export and round-trip semantics, canonical error taxonomy, governance rules. The **what**. | Architecture decisions, package/module layout, language/tooling choices, public API signatures, build/distribution mechanics, implementation flows. |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) (this doc) | Implementation **how**: architecture decisions (`AD-001..036`), package decomposition, ports & adapters, host boundary & public API, the template-driven projections (`G_*`) and generated codec, the metadata reshape + dispatch primitives, validation/execution flows, state/error/theming strategy, distribution, build/tooling. | Behavioral requirements (SPEC), metadata field lists (contract), test matrices (traceability), milestone sequencing (roadmap). |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) (this doc) | Implementation **how**: architecture decisions (`AD-001..037`), package decomposition, ports & adapters, host boundary & public API, the template-driven projections (`G_*`) and generated codec, the metadata reshape + dispatch primitives, validation/execution flows, state/error/theming strategy, distribution, build/tooling. | Behavioral requirements (SPEC), metadata field lists (contract), test matrices (traceability), milestone sequencing (roadmap). |
 | [`metadata-contract.md`](metadata-contract.md) | The cross-repo **data contract**: metadata field shapes for rules/params/operators/functions, the engine-owned export, schema versioning. The metadata **shape**. | Editor internals, UI, runtime wiring. |
 | [`traceability.md`](traceability.md) | **Verification**: requirement→code→test matrix, engine-parity (anti-drift) checks, round-trip corpus coverage, AC coverage. The **is-it-covered**. | Design rationale, behavior definitions. |
 | [`ROADMAP.md`](ROADMAP.md) | **Sequencing**: milestones (M0–M5), per-milestone scope/deliverables/Definition of Done, readiness, locked decisions, open questions, future considerations. The **in-what-order**. | Behavior definitions, design rationale, test matrices. |
@@ -512,6 +512,31 @@ alone must not change behavior; the host opts in explicitly. Per-version committ
 rejected: reintroduces the release coupling being removed.
 **SPEC link.** `SPEC.md` §7.18 (FR-139…FR-141), AC-043, §16.4 `metadata_fallback`;
 `metadata-contract.md` §3/§5; [RFC-007](proposals/rfc-007-dynamic-engine-metadata.md).
+
+### AD-037 — Codec structural predicates use total membership primitives; value sentinels retired; engine floor declared once (RFC-008)
+**Decision.** Every structural predicate in the projection codec — parameter/key presence,
+foreign-key detection, key-set/list emptiness, marker presence — is expressed with the engine's
+**total** primitives: the `in` membership operator and the `length` function (engine ≥ 0.1.8),
+negated only via the chained unary `!` form (`chain: [<total expr>, expr !]` — ratified RFC-008
+OQ2). The historical **value-sentinel idiom** (map keys → filter → `join` with a reserved
+`default` string → compare) is retired everywhere: generators, artifacts, and the driver's
+`@`-time predicates (`transon::absent-key`, `transon::absent-key@gen`, `@noopt`,
+`__transon_no_marker__` all deleted, not merely bypassed). The minimum engine the codec's
+primitives require is declared in **one exported constant** (the SPEC §7.19 codec engine floor)
+and surfaced at session init by the FR-142 check.
+**Rationale.** The sentinel idiom rested on the assumption "a real key never equals the
+sentinel" — false for user documents, and **reproduced** as an AD-004 violation: a rule node
+whose only foreign key was literally `transon::absent-key` matched the variant and the key was
+silently dropped through the round-trip. Totality is the property that makes a predicate safe
+in `switch`/`cond` keys (the same reasoning that introduced `type`, R-26); `in`/`length` return
+booleans/ints no document value can forge, cost O(1)/O(n) engine-side instead of a
+map+filter+join walk per param per variant per node, and shrink the committed artifacts (the
+idiom was ~150 expanded sites). **Alternatives.** Harden the sentinel (second guard round) —
+rejected: compounds the forgeable construct (ratified OQ3). Version-conditional generators
+(emit sentinel codecs for pre-0.1.8 hosts) — rejected: doubles the artifact matrix the AD-030
+gate must hold byte-stable, for hosts the floor check now names explicitly.
+**SPEC link.** `SPEC.md` §7.19 (FR-142), NFR-051, AC-044, §16.4 `engine_floor`;
+[RFC-008](proposals/rfc-008-generator-shrink-via-in.md).
 
 ---
 

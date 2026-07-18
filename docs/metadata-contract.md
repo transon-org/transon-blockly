@@ -303,6 +303,16 @@ the current metadata (AD-030; see [`traceability.md`](traceability.md)).
   and rejects `2.x`/`4.x`). Minor bumps are additive by definition (this §5 policy); a shape
   change that breaks consumers must bump the major. An incompatible or missing `metadata_version`
   fails the gate → snapshot fallback + `metadata_fallback` diagnostic (SPEC §16.4).
+- **Codec engine floor (RFC-008, SPEC §7.19/FR-142/NFR-051):** the `metadata_version` gate is
+  necessary but not sufficient — an older engine can advertise the same schema major while
+  lacking **language primitives** the committed codec artifacts execute (engine 0.1.7 exports
+  metadata `3.0` but has no `in` operator / `length` function). The editor therefore declares a
+  **codec engine floor** — one exported constant naming the minimum engine version whose
+  rule/operator/function surface the committed codec requires (**0.1.8** as of SPEC v2.7) — and
+  compares it against the host engine's reported version at session init, surfacing the
+  persistent, non-blocking `engine_floor` diagnostic (SPEC §16.4) when the host is below it.
+  Hosts pinning the engine from the committed snapshot (`engine_version`, AD-025) satisfy the
+  floor by construction.
 
 ---
 
