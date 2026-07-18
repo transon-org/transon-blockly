@@ -35,8 +35,8 @@ export type { ExecuteOptions } from './session/execute.js';
 export { tryReverse } from './session/reverse.js';
 export type { ReverseOutcome } from './session/reverse.js';
 
-// ---- example corpus (M5 D2, FR-079) ----
-export { buildExampleCorpus } from './session/examples.js';
+// ---- example corpus (M5 D2, FR-079; FR-132 embedder seam) ----
+export { buildExampleCorpus, buildExampleCorpusFromDocs } from './session/examples.js';
 
 // ---- host boundary + controller (D2) ----
 export type { TransonEditorHost, ExampleCase, TransonTheme } from './session/host.js';

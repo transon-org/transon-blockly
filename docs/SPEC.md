@@ -1,6 +1,20 @@
 # SPEC.md — Transon Visual Template Editor
 
-> **Version:** 2.7 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-18
+> **Version:** 2.8 · **Status:** Pre-implementation baseline · **Last updated:** 2026-07-18
+
+> **v2.8 — FR-132 presentation hardening for host-supplied corpora.** Amends **FR-132** (no new
+> IDs): (1) **label disambiguation** — when two entries in the same group would render the same
+> doc-sentence label, each colliding label is suffixed with the unique case name (the engine corpus
+> guarantees unique *names*, not unique doc first sentences — the pinned corpus already collides in
+> three rule groups); (2) **graceful degradation** — a corpus in which **no** entry carries any
+> tier or rule membership is presented as a single flat, ungrouped list, with no fabricated
+> "other" group header. Motivating regression: a host-supplied `examples` override built without
+> the engine reference lists (the docs-site embed's hand-mapped corpus) rendered all 163 cases
+> under one "Reference · other" group with colliding labels — read as "duplicated and
+> uncategorised". The tier/rule derivation itself is unchanged and now reachable by embedders:
+> the corpus builder is re-exported from the public surfaces
+> (`@transon/editor-react`, `@transon/editor-element`) so hosts can derive `ExampleCase[]` from an
+> engine docs payload instead of hand-mapping.
 
 > **v2.7 — total-membership codec + engine floor (RFC-008 slices 2–3, ratified OQs).** Adds
 > **§7.19 (FR-142)**: a session-init **codec engine-floor check** with a persistent, non-blocking
@@ -422,7 +436,12 @@ itself (FR-121, AC-036).
   [`metadata-contract.md`](metadata-contract.md) §2.7) — never from a hand-maintained
   editor-side list (AD-012) — and are presentation-only: they do not alter corpus contents,
   selection semantics (FR-009, AC-018), or a host-supplied `examples` override, which is
-  presented through the same mechanical derivation.
+  presented through the same mechanical derivation. When two entries in the same group would
+  render the same label, each colliding label shall be **disambiguated** by appending the unique
+  case name (doc first sentences are not unique; case names are). A corpus in which no entry
+  carries any tier or rule membership — e.g. a host-supplied override built without the engine
+  reference lists — shall be presented as a single **flat, ungrouped** list; the picker shall not
+  fabricate an "other" group header for a corpus that has no groups at all.
 - **FR-010** The editor shall be usable as an embeddable component (§7.14).
 - **FR-011** The editor shall expose events/callbacks so an embedding application can observe
   template changes, validation results, and execution results.

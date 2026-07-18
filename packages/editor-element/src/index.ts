@@ -24,3 +24,9 @@ export type {
   TransonTheme,
   ToolboxCategoryConfig,
 } from '@transon/editor-ui';
+
+// Example-corpus derivation (FR-132, SPEC v2.8): hosts overriding `host.examples` should derive
+// their corpus from the engine docs payload here — a hand-mapped corpus drops the `rule`/`tier`
+// joins and the picker degrades to a flat, group-less list.
+export { buildExampleCorpus, buildExampleCorpusFromDocs } from '@transon/editor-ui';
+export type { EditorDocs, EditorMetadata } from '@transon/editor-core';

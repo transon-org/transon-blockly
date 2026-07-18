@@ -6,8 +6,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { editorMetadata } from '@transon/editor-core';
-import type { EditorMetadata } from '@transon/editor-core';
-import { buildExampleCorpus } from '../src/session/examples.js';
+import type { EditorDocs, EditorMetadata } from '@transon/editor-core';
+import { buildExampleCorpus, buildExampleCorpusFromDocs } from '../src/session/examples.js';
 import { ExamplesPanel } from '../src/components/panels.js';
 import type { ExampleCase } from '../src/session/host.js';
 
@@ -110,16 +110,104 @@ describe('ExamplesPanel tiered rendering (FR-132)', () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ name: 'Recipe1' }));
   });
 
-  it('host-supplied corpora without tags/rules fall into the reference tier mechanically', () => {
+  it('a corpus with no tier/rule membership at all renders flat — no fabricated "other" group', () => {
+    // FR-132 (v2.8 degradation): e.g. a host `examples` override built without the engine
+    // reference lists. The old behavior — one "Reference · other" optgroup over everything —
+    // read as "uncategorised" in an embed; a group-less corpus must render group-less.
     const host: ExampleCase[] = [
       { name: 'HostCase', doc: 'Host example. Detail.', template: {} },
+      { name: 'HostCase2', doc: 'Second host example.', template: {} },
     ];
     const { container } = render(
       <ExamplesPanel examples={host} selected={null} onSelect={vi.fn()} onReset={vi.fn()} />,
     );
+    expect(container.querySelectorAll('optgroup').length).toBe(0);
+    const options = Array.from(container.querySelectorAll('option[value]'))
+      .filter((o) => (o as HTMLOptionElement).value !== '') as HTMLOptionElement[];
+    expect(options.map((o) => o.value)).toEqual(['HostCase', 'HostCase2']);
+    expect(options[0]!.textContent).toBe('Host example');
+    for (const o of options) expect(o.title).toBe(o.value);
+  });
+
+  it('a partially categorised corpus keeps the "Reference · other" group for the rule-less tail', () => {
+    // FR-132 (v2.8): the flat degradation applies only to corpora with NO grouping at all —
+    // partially categorised corpora retain "Reference · other" for the rule-less entries.
+    const mixed: ExampleCase[] = [
+      { name: 'Ruled', doc: 'Ruled case.', template: {}, rule: 'attr' },
+      { name: 'RuleLess', doc: 'Rule-less case.', template: {} },
+    ];
+    const { container } = render(
+      <ExamplesPanel examples={mixed} selected={null} onSelect={vi.fn()} onReset={vi.fn()} />,
+    );
     const groups = Array.from(container.querySelectorAll('optgroup')).map((g) => g.label);
-    expect(groups).toEqual(['Reference · other']);
-    const option = container.querySelector('option[value="HostCase"]') as HTMLOptionElement;
-    expect(option.textContent).toBe('Host example');
+    expect(groups).toEqual(['Reference · attr', 'Reference · other']);
+  });
+
+  it('colliding labels within a group are disambiguated by the unique case name', () => {
+    // FR-132 (v2.8 disambiguation): the engine guarantees unique NAMES, not unique doc first
+    // sentences — the pinned corpus already renders identical labels inside three rule groups.
+    const host: ExampleCase[] = [
+      { name: 'suffix_str', doc: 'Adds suffix to input string. Via format.', template: {} },
+      { name: 'suffix_expr', doc: 'Adds suffix to input string. Via expr.', template: {} },
+      { name: 'unrelated', doc: 'Stands alone.', template: {} },
+    ];
+    const { container } = render(
+      <ExamplesPanel examples={host} selected={null} onSelect={vi.fn()} onReset={vi.fn()} />,
+    );
+    const byValue = new Map(
+      (Array.from(container.querySelectorAll('option[value]')) as HTMLOptionElement[])
+        .filter((o) => o.value !== '')
+        .map((o) => [o.value, o.textContent]),
+    );
+    expect(byValue.get('suffix_str')).toBe('Adds suffix to input string — suffix_str');
+    expect(byValue.get('suffix_expr')).toBe('Adds suffix to input string — suffix_expr');
+    expect(byValue.get('unrelated')).toBe('Stands alone'); // no collision → no suffix
+  });
+
+  it('disambiguation is scoped per group: the same label in two different groups stays bare', () => {
+    // FR-132 (v2.8 disambiguation): per-group scoping — the same sentence under two different
+    // rules is already told apart by its optgroup, so it takes no case-name suffix.
+    const cases2: ExampleCase[] = [
+      { name: 'a1', doc: 'Same sentence.', template: {}, rule: 'attr' },
+      { name: 'm1', doc: 'Same sentence.', template: {}, rule: 'map' },
+    ];
+    const { container } = render(
+      <ExamplesPanel examples={cases2} selected={null} onSelect={vi.fn()} onReset={vi.fn()} />,
+    );
+    const texts = (Array.from(container.querySelectorAll('option[value]')) as HTMLOptionElement[])
+      .filter((o) => o.value !== '')
+      .map((o) => o.textContent);
+    expect(texts).toEqual(['Same sentence', 'Same sentence']);
+  });
+});
+
+describe('buildExampleCorpusFromDocs (FR-132) — the embedder seam', () => {
+  it('derives the same tier/rule joins as buildExampleCorpus from a bare docs payload', () => {
+    // The shape an embedder holds (e.g. the engine get_all_docs() payload) — no catalog wrapper.
+    const corpus = buildExampleCorpusFromDocs(fakeMetadata.docs);
+    expect(corpus).toEqual(buildExampleCorpus(fakeMetadata));
+    const byName = new Map(corpus.map((e) => [e.name, e]));
+    expect(byName.get('Worked1')!.tier).toBe('worked-example');
+    expect(byName.get('RefC')!.rule).toBe('attr');
+  });
+
+  it('tolerates a sparse or malformed docs payload (FR-132: engine owns the shape, AD-012)', () => {
+    // Missing curated lists, a non-list rule `examples` field, and a non-string param reference
+    // must all degrade to "no membership" — never throw on an engine payload the editor does not
+    // fully recognize.
+    const sparse = {
+      examples: [{ name: 'Only', doc: null, template: 1, data: null, result: 1, tags: [] }],
+      rules: [{ name: 'r', examples: 'not-a-list', params: [{ name: 'p', examples: [42] }] }],
+      operators: [],
+      functions: [],
+    } as unknown as EditorDocs;
+    const corpus = buildExampleCorpusFromDocs(sparse);
+    expect(corpus.map((e) => e.name)).toEqual(['Only']);
+    expect(corpus[0]!.rule).toBeUndefined();
+    expect(corpus[0]!.tier).toBeUndefined();
+    // A payload with no corpus at all yields an empty ExampleCase[] (the panel then renders null).
+    expect(
+      buildExampleCorpusFromDocs({ rules: [], operators: [], functions: [] } as unknown as EditorDocs),
+    ).toEqual([]);
   });
 });

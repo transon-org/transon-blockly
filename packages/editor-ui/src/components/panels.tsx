@@ -171,10 +171,11 @@ function exampleLabel(ex: ExampleCase): string {
  * curated-first from `buildExampleCorpus`, which resolves `tier` from the engine
  * `worked_examples`/`recipes` name-reference lists — never from tag conventions, contract §2.7),
  * then reference examples grouped by owning rule (alphabetical, rule-less cases last). Mechanical
- * over the engine-emitted case data (AD-012) — host-supplied corpora flow through the same
- * derivation.
+ * over the case data (AD-012). A corpus in which NO entry carries any tier or rule membership —
+ * e.g. a host `examples` override built without the engine reference lists — renders as one flat
+ * `label: null` group (SPEC v2.8): no fabricated "other" header over a corpus that has no groups.
  */
-function groupExamples(examples: ExampleCase[]): Array<{ label: string; entries: ExampleCase[] }> {
+function groupExamples(examples: ExampleCase[]): Array<{ label: string | null; entries: ExampleCase[] }> {
   const worked: ExampleCase[] = [];
   const recipes: ExampleCase[] = [];
   const byRule = new Map<string, ExampleCase[]>();
@@ -189,6 +190,10 @@ function groupExamples(examples: ExampleCase[]): Array<{ label: string; entries:
     }
   }
   const rules = [...byRule.keys()].filter((r) => r !== '').sort();
+  if (!worked.length && !recipes.length && !rules.length) {
+    // The panel renders nothing for an empty corpus, so `examples` is non-empty here.
+    return [{ label: null, entries: examples }];
+  }
   if (byRule.has('')) rules.push('');
   return [
     { label: 'Worked examples', entries: worked },
@@ -198,6 +203,26 @@ function groupExamples(examples: ExampleCase[]): Array<{ label: string; entries:
       entries: byRule.get(rule)!,
     })),
   ].filter((group) => group.entries.length > 0);
+}
+
+/**
+ * Display labels for one group's entries, keyed by case name (FR-132, SPEC v2.8): the doc-sentence
+ * label, suffixed with the unique case name when two entries in the group would otherwise render
+ * identically (the engine guarantees unique names, not unique doc first sentences). Scoped per
+ * group — the same sentence under two different rules stays bare.
+ */
+function disambiguatedLabels(entries: ExampleCase[]): Map<string, string> {
+  const counts = new Map<string, number>();
+  for (const ex of entries) {
+    const label = exampleLabel(ex);
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  const out = new Map<string, string>();
+  for (const ex of entries) {
+    const label = exampleLabel(ex);
+    out.set(ex.name, counts.get(label)! > 1 ? `${label} — ${ex.name}` : label);
+  }
+  return out;
 }
 
 /**
@@ -234,15 +259,22 @@ export function ExamplesPanel({
         <option value="" disabled>
           Choose an example…
         </option>
-        {groupExamples(examples).map((group) => (
-          <optgroup key={group.label} label={group.label}>
-            {group.entries.map((ex) => (
-              <option key={ex.name} value={ex.name} title={ex.name}>
-                {exampleLabel(ex)}
-              </option>
-            ))}
-          </optgroup>
-        ))}
+        {groupExamples(examples).map((group) => {
+          const labels = disambiguatedLabels(group.entries);
+          const options = group.entries.map((ex) => (
+            <option key={ex.name} value={ex.name} title={ex.name}>
+              {labels.get(ex.name)}
+            </option>
+          ));
+          // Group-less corpus (SPEC v2.8): flat options, no optgroup chrome.
+          return group.label === null ? (
+            options
+          ) : (
+            <optgroup key={group.label} label={group.label}>
+              {options}
+            </optgroup>
+          );
+        })}
       </select>
       {selected ? (
         <button type="button" data-testid="btn-reset-example" onClick={onReset}>

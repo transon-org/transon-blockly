@@ -6,21 +6,26 @@
 // with `host.examples`.
 
 import { editorMetadata } from '@transon/editor-core';
-import type { EditorMetadata, Json } from '@transon/editor-core';
+import type { EditorDocs, EditorMetadata, Json } from '@transon/editor-core';
 import type { ExampleCase } from './host.js';
 
 /**
- * Build the built-in example corpus from the committed metadata docs. The engine corpus serializes
- * every case exactly once with a unique `name` (metadata-contract §2.7), so this is a direct map —
- * no content-hash dedupe. The owning rule is taken from the engine-emitted `docs.rules[*].examples`
- * name references, falling back to the rule's parameter-level `params[*].examples` references (the
- * engine-owned tag join; never re-derived from tag conventions), and `tags` are the engine's corpus
- * tags. Curated-tier membership (`tier`) is resolved from the `docs.worked_examples`/`docs.recipes`
- * reference lists — the same lists that drive the curated-first ordering (FR-132): worked examples
- * then recipes, each in list order, then the rest of the corpus in emitted order. Defaults to the
- * pinned snapshot; pass `metadata` to build from an alternate (e.g. host-provided) payload.
+ * Build the example corpus from an engine docs payload (metadata-contract §2.7 shape — e.g. the
+ * `docs` member of `get_editor_metadata()`, or the engine's `get_all_docs()` export, which is
+ * structurally the same). This is the embedder seam (FR-132, SPEC v2.8): a host that supplies its
+ * own `examples` override should derive it here rather than hand-mapping — a hand-mapped corpus
+ * drops the `rule`/`tier` joins and the picker degrades to a flat list.
+ *
+ * The engine corpus serializes every case exactly once with a unique `name` (§2.7), so this is a
+ * direct map — no content-hash dedupe. The owning rule is taken from the engine-emitted
+ * `rules[*].examples` name references, falling back to the rule's parameter-level
+ * `params[*].examples` references (the engine-owned join; never re-derived from tag conventions),
+ * and `tags` are the engine's corpus tags. Curated-tier membership (`tier`) is resolved from the
+ * `worked_examples`/`recipes` reference lists — the same lists that drive the curated-first
+ * ordering (FR-132): worked examples then recipes, each in list order, then the rest of the corpus
+ * in emitted order.
  */
-export function buildExampleCorpus(metadata: EditorMetadata = editorMetadata): ExampleCase[] {
+export function buildExampleCorpusFromDocs(docs: EditorDocs): ExampleCase[] {
   const ruleByExample = new Map<string, string>();
   const claim = (names: unknown, rule: string) => {
     if (!Array.isArray(names)) return;
@@ -28,22 +33,22 @@ export function buildExampleCorpus(metadata: EditorMetadata = editorMetadata): E
       if (typeof name === 'string' && !ruleByExample.has(name)) ruleByExample.set(name, rule);
     }
   };
-  for (const entry of metadata.docs.rules) claim(entry.examples, entry.name);
-  for (const entry of metadata.docs.rules) {
+  for (const entry of docs.rules) claim(entry.examples, entry.name);
+  for (const entry of docs.rules) {
     for (const param of (entry.params as Array<Record<string, unknown>> | undefined) ?? []) {
       claim(param.examples, entry.name);
     }
   }
 
   const tierByExample = new Map<string, 'worked-example' | 'recipe'>();
-  for (const name of metadata.docs.worked_examples ?? []) tierByExample.set(name, 'worked-example');
-  for (const name of metadata.docs.recipes ?? []) {
+  for (const name of docs.worked_examples ?? []) tierByExample.set(name, 'worked-example');
+  for (const name of docs.recipes ?? []) {
     if (!tierByExample.has(name)) tierByExample.set(name, 'recipe');
   }
 
-  const corpus = metadata.docs.examples ?? [];
+  const corpus = docs.examples ?? [];
   const byName = new Map(corpus.map((example) => [example.name, example]));
-  const curated = [...(metadata.docs.worked_examples ?? []), ...(metadata.docs.recipes ?? [])]
+  const curated = [...(docs.worked_examples ?? []), ...(docs.recipes ?? [])]
     .map((name) => byName.get(name))
     .filter((example) => example !== undefined);
   const curatedNames = new Set(curated.map((example) => example.name));
@@ -59,4 +64,12 @@ export function buildExampleCorpus(metadata: EditorMetadata = editorMetadata): E
     tier: tierByExample.get(example.name),
     tags: example.tags,
   }));
+}
+
+/**
+ * The built-in corpus: `buildExampleCorpusFromDocs` over the committed metadata snapshot
+ * (AD-012). Pass `metadata` to build from an alternate (e.g. runtime-fetched) payload.
+ */
+export function buildExampleCorpus(metadata: EditorMetadata = editorMetadata): ExampleCase[] {
+  return buildExampleCorpusFromDocs(metadata.docs);
 }
