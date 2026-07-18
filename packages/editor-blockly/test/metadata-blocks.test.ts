@@ -83,6 +83,24 @@ describe('flyout dual label vs canvas title-only face (§12.5, OQ-018, AC-041(c)
     }
   });
 
+  it('the flyout substitution preserves a trailing param label merged into the title run (§12.5, revised 2026-07-18)', () => {
+    // map__item / map__items keep their disambiguating socket label (§12.5 face-uniqueness), and
+    // Blockly merges "Map" + "item(s)" into ONE text run — the extension must substitute only the
+    // title portion, or the flyout would collapse both variants back to "Map (map)".
+    const flyoutWs = new Blockly.Workspace();
+    (flyoutWs as unknown as { internalIsFlyout: boolean }).internalIsFlyout = true;
+    const item = flyoutWs.newBlock('transon_rule_map__item');
+    const items = flyoutWs.newBlock('transon_rule_map__items');
+    try {
+      expect([...item.getFields()][0]!.getText()).toBe('Map (map) item');
+      expect([...items.getFields()][0]!.getText()).toBe('Map (map) items');
+    } finally {
+      item.dispose(false);
+      items.dispose(false);
+      flyoutWs.dispose();
+    }
+  });
+
   it('structural (non-rule) blocks are unaffected by the flyout-label extension', () => {
     const flyoutWs = new Blockly.Workspace();
     (flyoutWs as unknown as { internalIsFlyout: boolean }).internalIsFlyout = true;

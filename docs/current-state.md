@@ -8,13 +8,36 @@
 <!-- BEGIN generated: at-a-glance · python harness/scripts/update_memory.py --state -->
 | | |
 |---|---|
-| Repo HEAD | `5e564dc` — Handoff: docs-site embed opted into runtime metadata, live-verified |
-| Branch | `main` |
+| Repo HEAD | `fb2a4ed` — Merge pull request #16 from transon-org/rfc-008-generator-shrink |
+| Branch | `fix-variant-face-collision` |
 | Engine pin | transon `v0.2.0` @ `58391ecc49bd` (see [metadata-snapshot.md](metadata-snapshot.md)) |
 | Metadata snapshot | committed ([metadata-snapshot.json](metadata-snapshot.json)) |
 <!-- END generated: at-a-glance -->
 
 ## Last action
+
+_**VARIANT FACE-COLLISION FIX (2026-07-18, branch `fix-variant-face-collision`, not merged):**
+user-reported: `call`/`expr` `value` vs `values` and `map` `item` vs `items` rendered
+pixel-identical in palette AND canvas — §12.5's unconditional "lone value input goes bare"
+assumed the socket unambiguous, false across sibling variants differing only by that param's
+name; the variant-agnostic flyout dual label + rule-level tooltip masked nothing. SPEC-first
+revision of **§12.5** (2026-07-18): bare socket ONLY when the face stays unique among the rule's
+variants; colliding variants keep the param label; flyout substitution preserves trailing label
+text merged into the title run. Implementation: `enrichForPalette` computes per-param `bare` via
+a rendered-face signature (collision ⇒ labelled), `G_palette`'s `P_PARAM_SEG_DEFAULT` now conds
+on `bare` (not `kind`); the flyout-label extension (`blocks.ts`) substitutes only the title
+portion of the first FieldLabel (Blockly merges "Map"+"items" into ONE text run — wholesale
+replacement would re-collapse the flyout faces; bonus: `expr__base`'s "op" / `call`'s "name"
+label no longer swallowed in the flyout). Tests: face-uniqueness regression gate (no two rule
+defs render the same face, names/accept stripped) + concrete labelled/bare assertions
+(palette.test.ts), flyout suffix-preservation (metadata-blocks.test.ts). **Regen trap applies**
+(rebuild editor-core → regen → rebuild again — first regen runs the stale inlined G_palette);
+density baseline regenerated (`UPDATE_DENSITY=1` — labelled sockets widen expr/call faces
+~+50px, accepted cost). All gates green (traceability, parity 23/29/34, snapshot check), full
+suite green, **live-verified** (Pyodide): palette shows `Map (map) item` / `Map (map) items`,
+`Call function (call) name [str▾] value/values` distinct; canvas face `Call function name [str▾]
+values`; console clean. Display-only (§21.12): codec, artifacts encoder/decoder, round-trip
+untouched (only `G_palette.json` + `palette.json` regenerated)._
 
 _**RFC-008 SLICES 2–3 IMPLEMENTED (2026-07-18, branch `rfc-008-generator-shrink`, SPEC v2.7):**
 slice 2 SPEC-first: **FR-142** (§7.19 session-init codec engine-floor check, §16.4 `engine_floor`

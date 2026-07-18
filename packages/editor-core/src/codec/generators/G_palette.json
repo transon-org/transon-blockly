@@ -444,11 +444,6 @@
                                   "items": [
                                     " ",
                                     {
-                                      "@": "attr",
-                                      "name": "label"
-                                    },
-                                    " ",
-                                    {
                                       "@": "format",
                                       "pattern": "%{}",
                                       "value": {
@@ -466,21 +461,19 @@
                                   "sep": ""
                                 },
                                 "when": {
-                                  "@": "expr",
-                                  "op": "==",
-                                  "values": [
-                                    {
-                                      "@": "attr",
-                                      "name": "kind"
-                                    },
-                                    "constant"
-                                  ]
+                                  "@": "attr",
+                                  "name": "bare"
                                 }
                               }
                             ],
                             "default": {
                               "@": "join",
                               "items": [
+                                " ",
+                                {
+                                  "@": "attr",
+                                  "name": "label"
+                                },
                                 " ",
                                 {
                                   "@": "format",

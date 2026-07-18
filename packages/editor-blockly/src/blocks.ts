@@ -85,7 +85,15 @@ function ensureFlyoutLabelExtension(blocks: BlockDefinition[]): void {
     const label = flyoutLabelsByType?.get(this.type);
     if (!label) return;
     const title = [...this.getFields()][0];
-    if (title instanceof Blockly.FieldLabel) title.setValue(label);
+    if (!(title instanceof Blockly.FieldLabel)) return;
+    // Blockly merges adjacent message text into ONE FieldLabel, so the first field may carry the
+    // title PLUS a following label — e.g. "Map items", where "items" is the §12.5 face-uniqueness
+    // socket label that distinguishes map__items from map__item. Substitute only the title portion
+    // ("Map (map) items"), or the flyout would collapse the colliding variants back onto one face.
+    // The canvas title is the dual label minus its " (<rule>)" suffix, by construction (G_palette).
+    const canvasTitle = label.replace(/ \([^()]*\)$/, '');
+    const current = String(title.getValue() ?? '');
+    title.setValue(current.startsWith(canvasTitle) ? label + current.slice(canvasTitle.length) : label);
   });
 }
 
